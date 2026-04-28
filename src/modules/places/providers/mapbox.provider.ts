@@ -16,6 +16,7 @@ const BASE_URL = 'https://api.mapbox.com/search/searchbox/v1';
 interface MapboxSuggestion {
   name?: string;
   mapbox_id?: string;
+  feature_type?: string;
   place_formatted?: string;
   full_address?: string;
 }
@@ -59,7 +60,7 @@ export class MapboxPlaceSearchProvider implements PlaceSearchProvider {
     const body = (await res.json()) as { suggestions?: MapboxSuggestion[] };
     return (body.suggestions ?? [])
       .filter((s): s is MapboxSuggestion & { mapbox_id: string } =>
-        Boolean(s.mapbox_id),
+        Boolean(s.mapbox_id) && s.feature_type !== 'category',
       )
       .map((s) => ({
         id: s.mapbox_id,
