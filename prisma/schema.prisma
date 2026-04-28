@@ -1,0 +1,12 @@
+// Prisma schema for forsure backend.
+// Models will be added as features are built. Starting with no domain models —
+// migrations begin once the auth module is in place.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}

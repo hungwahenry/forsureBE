@@ -1,0 +1,186 @@
+import {
+  ArgumentsHost,
+  Catch,
+  ExceptionFilter,
+  HttpException,
+  HttpStatus,
+  Logger,
+  ValidationError,
+} from '@nestjs/common';
+import { Request, Response } from 'express';
+import {
+  DefaultErrorMessages,
+  ErrorCode,
+  ErrorStatusMap,
+} from '../constants/error-codes';
+import { AppException } from '../exceptions/app.exception';
+
+interface ErrorEnvelope {
+  success: false;
+  error: {
+    code: ErrorCode | string;
+    message: string;
+    details?: unknown;
+  };
+  meta: { requestId: string };
+}
+
+interface NestValidationErrorBody {
+  message: string | (string | ValidationError)[];
+  error?: string;
+  statusCode?: number;
+}
+
+@Catch()
+export class AllExceptionsFilter implements ExceptionFilter {
+  private readonly logger = new Logger(AllExceptionsFilter.name);
+
+  catch(exception: unknown, host: ArgumentsHost): void {
+    const ctx = host.switchToHttp();
+    const req = ctx.getRequest<Request>();
+    const res = ctx.getResponse<Response>();
+
+    const { status, body } = this.toEnvelope(exception, req.requestId);
+
+    if (status >= 500) {
+      this.logger.error(
+        {
+          requestId: req.requestId,
+          path: req.url,
+          method: req.method,
+          err: this.serializeError(exception),
+        },
+        'Unhandled exception',
+      );
+    }
+
+    res.status(status).json(body);
+  }
+
+  private toEnvelope(
+    exception: unknown,
+    requestId: string,
+  ): { status: number; body: ErrorEnvelope } {
+    if (exception instanceof AppException) {
+      return {
+        status: ErrorStatusMap[exception.code],
+        body: {
+          success: false,
+          error: {
+            code: exception.code,
+            message: exception.message,
+            details: exception.details,
+          },
+          meta: { requestId },
+        },
+      };
+    }
+
+    if (exception instanceof HttpException) {
+      const status = exception.getStatus();
+      const response = exception.getResponse();
+      return this.fromHttpException(status, response, requestId);
+    }
+
+    return {
+      status: HttpStatus.INTERNAL_SERVER_ERROR,
+      body: {
+        success: false,
+        error: {
+          code: ErrorCode.INTERNAL_ERROR,
+          message: DefaultErrorMessages.INTERNAL_ERROR,
+        },
+        meta: { requestId },
+      },
+    };
+  }
+
+  private fromHttpException(
+    status: number,
+    response: string | object,
+    requestId: string,
+  ): { status: number; body: ErrorEnvelope } {
+    if (typeof response === 'string') {
+      return {
+        status,
+        body: {
+          success: false,
+          error: { code: this.codeForStatus(status), message: response },
+          meta: { requestId },
+        },
+      };
+    }
+
+    const body = response as NestValidationErrorBody & {
+      code?: string;
+      message?: unknown;
+    };
+
+    if (status === HttpStatus.BAD_REQUEST && Array.isArray(body.message)) {
+      return {
+        status,
+        body: {
+          success: false,
+          error: {
+            code: ErrorCode.VALIDATION_FAILED,
+            message: DefaultErrorMessages.VALIDATION_FAILED,
+            details: body.message,
+          },
+          meta: { requestId },
+        },
+      };
+    }
+
+    const message =
+      typeof body.message === 'string'
+        ? body.message
+        : (body.error ?? this.defaultMessageForStatus(status));
+
+    return {
+      status,
+      body: {
+        success: false,
+        error: {
+          code: body.code ?? this.codeForStatus(status),
+          message,
+        },
+        meta: { requestId },
+      },
+    };
+  }
+
+  private codeForStatus(status: number): ErrorCode | string {
+    switch (status) {
+      case HttpStatus.UNAUTHORIZED:
+        return ErrorCode.AUTH_UNAUTHORIZED;
+      case HttpStatus.FORBIDDEN:
+        return ErrorCode.AUTH_FORBIDDEN;
+      case HttpStatus.NOT_FOUND:
+        return ErrorCode.RESOURCE_NOT_FOUND;
+      case HttpStatus.CONFLICT:
+        return ErrorCode.RESOURCE_CONFLICT;
+      case HttpStatus.TOO_MANY_REQUESTS:
+        return ErrorCode.RATE_LIMITED;
+      case HttpStatus.BAD_REQUEST:
+        return ErrorCode.VALIDATION_FAILED;
+      default:
+        return status >= 500
+          ? ErrorCode.INTERNAL_ERROR
+          : `HTTP_${status}`;
+    }
+  }
+
+  private defaultMessageForStatus(status: number): string {
+    const code = this.codeForStatus(status);
+    return code in DefaultErrorMessages
+      ? DefaultErrorMessages[code as ErrorCode]
+      : 'Request failed.';
+  }
+
+  private serializeError(err: unknown): Record<string, unknown> {
+    if (err instanceof Error) {
+      return { name: err.name, message: err.message, stack: err.stack };
+    }
+    return { value: String(err) };
+  }
+}
