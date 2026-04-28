@@ -22,6 +22,7 @@ model User {
   profile            Profile?
   emailVerifications EmailVerification[]
   refreshTokens      RefreshToken[]
+  activities         Activity[]
 }
 
 enum UserStatus {
@@ -83,4 +84,40 @@ enum Gender {
   FEMALE
   NON_BINARY
   PREFER_NOT_TO_SAY
+}
+
+// ----- Activities -----
+
+model Activity {
+  id               String                   @id // act_...
+  authorUserId     String
+  author           User                     @relation(fields: [authorUserId], references: [id], onDelete: Cascade)
+  emoji            String
+  title            String
+  startsAt         DateTime
+  placeName        String
+  placeLat         Float
+  placeLng         Float
+  capacity         Int
+  genderPreference ActivityGenderPreference
+  status           ActivityStatus           @default(OPEN)
+  createdAt        DateTime                 @default(now())
+  updatedAt        DateTime                 @updatedAt
+
+  @@index([startsAt])
+  @@index([status, startsAt])
+  @@index([authorUserId, createdAt])
+}
+
+enum ActivityStatus {
+  OPEN
+  FULL
+  CANCELLED
+  DONE
+}
+
+enum ActivityGenderPreference {
+  ALL
+  MALE
+  FEMALE
 }

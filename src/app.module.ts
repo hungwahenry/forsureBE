@@ -14,6 +14,7 @@ import { ConfigModule } from './config/config.module';
 import type { Env } from './config/env.schema';
 import { EmailModule } from './email/email.module';
 import { HealthModule } from './health/health.module';
+import { ActivitiesModule } from './modules/activities/activities.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { OnboardingModule } from './modules/onboarding/onboarding.module';
 import { PrismaModule } from './prisma/prisma.module';
@@ -61,6 +62,7 @@ import { StorageModule } from './storage/storage.module';
     HealthModule,
     AuthModule,
     OnboardingModule,
+    ActivitiesModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
