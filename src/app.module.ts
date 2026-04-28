@@ -17,6 +17,7 @@ import { HealthModule } from './health/health.module';
 import { ActivitiesModule } from './modules/activities/activities.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { OnboardingModule } from './modules/onboarding/onboarding.module';
+import { PlacesModule } from './modules/places/places.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { StorageModule } from './storage/storage.module';
 
@@ -63,6 +64,7 @@ import { StorageModule } from './storage/storage.module';
     AuthModule,
     OnboardingModule,
     ActivitiesModule,
+    PlacesModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
