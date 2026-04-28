@@ -13,19 +13,14 @@ import {
 
 const BASE_URL = 'https://places.googleapis.com/v1';
 
-// Essentials-tier fields only — keeps autocomplete + details in the cheapest
-// SKU. Adding photos/openingHours/etc. would bump us into Pro/Enterprise.
 const AUTOCOMPLETE_FIELD_MASK = [
   'suggestions.placePrediction.placeId',
   'suggestions.placePrediction.structuredFormat',
   'suggestions.placePrediction.text',
 ].join(',');
-const PLACE_DETAILS_FIELD_MASK = [
-  'id',
-  'displayName',
-  'formattedAddress',
-  'location',
-].join(',');
+const PLACE_DETAILS_FIELD_MASK = ['id', 'formattedAddress', 'location'].join(
+  ',',
+);
 
 const PROXIMITY_RADIUS_METERS = 50_000;
 
@@ -44,7 +39,6 @@ interface GoogleAutocompleteResponse {
 
 interface GooglePlaceDetailsResponse {
   id?: string;
-  displayName?: { text?: string };
   formattedAddress?: string;
   location?: { latitude: number; longitude: number };
 }
@@ -101,9 +95,6 @@ export class GooglePlaceSearchProvider implements PlaceSearchProvider {
     id: string,
     { sessionToken }: RetrieveParams,
   ): Promise<PlaceDetails> {
-    // sessionToken is forwarded as a query param so Google attributes this
-    // call to the same session as the autocomplete calls (Essentials SKU,
-    // 1 billable unit instead of 2).
     const params = new URLSearchParams({ sessionToken });
     const res = await fetch(
       `${BASE_URL}/places/${encodeURIComponent(id)}?${params.toString()}`,
@@ -124,7 +115,8 @@ export class GooglePlaceSearchProvider implements PlaceSearchProvider {
     }
     return {
       id: data.id ?? id,
-      name: data.displayName?.text ?? '',
+      // Google: name intentionally not requested (Pro tier). Frontend uses
+      // the suggestion's name as the canonical display value.
       address: data.formattedAddress ?? '',
       lat: data.location.latitude,
       lng: data.location.longitude,

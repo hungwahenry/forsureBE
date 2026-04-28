@@ -11,8 +11,7 @@ export interface PlaceSuggestion {
 
 export interface PlaceDetails {
   id: string;
-  name: string;
-  /** Full formatted address. */
+  name?: string;
   address: string;
   lat: number;
   lng: number;
