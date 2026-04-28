@@ -1,7 +1,3 @@
-// Prisma schema for forsure backend.
-// Models will be added as features are built. Starting with no domain models —
-// migrations begin once the auth module is in place.
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -9,4 +5,82 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+// ----- Auth -----
+
+model User {
+  id                    String     @id // usr_...
+  email                 String     @unique
+  emailVerifiedAt       DateTime?
+  status                UserStatus @default(ACTIVE)
+  onboardingCompletedAt DateTime?
+  lastLoginAt           DateTime?
+  createdAt             DateTime   @default(now())
+  updatedAt             DateTime   @updatedAt
+
+  profile            Profile?
+  emailVerifications EmailVerification[]
+  refreshTokens      RefreshToken[]
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  DELETED
+}
+
+model EmailVerification {
+  id         String    @id // evf_...
+  email      String
+  userId     String?
+  user       User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  codeHash   String
+  attempts   Int       @default(0)
+  expiresAt  DateTime
+  consumedAt DateTime?
+  ipAddress  String?
+  createdAt  DateTime  @default(now())
+
+  @@index([email, consumedAt])
+}
+
+model RefreshToken {
+  id         String    @id // rt_...
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash  String    @unique
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  userAgent  String?
+  ipAddress  String?
+  lastUsedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([userId, revokedAt])
+}
+
+// ----- Profile -----
+
+model Profile {
+  id          String   @id // prf_...
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  username    String   @unique
+  displayName String
+  dateOfBirth DateTime
+  gender      Gender
+  avatarKey   String
+  locationLat Float
+  locationLng Float
+  placeName   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  NON_BINARY
+  PREFER_NOT_TO_SAY
 }

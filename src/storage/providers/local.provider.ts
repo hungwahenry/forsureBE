@@ -1,0 +1,38 @@
+import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import * as fs from 'fs/promises';
+import * as path from 'path';
+import type { Env } from '../../config/env.schema';
+import { PutOptions, StorageProvider } from '../storage.interface';
+
+@Injectable()
+export class LocalStorageProvider implements StorageProvider {
+  private readonly baseDir: string;
+  private readonly publicBase: string;
+
+  constructor(config: ConfigService<Env, true>) {
+    this.baseDir = path.resolve(
+      config.get('LOCAL_STORAGE_DIR', { infer: true }),
+    );
+    this.publicBase = config
+      .get('LOCAL_PUBLIC_URL', { infer: true })!
+      .replace(/\/$/, '');
+  }
+
+  async put(key: string, body: Buffer, _opts: PutOptions): Promise<void> {
+    const filePath = path.join(this.baseDir, key);
+    await fs.mkdir(path.dirname(filePath), { recursive: true });
+    await fs.writeFile(filePath, body);
+  }
+
+  async delete(key: string): Promise<void> {
+    const filePath = path.join(this.baseDir, key);
+    await fs.unlink(filePath).catch((err: NodeJS.ErrnoException) => {
+      if (err.code !== 'ENOENT') throw err;
+    });
+  }
+
+  publicUrl(key: string): string {
+    return `${this.publicBase}/${key}`;
+  }
+}

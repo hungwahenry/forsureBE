@@ -1,17 +1,21 @@
-import { RequestMethod, ValidationPipe, VersioningType } from '@nestjs/common';
+import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory, Reflector } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import { Logger } from 'nestjs-pino';
+import * as path from 'path';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 import type { Env } from './config/env.schema';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    bufferLogs: true,
+  });
 
   app.useLogger(app.get(Logger));
 
@@ -22,6 +26,7 @@ async function bootstrap() {
     helmet({
       contentSecurityPolicy: isProd ? undefined : false,
       crossOriginEmbedderPolicy: false,
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
     }),
   );
   app.use(cookieParser());
@@ -31,12 +36,21 @@ async function bootstrap() {
     credentials: true,
   });
 
-  app.setGlobalPrefix('v1', {
-    exclude: [
-      { path: 'health', method: RequestMethod.GET },
-      { path: 'health/ready', method: RequestMethod.GET },
-    ],
-  });
+  // Serve local-storage uploads when the local driver is in use.
+  if (config.get('STORAGE_DRIVER', { infer: true }) === 'local') {
+    const uploadsDir = path.resolve(
+      config.get('LOCAL_STORAGE_DIR', { infer: true }),
+    );
+    app.useStaticAssets(uploadsDir, {
+      prefix: '/static/',
+      setHeaders: (res) =>
+        res.setHeader(
+          'Cache-Control',
+          'public, max-age=31536000, immutable',
+        ),
+    });
+  }
+
   app.enableVersioning({ type: VersioningType.URI, defaultVersion: '1' });
 
   app.useGlobalPipes(

@@ -30,6 +30,9 @@ coverage/
 prisma/*.db
 prisma/migrations/dev.db*
 
+# Local storage driver dump
+uploads/
+
 # Misc
 .cache/
 *.tsbuildinfo

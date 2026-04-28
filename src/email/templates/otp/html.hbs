@@ -1,0 +1,12 @@
+{{#> _layout title="Your forsure code" preheader=(concat "Your code is " code)}}
+  <h1 style="font-size:18px;margin:0 0 12px;color:#111;">Your forsure code</h1>
+  <p style="margin:0 0 24px;color:#555;line-height:1.5;">
+    Enter this code in the app to continue. It expires in {{ttlMinutes}} minutes.
+  </p>
+  <div style="font-size:32px;font-weight:700;letter-spacing:8px;text-align:center;background:#f4f4f5;border-radius:8px;padding:20px;color:#111;">
+    {{code}}
+  </div>
+  <p style="margin:24px 0 0;font-size:13px;color:#888;line-height:1.5;">
+    If you didn't request this, you can safely ignore this email.
+  </p>
+{{/_layout}}

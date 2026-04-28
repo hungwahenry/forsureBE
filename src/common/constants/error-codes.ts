@@ -6,6 +6,7 @@ export const ErrorCode = {
   AUTH_TOKEN_INVALID: 'AUTH_TOKEN_INVALID',
   AUTH_UNAUTHORIZED: 'AUTH_UNAUTHORIZED',
   AUTH_FORBIDDEN: 'AUTH_FORBIDDEN',
+  ONBOARDING_REQUIRED: 'ONBOARDING_REQUIRED',
 
   VALIDATION_FAILED: 'VALIDATION_FAILED',
 
@@ -24,6 +25,7 @@ export const ErrorStatusMap: Record<ErrorCode, HttpStatus> = {
   AUTH_TOKEN_INVALID: HttpStatus.UNAUTHORIZED,
   AUTH_UNAUTHORIZED: HttpStatus.UNAUTHORIZED,
   AUTH_FORBIDDEN: HttpStatus.FORBIDDEN,
+  ONBOARDING_REQUIRED: HttpStatus.FORBIDDEN,
 
   VALIDATION_FAILED: HttpStatus.BAD_REQUEST,
 
@@ -40,6 +42,7 @@ export const DefaultErrorMessages: Record<ErrorCode, string> = {
   AUTH_TOKEN_INVALID: 'Authentication token is invalid.',
   AUTH_UNAUTHORIZED: 'Authentication required.',
   AUTH_FORBIDDEN: 'You do not have permission to perform this action.',
+  ONBOARDING_REQUIRED: 'Please complete your profile to continue.',
 
   VALIDATION_FAILED: 'Request validation failed.',
 
