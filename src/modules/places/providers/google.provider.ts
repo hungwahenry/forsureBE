@@ -17,6 +17,9 @@ const AUTOCOMPLETE_FIELD_MASK = [
   'suggestions.placePrediction.placeId',
   'suggestions.placePrediction.structuredFormat',
   'suggestions.placePrediction.text',
+  // Free at Essentials tier — we use it to drop non-venue results
+  // (neighborhoods, countries, addresses) before returning to the client.
+  'suggestions.placePrediction.types',
 ].join(',');
 const PLACE_DETAILS_FIELD_MASK = ['id', 'formattedAddress', 'location'].join(
   ',',
@@ -33,6 +36,7 @@ interface GoogleAutocompleteResponse {
         mainText?: { text?: string };
         secondaryText?: { text?: string };
       };
+      types?: string[];
     };
   }>;
 }
@@ -82,7 +86,10 @@ export class GooglePlaceSearchProvider implements PlaceSearchProvider {
     return (data.suggestions ?? [])
       .map((s) => s.placePrediction)
       .filter((p): p is NonNullable<typeof p> & { placeId: string } =>
-        Boolean(p?.placeId),
+        // Keep only real venues — `establishment` is Google's umbrella tag
+        // for businesses / POIs (restaurants, parks, gyms, cinemas, ...).
+        // Drops neighborhoods, sublocalities, addresses, regions, countries.
+        Boolean(p?.placeId) && (p?.types?.includes('establishment') ?? false),
       )
       .map((p) => ({
         id: p.placeId,

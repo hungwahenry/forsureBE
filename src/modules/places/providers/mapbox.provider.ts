@@ -49,6 +49,9 @@ export class MapboxPlaceSearchProvider implements PlaceSearchProvider {
       session_token: sessionToken,
       access_token: this.token,
       limit: '8',
+      // Hangout app — restrict to Points of Interest only. Drops
+      // neighborhoods, regions, countries, raw addresses.
+      types: 'poi',
     });
     if (proximity) {
       params.set('proximity', `${proximity.lng},${proximity.lat}`);
