@@ -10,6 +10,7 @@ import {
   RetrieveParams,
   SuggestParams,
 } from '../places.interface';
+import { providerFetch } from '../utils/provider-fetch';
 
 const BASE_URL = 'https://api.mapbox.com/search/searchbox/v1';
 
@@ -57,7 +58,7 @@ export class MapboxPlaceSearchProvider implements PlaceSearchProvider {
       params.set('proximity', `${proximity.lng},${proximity.lat}`);
     }
 
-    const res = await fetch(`${BASE_URL}/suggest?${params.toString()}`);
+    const res = await providerFetch(`${BASE_URL}/suggest?${params.toString()}`);
     if (!res.ok) throw await this.toError(res, 'suggest');
 
     const body = (await res.json()) as { suggestions?: MapboxSuggestion[] };
@@ -80,7 +81,7 @@ export class MapboxPlaceSearchProvider implements PlaceSearchProvider {
       session_token: sessionToken,
       access_token: this.token,
     });
-    const res = await fetch(
+    const res = await providerFetch(
       `${BASE_URL}/retrieve/${encodeURIComponent(id)}?${params.toString()}`,
     );
     if (!res.ok) throw await this.toError(res, 'retrieve');

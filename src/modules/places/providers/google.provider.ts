@@ -10,6 +10,7 @@ import {
   RetrieveParams,
   SuggestParams,
 } from '../places.interface';
+import { providerFetch } from '../utils/provider-fetch';
 
 const BASE_URL = 'https://places.googleapis.com/v1';
 
@@ -71,7 +72,7 @@ export class GooglePlaceSearchProvider implements PlaceSearchProvider {
       };
     }
 
-    const res = await fetch(`${BASE_URL}/places:autocomplete`, {
+    const res = await providerFetch(`${BASE_URL}/places:autocomplete`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -103,7 +104,7 @@ export class GooglePlaceSearchProvider implements PlaceSearchProvider {
     { sessionToken }: RetrieveParams,
   ): Promise<PlaceDetails> {
     const params = new URLSearchParams({ sessionToken });
-    const res = await fetch(
+    const res = await providerFetch(
       `${BASE_URL}/places/${encodeURIComponent(id)}?${params.toString()}`,
       {
         headers: {

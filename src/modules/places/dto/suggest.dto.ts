@@ -2,12 +2,12 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
   IsNumber,
-  IsOptional,
   IsString,
   IsUUID,
   Length,
   Max,
   Min,
+  ValidateIf,
 } from 'class-validator';
 
 export class SuggestPlacesDto {
@@ -17,7 +17,9 @@ export class SuggestPlacesDto {
   q!: string;
 
   @ApiPropertyOptional({ example: 6.4541 })
-  @IsOptional()
+  @ValidateIf(
+    (o: SuggestPlacesDto) => o.lat !== undefined || o.lng !== undefined,
+  )
   @Type(() => Number)
   @IsNumber()
   @Min(-90)
@@ -25,7 +27,9 @@ export class SuggestPlacesDto {
   lat?: number;
 
   @ApiPropertyOptional({ example: 3.3947 })
-  @IsOptional()
+  @ValidateIf(
+    (o: SuggestPlacesDto) => o.lat !== undefined || o.lng !== undefined,
+  )
   @Type(() => Number)
   @IsNumber()
   @Min(-180)
