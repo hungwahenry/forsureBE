@@ -1,5 +1,4 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { ActivityGenderPreference, Gender } from '@prisma/client';
 import { Prisma } from '@prisma/client';
 import { ErrorCode } from '../../common/constants/error-codes';
 import type { CursorPage } from '../../common/dto/pagination.dto';
@@ -7,6 +6,7 @@ import { AppException } from '../../common/exceptions/app.exception';
 import { PrismaService } from '../../prisma/prisma.service';
 import { STORAGE_PROVIDER_TOKEN } from '../../storage/storage.interface';
 import type { StorageProvider } from '../../storage/storage.interface';
+import { activityVisibleGenderPreferences } from '../activities/gender-policy';
 import { FeedQueryDto } from './dto/feed.dto';
 import type { FeedItem, FeedRow } from './feed.interface';
 import { decodeFeedCursor, encodeFeedCursor } from './utils/cursor';
@@ -34,7 +34,7 @@ export class FeedService {
     const cursor = query.cursor ? decodeFeedCursor(query.cursor) : null;
     const radiusMeters = query.radiusKm * 1000;
     const limit = query.limit;
-    const visibleGenderPrefs = visibleGenderPreferencesFor(profile.gender);
+    const visibleGenderPrefs = activityVisibleGenderPreferences(profile.gender);
 
     // Fetch limit + 1 to detect hasMore.
     const rows = await this.prisma.$queryRaw<FeedRow[]>`
@@ -48,11 +48,11 @@ export class FeedService {
         a."placeLng",
         a.capacity,
         a."genderPreference",
+        a."participantCount",
         a."authorUserId",
         prof.username AS "hostUsername",
         prof."displayName" AS "hostDisplayName",
         prof."avatarKey" AS "hostAvatarKey",
-        (SELECT COUNT(*)::int FROM "ActivityParticipant" p WHERE p."activityId" = a.id) AS "participantCount",
         (
           SELECT array_agg(av) FROM (
             SELECT pp."avatarKey" AS av
@@ -83,7 +83,7 @@ export class FeedService {
           SELECT 1 FROM "ActivityParticipant" vp
           WHERE vp."activityId" = a.id AND vp."userId" = ${viewerUserId}
         )
-        AND (SELECT COUNT(*) FROM "ActivityParticipant" p2 WHERE p2."activityId" = a.id) < a.capacity
+        AND a."participantCount" < a.capacity
         ${
           cursor
             ? Prisma.sql`AND (
@@ -140,20 +140,3 @@ export class FeedService {
   }
 }
 
-/**
- * MALE → can see ALL + MALE-only.
- * FEMALE → can see ALL + FEMALE-only.
- * NON_BINARY / PREFER_NOT_TO_SAY → can only see ALL.
- */
-function visibleGenderPreferencesFor(
-  viewerGender: Gender,
-): ActivityGenderPreference[] {
-  switch (viewerGender) {
-    case Gender.MALE:
-      return [ActivityGenderPreference.ALL, ActivityGenderPreference.MALE];
-    case Gender.FEMALE:
-      return [ActivityGenderPreference.ALL, ActivityGenderPreference.FEMALE];
-    default:
-      return [ActivityGenderPreference.ALL];
-  }
-}

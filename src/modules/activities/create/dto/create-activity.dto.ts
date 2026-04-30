@@ -15,11 +15,6 @@ import {
 export const ACTIVITY_TITLE_MAX = 100;
 export const ACTIVITY_CAPACITY_MAX = 25;
 
-/**
- * Create-activity input. Mirrored on the frontend in features/activities/
- * validation/schemas.ts. Server is the source of truth — extra refinements
- * (e.g. 30-min future check) are enforced in the service.
- */
 export class CreateActivityDto {
   @ApiProperty({
     example: '🎬',

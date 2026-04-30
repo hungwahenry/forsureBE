@@ -1,15 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { Activity } from '@prisma/client';
-import { ErrorCode } from '../../common/constants/error-codes';
-import { AppException } from '../../common/exceptions/app.exception';
-import { createId } from '../../common/utils/id';
-import { PrismaService } from '../../prisma/prisma.service';
+import { ErrorCode } from '../../../common/constants/error-codes';
+import { AppException } from '../../../common/exceptions/app.exception';
+import { createId } from '../../../common/utils/id';
+import { PrismaService } from '../../../prisma/prisma.service';
 import { CreateActivityDto } from './dto/create-activity.dto';
 
 const MIN_LEAD_TIME_MS = 30 * 60_000; // 30 minutes
 
 @Injectable()
-export class ActivitiesService {
+export class CreateActivityService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(

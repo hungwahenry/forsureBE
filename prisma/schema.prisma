@@ -14,12 +14,12 @@ datasource db {
 model User {
   id                    String     @id // usr_...
   email                 String     @unique
-  emailVerifiedAt       DateTime?
+  emailVerifiedAt       DateTime?  @db.Timestamptz(3)
   status                UserStatus @default(ACTIVE)
-  onboardingCompletedAt DateTime?
-  lastLoginAt           DateTime?
-  createdAt             DateTime   @default(now())
-  updatedAt             DateTime   @updatedAt
+  onboardingCompletedAt DateTime?  @db.Timestamptz(3)
+  lastLoginAt           DateTime?  @db.Timestamptz(3)
+  createdAt             DateTime   @default(now()) @db.Timestamptz(3)
+  updatedAt             DateTime   @updatedAt @db.Timestamptz(3)
 
   profile                Profile?
   emailVerifications     EmailVerification[]
@@ -41,10 +41,10 @@ model EmailVerification {
   user       User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
   codeHash   String
   attempts   Int       @default(0)
-  expiresAt  DateTime
-  consumedAt DateTime?
+  expiresAt  DateTime  @db.Timestamptz(3)
+  consumedAt DateTime? @db.Timestamptz(3)
   ipAddress  String?
-  createdAt  DateTime  @default(now())
+  createdAt  DateTime  @default(now()) @db.Timestamptz(3)
 
   @@index([email, consumedAt])
 }
@@ -54,12 +54,12 @@ model RefreshToken {
   userId     String
   user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   tokenHash  String    @unique
-  expiresAt  DateTime
-  revokedAt  DateTime?
+  expiresAt  DateTime  @db.Timestamptz(3)
+  revokedAt  DateTime? @db.Timestamptz(3)
   userAgent  String?
   ipAddress  String?
-  lastUsedAt DateTime?
-  createdAt  DateTime  @default(now())
+  lastUsedAt DateTime? @db.Timestamptz(3)
+  createdAt  DateTime  @default(now()) @db.Timestamptz(3)
 
   @@index([userId, revokedAt])
 }
@@ -72,7 +72,7 @@ model Profile {
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   username    String   @unique
   displayName String
-  dateOfBirth DateTime
+  dateOfBirth DateTime @db.Timestamptz(3)
   gender      Gender
   avatarKey   String
   locationLat Float
@@ -80,8 +80,11 @@ model Profile {
   // PostGIS geography point — generated from locationLat/locationLng. Read via raw SQL only.
   locationPoint Unsupported("geography(Point, 4326)")?
   placeName   String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  // Maintained by Postgres triggers — never write directly from app code.
+  activitiesHostedCount Int @default(0)
+  activitiesJoinedCount Int @default(0)
+  createdAt   DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime @updatedAt @db.Timestamptz(3)
 }
 
 enum Gender {
@@ -99,17 +102,19 @@ model Activity {
   author           User                     @relation(fields: [authorUserId], references: [id], onDelete: Cascade)
   emoji            String
   title            String
-  startsAt         DateTime
+  startsAt         DateTime                 @db.Timestamptz(3)
   placeName        String
   placeLat         Float
   placeLng         Float
   // PostGIS geography point — generated from placeLat/placeLng. Read via raw SQL only.
   placePoint       Unsupported("geography(Point, 4326)")?
   capacity         Int
+  // Maintained by a Postgres trigger on ActivityParticipant — never write directly.
+  participantCount Int                      @default(0)
   genderPreference ActivityGenderPreference
   status           ActivityStatus           @default(OPEN)
-  createdAt        DateTime                 @default(now())
-  updatedAt        DateTime                 @updatedAt
+  createdAt        DateTime                 @default(now()) @db.Timestamptz(3)
+  updatedAt        DateTime                 @updatedAt @db.Timestamptz(3)
 
   participants ActivityParticipant[]
 
@@ -135,7 +140,7 @@ model ActivityParticipant {
   id         String   @id // ap_...
   activityId String
   userId     String
-  joinedAt   DateTime @default(now())
+  joinedAt   DateTime @default(now()) @db.Timestamptz(3)
 
   activity Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
   user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
