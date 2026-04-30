@@ -1,10 +1,12 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [postgis]
 }
 
 // ----- Auth -----
@@ -19,10 +21,11 @@ model User {
   createdAt             DateTime   @default(now())
   updatedAt             DateTime   @updatedAt
 
-  profile            Profile?
-  emailVerifications EmailVerification[]
-  refreshTokens      RefreshToken[]
-  activities         Activity[]
+  profile                Profile?
+  emailVerifications     EmailVerification[]
+  refreshTokens          RefreshToken[]
+  activities             Activity[]
+  activityParticipations ActivityParticipant[]
 }
 
 enum UserStatus {
@@ -74,6 +77,8 @@ model Profile {
   avatarKey   String
   locationLat Float
   locationLng Float
+  // PostGIS geography point — generated from locationLat/locationLng. Read via raw SQL only.
+  locationPoint Unsupported("geography(Point, 4326)")?
   placeName   String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -98,11 +103,15 @@ model Activity {
   placeName        String
   placeLat         Float
   placeLng         Float
+  // PostGIS geography point — generated from placeLat/placeLng. Read via raw SQL only.
+  placePoint       Unsupported("geography(Point, 4326)")?
   capacity         Int
   genderPreference ActivityGenderPreference
   status           ActivityStatus           @default(OPEN)
   createdAt        DateTime                 @default(now())
   updatedAt        DateTime                 @updatedAt
+
+  participants ActivityParticipant[]
 
   @@index([startsAt])
   @@index([status, startsAt])
@@ -120,4 +129,18 @@ enum ActivityGenderPreference {
   ALL
   MALE
   FEMALE
+}
+
+model ActivityParticipant {
+  id         String   @id // ap_...
+  activityId String
+  userId     String
+  joinedAt   DateTime @default(now())
+
+  activity Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([activityId, userId])
+  @@index([userId, joinedAt])
+  @@index([activityId])
 }
