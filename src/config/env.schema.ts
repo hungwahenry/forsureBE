@@ -52,10 +52,8 @@ export const envSchema = z
     S3_SECRET_ACCESS_KEY: z.string().optional(),
     S3_PUBLIC_URL: z.url().optional(),
 
-    // Places (search/autocomplete) ---
-    PLACES_PROVIDER: z.enum(['mapbox', 'google']).default('mapbox'),
-    MAPBOX_TOKEN: z.string().optional(),
-    GOOGLE_PLACES_API_KEY: z.string().optional(),
+    // Places (search/autocomplete via Google Places New) ---
+    GOOGLE_PLACES_API_KEY: z.string().min(1),
   })
   .superRefine((env, ctx) => {
     if (env.STORAGE_DRIVER === 's3') {
@@ -82,21 +80,6 @@ export const envSchema = z
         code: 'custom',
         path: ['LOCAL_PUBLIC_URL'],
         message: 'LOCAL_PUBLIC_URL is required when STORAGE_DRIVER=local',
-      });
-    }
-    if (env.PLACES_PROVIDER === 'mapbox' && !env.MAPBOX_TOKEN) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['MAPBOX_TOKEN'],
-        message: 'MAPBOX_TOKEN is required when PLACES_PROVIDER=mapbox',
-      });
-    }
-    if (env.PLACES_PROVIDER === 'google' && !env.GOOGLE_PLACES_API_KEY) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['GOOGLE_PLACES_API_KEY'],
-        message:
-          'GOOGLE_PLACES_API_KEY is required when PLACES_PROVIDER=google',
       });
     }
   });

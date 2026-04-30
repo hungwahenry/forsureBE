@@ -3,15 +3,9 @@ import { AppException } from '../../../common/exceptions/app.exception';
 
 const TIMEOUT_MS = 8_000;
 
-/**
- * `fetch` wrapper for places-provider HTTP calls. Adds an 8 s timeout via
- * AbortController and translates network/timeout failures into a clean
- * AppException so callers don't have to repeat the same try/catch.
- *
- * Non-2xx responses are NOT translated here — callers handle status-based
- * errors (e.g. parsing the provider's own error envelope).
- */
-export async function providerFetch(
+// `fetch` with an 8s timeout + clean AppException on network/timeout failures.
+// Non-2xx responses are NOT translated — callers handle status-based errors.
+export async function placesFetch(
   url: string | URL,
   init?: RequestInit,
 ): Promise<Response> {

@@ -1,22 +1,15 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { RetrievePlaceDto } from './dto/retrieve.dto';
 import { SuggestPlacesDto } from './dto/suggest.dto';
-import { PLACE_SEARCH_PROVIDER_TOKEN } from './places.interface';
-import type {
-  PlaceDetails,
-  PlaceSearchProvider,
-  PlaceSuggestion,
-} from './places.interface';
+import type { PlaceDetails, PlaceSuggestion } from './places.interface';
+import { GooglePlacesClient } from './places.client';
 
 @Injectable()
 export class PlacesService {
-  constructor(
-    @Inject(PLACE_SEARCH_PROVIDER_TOKEN)
-    private readonly provider: PlaceSearchProvider,
-  ) {}
+  constructor(private readonly google: GooglePlacesClient) {}
 
   suggest(dto: SuggestPlacesDto): Promise<PlaceSuggestion[]> {
-    return this.provider.suggest({
+    return this.google.suggest({
       q: dto.q,
       sessionToken: dto.sessionToken,
       proximity:
@@ -27,6 +20,6 @@ export class PlacesService {
   }
 
   retrieve(id: string, dto: RetrievePlaceDto): Promise<PlaceDetails> {
-    return this.provider.retrieve(id, { sessionToken: dto.sessionToken });
+    return this.google.retrieve(id, { sessionToken: dto.sessionToken });
   }
 }

@@ -1,16 +1,15 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { ErrorCode } from '../../../common/constants/error-codes';
-import { AppException } from '../../../common/exceptions/app.exception';
-import type { Env } from '../../../config/env.schema';
+import { ErrorCode } from '../../common/constants/error-codes';
+import { AppException } from '../../common/exceptions/app.exception';
+import type { Env } from '../../config/env.schema';
 import {
   PlaceDetails,
-  PlaceSearchProvider,
   PlaceSuggestion,
   RetrieveParams,
   SuggestParams,
-} from '../places.interface';
-import { providerFetch } from '../utils/provider-fetch';
+} from './places.interface';
+import { placesFetch } from './utils/places-fetch';
 
 const BASE_URL = 'https://places.googleapis.com/v1';
 
@@ -18,8 +17,6 @@ const AUTOCOMPLETE_FIELD_MASK = [
   'suggestions.placePrediction.placeId',
   'suggestions.placePrediction.structuredFormat',
   'suggestions.placePrediction.text',
-  // Free at Essentials tier — we use it to drop non-venue results
-  // (neighborhoods, countries, addresses) before returning to the client.
   'suggestions.placePrediction.types',
 ].join(',');
 const PLACE_DETAILS_FIELD_MASK = ['id', 'formattedAddress', 'location'].join(
@@ -49,8 +46,8 @@ interface GooglePlaceDetailsResponse {
 }
 
 @Injectable()
-export class GooglePlaceSearchProvider implements PlaceSearchProvider {
-  private readonly logger = new Logger(GooglePlaceSearchProvider.name);
+export class GooglePlacesClient {
+  private readonly logger = new Logger(GooglePlacesClient.name);
   private readonly apiKey: string;
 
   constructor(config: ConfigService<Env, true>) {
@@ -72,7 +69,7 @@ export class GooglePlaceSearchProvider implements PlaceSearchProvider {
       };
     }
 
-    const res = await providerFetch(`${BASE_URL}/places:autocomplete`, {
+    const res = await placesFetch(`${BASE_URL}/places:autocomplete`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -104,7 +101,7 @@ export class GooglePlaceSearchProvider implements PlaceSearchProvider {
     { sessionToken }: RetrieveParams,
   ): Promise<PlaceDetails> {
     const params = new URLSearchParams({ sessionToken });
-    const res = await providerFetch(
+    const res = await placesFetch(
       `${BASE_URL}/places/${encodeURIComponent(id)}?${params.toString()}`,
       {
         headers: {
