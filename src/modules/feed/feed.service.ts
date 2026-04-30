@@ -8,46 +8,8 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { STORAGE_PROVIDER_TOKEN } from '../../storage/storage.interface';
 import type { StorageProvider } from '../../storage/storage.interface';
 import { FeedQueryDto } from './dto/feed.dto';
+import type { FeedItem, FeedRow } from './feed.interface';
 import { decodeFeedCursor, encodeFeedCursor } from './utils/cursor';
-
-/**
- * One row in the feed response. Shape is mirrored on the frontend.
- */
-export interface FeedItem {
-  id: string;
-  emoji: string;
-  title: string;
-  startsAt: string;
-  place: { name: string; lat: number; lng: number };
-  capacity: number;
-  spotsLeft: number;
-  distanceKm: number;
-  host: {
-    id: string;
-    username: string;
-    displayName: string;
-    avatarUrl: string;
-  };
-  isOwn: boolean;
-}
-
-interface FeedRow {
-  id: string;
-  emoji: string;
-  title: string;
-  startsAt: Date;
-  placeName: string;
-  placeLat: number;
-  placeLng: number;
-  capacity: number;
-  authorUserId: string;
-  participantCount: number;
-  distanceKm: number;
-  bucket: number;
-  hostUsername: string;
-  hostDisplayName: string;
-  hostAvatarKey: string;
-}
 
 @Injectable()
 export class FeedService {
@@ -85,11 +47,22 @@ export class FeedService {
         a."placeLat",
         a."placeLng",
         a.capacity,
+        a."genderPreference",
         a."authorUserId",
         prof.username AS "hostUsername",
         prof."displayName" AS "hostDisplayName",
         prof."avatarKey" AS "hostAvatarKey",
         (SELECT COUNT(*)::int FROM "ActivityParticipant" p WHERE p."activityId" = a.id) AS "participantCount",
+        (
+          SELECT array_agg(av) FROM (
+            SELECT pp."avatarKey" AS av
+            FROM "ActivityParticipant" ap
+            JOIN "Profile" pp ON pp."userId" = ap."userId"
+            WHERE ap."activityId" = a.id
+            ORDER BY ap."joinedAt" DESC
+            LIMIT 3
+          ) sub
+        ) AS "participantAvatarKeys",
         ST_Distance(
           a."placePoint",
           ST_SetSRID(ST_MakePoint(${query.lng}, ${query.lat}), 4326)::geography
@@ -136,23 +109,32 @@ export class FeedService {
           })
         : null;
 
-    const items: FeedItem[] = page.map((r) => ({
-      id: r.id,
-      emoji: r.emoji,
-      title: r.title,
-      startsAt: r.startsAt.toISOString(),
-      place: { name: r.placeName, lat: r.placeLat, lng: r.placeLng },
-      capacity: r.capacity,
-      spotsLeft: r.capacity - Number(r.participantCount),
-      distanceKm: Number(r.distanceKm),
-      host: {
-        id: r.authorUserId,
-        username: r.hostUsername,
-        displayName: r.hostDisplayName,
-        avatarUrl: this.storage.publicUrl(r.hostAvatarKey),
-      },
-      isOwn: r.authorUserId === viewerUserId,
-    }));
+    const items: FeedItem[] = page.map((r) => {
+      const participantCount = Number(r.participantCount);
+      return {
+        id: r.id,
+        emoji: r.emoji,
+        title: r.title,
+        startsAt: r.startsAt.toISOString(),
+        place: { name: r.placeName, lat: r.placeLat, lng: r.placeLng },
+        capacity: r.capacity,
+        genderPreference: r.genderPreference,
+        spotsLeft: r.capacity - participantCount,
+        distanceKm: Number(r.distanceKm),
+        host: {
+          id: r.authorUserId,
+          username: r.hostUsername,
+          displayName: r.hostDisplayName,
+          avatarUrl: this.storage.publicUrl(r.hostAvatarKey),
+        },
+        participantAvatarUrls: (r.participantAvatarKeys ?? []).map((key) =>
+          this.storage.publicUrl(key),
+        ),
+        // Host counts as 1 going.
+        goingCount: participantCount + 1,
+        isOwn: r.authorUserId === viewerUserId,
+      };
+    });
 
     return { items, pageInfo: { nextCursor, hasMore } };
   }
