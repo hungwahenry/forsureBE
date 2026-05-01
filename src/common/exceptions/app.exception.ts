@@ -11,10 +11,6 @@ export interface AppExceptionOptions {
   cause?: unknown;
 }
 
-/**
- * Throw this anywhere in the app instead of HttpException directly.
- * The global exception filter unwraps it into the standard error envelope.
- */
 export class AppException extends HttpException {
   readonly code: ErrorCode;
   readonly details?: unknown;

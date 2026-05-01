@@ -6,7 +6,6 @@ const MULTIPLIERS: Record<string, number> = {
   d: 86_400_000,
 };
 
-/** Parse a duration string like "15m" or "30d" into milliseconds. */
 export function parseDurationToMs(duration: string): number {
   const match = /^(\d+)(ms|s|m|h|d)$/.exec(duration);
   if (!match) throw new Error(`Invalid duration: ${duration}`);

@@ -1,14 +1,5 @@
 import { ActivityGenderPreference, Gender } from '@prisma/client';
 
-/**
- * Activity-domain gender visibility rules. Used by the feed (filter what a
- * viewer can see) and join (whether a viewer can join).
- *
- * MALE viewer → can see/join ALL + MALE-only.
- * FEMALE viewer → can see/join ALL + FEMALE-only.
- * NON_BINARY / PREFER_NOT_TO_SAY → only ALL.
- */
-
 export function isGenderAllowedForActivity(
   viewerGender: Gender,
   pref: ActivityGenderPreference,

@@ -1,9 +1,6 @@
 import { ErrorCode } from '../../../common/constants/error-codes';
 import { AppException } from '../../../common/exceptions/app.exception';
 
-/**
- * Composite sort key encoded into the feed cursor.
- */
 export interface FeedCursor {
   bucket: number;
   distanceKm: number;
