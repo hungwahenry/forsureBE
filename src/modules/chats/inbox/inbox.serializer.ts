@@ -6,6 +6,7 @@ export function serializePreview(row: ChatPreviewRow): ChatPreviewDto {
     title: row.title,
     emoji: row.emoji,
     startsAt: row.startsAt.toISOString(),
+    status: row.status,
     hostUserId: row.hostUserId,
     unreadCount: row.unreadCount,
     lastMessage:

@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { User } from '@prisma/client';
@@ -8,6 +8,7 @@ import { createId } from '../../common/utils/id';
 import type { Env } from '../../config/env.schema';
 import { EmailService } from '../../email/email.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { STORAGE_PROVIDER_TOKEN, type StorageProvider } from '../../storage/storage.interface';
 import { generateOtp, generateRefreshToken, sha256 } from './utils/crypto';
 import { parseDurationToMs } from './utils/duration';
 
@@ -38,6 +39,8 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly email: EmailService,
     private readonly jwt: JwtService,
+    @Inject(STORAGE_PROVIDER_TOKEN)
+    private readonly storage: StorageProvider,
     config: ConfigService<Env, true>,
   ) {
     this.accessTtlMs = parseDurationToMs(
@@ -190,11 +193,14 @@ export class AuthService {
 
   async getMe(
     userId: string,
-  ): Promise<{ user: User; onboardingRequired: boolean }> {
+  ): Promise<{ user: User & { avatarUrl: string }; onboardingRequired: boolean }> {
     const user = await this.prisma.user.findUniqueOrThrow({
       where: { id: userId },
+      include: { profile: { select: { avatarKey: true } } },
     });
-    return { user, onboardingRequired: !user.onboardingCompletedAt };
+    const avatarUrl = user.profile ? this.storage.publicUrl(user.profile.avatarKey) : '';
+    const { profile: _, ...rest } = user;
+    return { user: { ...rest, avatarUrl }, onboardingRequired: !user.onboardingCompletedAt };
   }
 
   async issueAccessToken(

@@ -5,7 +5,6 @@ generator client {
 
 datasource db {
   provider   = "postgresql"
-  url        = env("DATABASE_URL")
   extensions = [postgis]
 }
 
@@ -77,10 +76,8 @@ model Profile {
   avatarKey   String
   locationLat Float
   locationLng Float
-  // PostGIS geography point — generated from locationLat/locationLng. Read via raw SQL only.
   locationPoint Unsupported("geography(Point, 4326)")?
   placeName   String
-  // Maintained by Postgres triggers — never write directly from app code.
   activitiesHostedCount Int @default(0)
   activitiesJoinedCount Int @default(0)
   createdAt   DateTime @default(now()) @db.Timestamptz(3)
@@ -104,18 +101,18 @@ model Activity {
   placeName        String
   placeLat         Float
   placeLng         Float
-  // PostGIS geography point — generated from placeLat/placeLng. Read via raw SQL only.
   placePoint       Unsupported("geography(Point, 4326)")?
   capacity         Int
-  // Maintained by a Postgres trigger on ActivityParticipant — never write directly.
   participantCount Int                      @default(0)
   genderPreference ActivityGenderPreference
   status           ActivityStatus           @default(OPEN)
+  pinnedMessageId  String?                  @unique
   createdAt        DateTime                 @default(now()) @db.Timestamptz(3)
   updatedAt        DateTime                 @updatedAt @db.Timestamptz(3)
 
-  participants ActivityParticipant[]
-  chatMessages ChatMessage[]
+  participants  ActivityParticipant[]
+  chatMessages  ChatMessage[]
+  pinnedMessage ChatMessage?          @relation("ActivityPinnedMessage", fields: [pinnedMessageId], references: [id], onDelete: SetNull)
 
   @@index([startsAt])
   @@index([status, startsAt])
@@ -139,10 +136,6 @@ enum ActivityRole {
   MEMBER
 }
 
-// Single source of truth for "who is in this activity." The host is just a
-// participant with role=HOST — created in the same transaction as the
-// Activity itself. A partial unique index in migration SQL enforces exactly
-// one HOST per activity.
 model ActivityParticipant {
   id         String       @id // ap_...
   activityId String
@@ -162,22 +155,26 @@ model ActivityParticipant {
 
 // ----- Chat -----
 
-// One chat per Activity. Chat membership = exists ActivityParticipant row.
-// Host vs member is just `role` — both are full chat members; only delete
-// uses the role to gate "host can delete anyone's message."
+enum ChatMessageKind {
+  TEXT
+  SYSTEM
+}
+
 model ChatMessage {
-  id              String    @id // msg_...
+  id              String          @id // msg_...
   activityId      String
   senderUserId    String
+  kind            ChatMessageKind @default(TEXT)
   body            String?
   imageKey        String?
   parentMessageId String?
-  createdAt       DateTime  @default(now()) @db.Timestamptz(3)
+  createdAt       DateTime        @default(now()) @db.Timestamptz(3)
 
-  activity Activity      @relation(fields: [activityId], references: [id], onDelete: Cascade)
-  sender   User          @relation(fields: [senderUserId], references: [id], onDelete: Cascade)
-  parent   ChatMessage?  @relation("MessageReplies", fields: [parentMessageId], references: [id], onDelete: SetNull)
-  replies  ChatMessage[] @relation("MessageReplies")
+  activity      Activity      @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  sender        User          @relation(fields: [senderUserId], references: [id], onDelete: Cascade)
+  parent        ChatMessage?  @relation("MessageReplies", fields: [parentMessageId], references: [id], onDelete: SetNull)
+  replies       ChatMessage[] @relation("MessageReplies")
+  pinnedInActivity Activity?  @relation("ActivityPinnedMessage")
 
   @@index([activityId, createdAt])
 }

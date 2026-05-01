@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { ActivityRole } from '@prisma/client';
+import { ActivityRole, ActivityStatus, ChatMessageKind } from '@prisma/client';
 import { ErrorCode } from '../../../common/constants/error-codes';
 import type { CursorPage } from '../../../common/dto/pagination.dto';
 import { AppException } from '../../../common/exceptions/app.exception';
@@ -67,6 +67,20 @@ export class MessagesService {
     file?: UploadedImageFile,
   ): Promise<ChatMessageDto> {
     await this.membership.requireChatMembership(userId, activityId);
+
+    const activity = await this.prisma.activity.findUnique({
+      where: { id: activityId },
+      select: { status: true },
+    });
+    if (
+      activity &&
+      (activity.status === ActivityStatus.CANCELLED ||
+        activity.status === ActivityStatus.DONE)
+    ) {
+      throw new AppException(ErrorCode.RESOURCE_CONFLICT, {
+        message: 'This chat is read-only.',
+      });
+    }
 
     const trimmedBody = dto.body?.trim();
     if (!trimmedBody && !file) {
@@ -147,5 +161,26 @@ export class MessagesService {
       userId,
       at: new Date(),
     });
+  }
+
+  async postSystemMessage(
+    activityId: string,
+    senderUserId: string,
+    body: string,
+  ): Promise<ChatMessageDto> {
+    const created = await queries.createMessage(this.prisma, {
+      id: createId('msg'),
+      activityId,
+      senderUserId,
+      kind: ChatMessageKind.SYSTEM,
+      body,
+      imageKey: null,
+      parentMessageId: null,
+    });
+    const dtoOut = serializeMessage(this.storage, created);
+    this.realtime.toRoom(chatRoom(activityId), ChatEvents.MessageNew, {
+      message: dtoOut,
+    });
+    return dtoOut;
   }
 }

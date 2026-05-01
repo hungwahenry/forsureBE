@@ -4,10 +4,12 @@ import { InboxService } from './inbox/inbox.service';
 import { MembershipService } from './membership/membership.service';
 import { MessagesController } from './messages/messages.controller';
 import { MessagesService } from './messages/messages.service';
+import { PinController } from './pin/pin.controller';
+import { PinService } from './pin/pin.service';
 
 @Module({
-  controllers: [InboxController, MessagesController],
-  providers: [InboxService, MessagesService, MembershipService],
-  exports: [MembershipService],
+  controllers: [InboxController, MessagesController, PinController],
+  providers: [InboxService, MessagesService, MembershipService, PinService],
+  exports: [MembershipService, MessagesService],
 })
 export class ChatsModule {}

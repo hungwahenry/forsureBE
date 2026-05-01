@@ -16,6 +16,7 @@ export function serializeMessage(
   return {
     id: m.id,
     activityId: m.activityId,
+    kind: m.kind,
     body: m.body,
     imageUrl: m.imageKey ? storage.publicUrl(m.imageKey) : null,
     createdAt: m.createdAt.toISOString(),

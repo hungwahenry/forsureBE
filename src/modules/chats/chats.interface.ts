@@ -1,8 +1,13 @@
-import type { ActivityRole } from '@prisma/client';
+import type {
+  ActivityRole,
+  ActivityStatus,
+  ChatMessageKind,
+} from '@prisma/client';
 
 export interface ChatMessageDto {
   id: string;
   activityId: string;
+  kind: ChatMessageKind;
   body: string | null;
   imageUrl: string | null;
   createdAt: string;
@@ -25,6 +30,7 @@ export interface ChatPreviewDto {
   title: string;
   emoji: string;
   startsAt: string;
+  status: ActivityStatus;
   hostUserId: string;
   unreadCount: number;
   lastMessage: {
@@ -41,6 +47,7 @@ export interface ChatPreviewRow {
   title: string;
   emoji: string;
   startsAt: Date;
+  status: ActivityStatus;
   hostUserId: string;
   unreadCount: number;
   lastMessageId: string | null;

@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import { ChatMessageKind, Prisma } from '@prisma/client';
 import type { PrismaService } from '../../../prisma/prisma.service';
 import type { MessageCursor } from './messages.cursor';
 
@@ -16,12 +16,12 @@ interface CreateMessageInput {
   id: string;
   activityId: string;
   senderUserId: string;
+  kind?: ChatMessageKind;
   body: string | null;
   imageKey: string | null;
   parentMessageId: string | null;
 }
 
-/** Newest-first paginated messages. Cursor walks backwards in time. */
 export async function findMessagesPage(
   prisma: PrismaService,
   activityId: string,
