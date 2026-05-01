@@ -35,10 +35,7 @@ export class ReportsController {
     summary:
       'Submit a report against a user, activity, or message. One per (reporter, target) — re-submitting updates the reason/details.',
   })
-  submit(
-    @CurrentUser() user: AuthenticatedUser,
-    @Body() dto: CreateReportDto,
-  ) {
+  submit(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreateReportDto) {
     return this.reports.submitReport(user.id, dto);
   }
 }

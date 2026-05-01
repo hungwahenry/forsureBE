@@ -8,7 +8,10 @@ import { createId } from '../../common/utils/id';
 import type { Env } from '../../config/env.schema';
 import { EmailService } from '../../email/email.service';
 import { PrismaService } from '../../prisma/prisma.service';
-import { STORAGE_PROVIDER_TOKEN, type StorageProvider } from '../../storage/storage.interface';
+import {
+  STORAGE_PROVIDER_TOKEN,
+  type StorageProvider,
+} from '../../storage/storage.interface';
 import { generateOtp, generateRefreshToken, sha256 } from './utils/crypto';
 import { parseDurationToMs } from './utils/duration';
 
@@ -191,16 +194,20 @@ export class AuthService {
     });
   }
 
-  async getMe(
-    userId: string,
-  ): Promise<{ user: User & { avatarUrl: string }; onboardingRequired: boolean }> {
+  async getMe(userId: string): Promise<{
+    user: User & { avatarUrl: string };
+    onboardingRequired: boolean;
+  }> {
     const user = await this.prisma.user.findUniqueOrThrow({
       where: { id: userId },
       include: { profile: { select: { avatarKey: true } } },
     });
-    const avatarUrl = user.profile ? this.storage.publicUrl(user.profile.avatarKey) : '';
-    const { profile: _, ...rest } = user;
-    return { user: { ...rest, avatarUrl }, onboardingRequired: !user.onboardingCompletedAt };
+    const { profile, ...rest } = user;
+    const avatarUrl = profile ? this.storage.publicUrl(profile.avatarKey) : '';
+    return {
+      user: { ...rest, avatarUrl },
+      onboardingRequired: !user.onboardingCompletedAt,
+    };
   }
 
   async issueAccessToken(

@@ -3,6 +3,7 @@ import { ActivityRole, ActivityStatus } from '@prisma/client';
 import { ErrorCode } from '../../../common/constants/error-codes';
 import { AppException } from '../../../common/exceptions/app.exception';
 import { createId } from '../../../common/utils/id';
+import { upsertYearStats } from '../../../common/utils/stats';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { MembershipService } from '../../chats/membership/membership.service';
 import { isGenderAllowedForActivity } from '../gender-policy';
@@ -78,6 +79,11 @@ export class JoinActivityService {
             role: ActivityRole.MEMBER,
           },
         });
+        await tx.profile.update({
+          where: { userId: viewerUserId },
+          data: { activitiesJoinedCount: { increment: 1 } },
+        });
+        await upsertYearStats(tx, viewerUserId, { activitiesJoinedCount: 1 });
       } catch (err: unknown) {
         // Unique on (activityId, userId): viewer is the host or already joined.
         if (

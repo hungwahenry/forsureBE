@@ -7,10 +7,7 @@ import {
   type StorageProvider,
 } from '../../storage/storage.interface';
 import { ExploreQueryDto } from './dto/explore.dto';
-import {
-  decodeExploreCursor,
-  encodeExploreCursor,
-} from './explore.cursor';
+import { decodeExploreCursor, encodeExploreCursor } from './explore.cursor';
 import {
   serializeExplorePost,
   type ExplorePostDto,

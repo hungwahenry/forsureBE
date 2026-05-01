@@ -38,7 +38,8 @@ export class PostsController {
   @Get()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'List memory posts on an activity. Non-participants only see PUBLIC posts on shareable, DONE activities.',
+    summary:
+      'List memory posts on an activity. Non-participants only see PUBLIC posts on shareable, DONE activities.',
   })
   list(
     @CurrentUser() user: AuthenticatedUser,
@@ -72,7 +73,7 @@ export class PostsController {
     },
   })
   @ApiOperation({
-    summary: 'Create the viewer\'s memory post (one per activity).',
+    summary: "Create the viewer's memory post (one per activity).",
   })
   create(
     @CurrentUser() user: AuthenticatedUser,
@@ -98,7 +99,9 @@ export class PostsController {
       },
     },
   })
-  @ApiOperation({ summary: 'Edit the viewer\'s post (caption, visibility, photos).' })
+  @ApiOperation({
+    summary: "Edit the viewer's post (caption, visibility, photos).",
+  })
   update(
     @CurrentUser() user: AuthenticatedUser,
     @Param('activityId') activityId: string,

@@ -82,8 +82,14 @@ model Profile {
   placeName   String
   activitiesHostedCount Int @default(0)
   activitiesJoinedCount Int @default(0)
+  activitiesCompletedCount Int @default(0)
+  messagesSentCount    Int @default(0)
+  memoriesPostedCount  Int @default(0)
+  photosSharedCount    Int @default(0)
   createdAt   DateTime @default(now()) @db.Timestamptz(3)
   updatedAt   DateTime @updatedAt @db.Timestamptz(3)
+
+  yearStats   UserYearStats[]
 }
 
 enum Gender {
@@ -106,6 +112,8 @@ model Activity {
   placePoint       Unsupported("geography(Point, 4326)")?
   capacity         Int
   participantCount Int                      @default(0)
+  messageCount     Int                      @default(0)
+  postCount        Int                      @default(0)
   genderPreference ActivityGenderPreference
   status           ActivityStatus           @default(OPEN)
   memoriesShareablePublicly Boolean         @default(false)
@@ -270,4 +278,26 @@ model ActivityPostPhoto {
   post ActivityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
 
   @@index([postId, sortOrder])
+}
+
+// ----- Yearly Stats (Wrapped) -----
+
+model UserYearStats {
+  id                       String @id // uys_...
+  userId                   String
+  year                     Int
+  activitiesHostedCount    Int @default(0)
+  activitiesJoinedCount    Int @default(0)
+  activitiesCompletedCount Int @default(0)
+  activitiesCancelledCount Int @default(0)
+  messagesSentCount        Int @default(0)
+  memoriesPostedCount      Int @default(0)
+  photosSharedCount        Int @default(0)
+  createdAt                DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt                DateTime @updatedAt @db.Timestamptz(3)
+
+  user Profile @relation(fields: [userId], references: [userId], onDelete: Cascade)
+
+  @@unique([userId, year])
+  @@index([userId])
 }

@@ -12,7 +12,8 @@ import {
 export const POST_CAPTION_MAX_LENGTH = 500;
 
 function toStringArray(value: unknown): string[] {
-  if (Array.isArray(value)) return value.filter((v): v is string => typeof v === 'string');
+  if (Array.isArray(value))
+    return value.filter((v): v is string => typeof v === 'string');
   if (typeof value === 'string') return value.length === 0 ? [] : [value];
   return [];
 }
@@ -32,7 +33,9 @@ export class UpsertPostDto {
   @IsEnum(PostVisibility)
   visibility?: PostVisibility;
 
-  @ApiPropertyOptional({ description: 'IDs of existing photos to keep (PATCH only).' })
+  @ApiPropertyOptional({
+    description: 'IDs of existing photos to keep (PATCH only).',
+  })
   @IsOptional()
   @Transform(({ value }: { value: unknown }) => toStringArray(value))
   @IsArray()

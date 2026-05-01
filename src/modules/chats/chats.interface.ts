@@ -30,6 +30,7 @@ export interface ChatPreviewDto {
   title: string;
   emoji: string;
   startsAt: string;
+  placeName: string;
   status: ActivityStatus;
   hostUserId: string;
   unreadCount: number;
@@ -47,6 +48,7 @@ export interface ChatPreviewRow {
   title: string;
   emoji: string;
   startsAt: Date;
+  placeName: string;
   status: ActivityStatus;
   hostUserId: string;
   unreadCount: number;

@@ -7,6 +7,7 @@ interface RawPreviewRow {
   title: string;
   emoji: string;
   starts_at: Date;
+  place_name: string;
   status: ActivityStatus;
   host_user_id: string;
   unread_count: number;
@@ -27,6 +28,7 @@ export async function findChatPreviews(
       a.title,
       a.emoji,
       a."startsAt"               AS starts_at,
+      a."placeName"              AS place_name,
       a.status                   AS status,
       host."userId"              AS host_user_id,
       COALESCE(unread.cnt, 0)    AS unread_count,
@@ -64,6 +66,7 @@ export async function findChatPreviews(
     title: r.title,
     emoji: r.emoji,
     startsAt: r.starts_at,
+    placeName: r.place_name,
     status: r.status,
     hostUserId: r.host_user_id,
     unreadCount: Number(r.unread_count),

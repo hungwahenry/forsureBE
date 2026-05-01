@@ -15,7 +15,10 @@ export function decodeExploreCursor(raw: string): ExploreCursor {
     const parsed = JSON.parse(
       Buffer.from(raw, 'base64url').toString('utf8'),
     ) as Partial<ExploreCursor>;
-    if (typeof parsed.createdAtMs !== 'number' || typeof parsed.id !== 'string') {
+    if (
+      typeof parsed.createdAtMs !== 'number' ||
+      typeof parsed.id !== 'string'
+    ) {
       throw new Error('malformed cursor');
     }
     return parsed as ExploreCursor;

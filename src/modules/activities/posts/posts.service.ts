@@ -8,6 +8,7 @@ import {
 import { ErrorCode } from '../../../common/constants/error-codes';
 import { AppException } from '../../../common/exceptions/app.exception';
 import { createId } from '../../../common/utils/id';
+import { upsertYearStats } from '../../../common/utils/stats';
 import { PrismaService } from '../../../prisma/prisma.service';
 import {
   STORAGE_PROVIDER_TOKEN,
@@ -127,10 +128,34 @@ export class PostsService {
         },
         include: postInclude,
       });
+
+      // Increment denormalized counts (fire-and-forget — non-critical).
+      void Promise.all([
+        this.prisma.profile.update({
+          where: { userId },
+          data: {
+            memoriesPostedCount: { increment: 1 },
+            photosSharedCount: { increment: imageKeys.length },
+          },
+        }),
+        this.prisma.activity.update({
+          where: { id: activityId },
+          data: { postCount: { increment: 1 } },
+        }),
+        this.prisma.$transaction((tx) =>
+          upsertYearStats(tx, userId, {
+            memoriesPostedCount: 1,
+            photosSharedCount: imageKeys.length,
+          }),
+        ),
+      ]).catch(() => undefined);
+
       return serializePost(this.storage, created);
     }
 
-    const keepIds = new Set(dto.keepPhotoIds ?? existing.photos.map((p) => p.id));
+    const keepIds = new Set(
+      dto.keepPhotoIds ?? existing.photos.map((p) => p.id),
+    );
     const kept = existing.photos.filter((p) => keepIds.has(p.id));
     const dropped = existing.photos.filter((p) => !keepIds.has(p.id));
 
@@ -212,9 +237,9 @@ export class PostsService {
       }
     }
     await this.prisma.activityPost.delete({ where: { id: postId } });
-    void Promise.all(post.photos.map((p) => this.storage.delete(p.imageKey))).catch(
-      () => undefined,
-    );
+    void Promise.all(
+      post.photos.map((p) => this.storage.delete(p.imageKey)),
+    ).catch(() => undefined);
   }
 
   private async requireActivity(activityId: string) {
@@ -239,7 +264,7 @@ export class PostsService {
   }) {
     if (activity.status !== ActivityStatus.DONE) {
       throw new AppException(ErrorCode.RESOURCE_CONFLICT, {
-        message: "You can post memories once the activity has ended.",
+        message: 'You can post memories once the activity has ended.',
       });
     }
     const cutoff = activity.startsAt.getTime() + POST_WINDOW_MS;

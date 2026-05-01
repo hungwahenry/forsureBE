@@ -34,7 +34,10 @@ export interface ExplorePostDto {
 export type ExplorePostRow = ActivityPost & {
   photos: ActivityPostPhoto[];
   author: User & { profile: Profile | null };
-  activity: Pick<Activity, 'id' | 'emoji' | 'title' | 'startsAt' | 'placeName'> & {
+  activity: Pick<
+    Activity,
+    'id' | 'emoji' | 'title' | 'startsAt' | 'placeName'
+  > & {
     participants: Array<{
       user: { profile: { username: string } | null };
     }>;

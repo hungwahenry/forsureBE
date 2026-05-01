@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { ActivityRole, ActivityStatus } from '@prisma/client';
+import { upsertYearStats } from '../../../common/utils/stats';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { RealtimeService } from '../../../realtime/realtime.service';
 import { ChatEvents, chatRoom } from '../../chats/chats.events';
@@ -29,9 +30,7 @@ export class AutoDoneScheduler {
       select: {
         id: true,
         participants: {
-          where: { role: ActivityRole.HOST },
-          select: { userId: true },
-          take: 1,
+          select: { userId: true, role: true },
         },
       },
     });
@@ -46,10 +45,16 @@ export class AutoDoneScheduler {
     });
 
     for (const a of matured) {
-      const hostUserId = a.participants[0]?.userId;
-      if (hostUserId) {
+      const hostParticipant = a.participants.find(
+        (p) => p.role === ActivityRole.HOST,
+      );
+      if (hostParticipant) {
         await this.messages
-          .postSystemMessage(a.id, hostUserId, 'this activity has ended')
+          .postSystemMessage(
+            a.id,
+            hostParticipant.userId,
+            'this activity has ended',
+          )
           .catch((err: unknown) => {
             this.logger.warn(
               { err, activityId: a.id },
@@ -57,6 +62,18 @@ export class AutoDoneScheduler {
             );
           });
       }
+      // Increment completed counts for all participants (fire-and-forget).
+      void Promise.all(
+        a.participants.map(async (p) => {
+          await this.prisma.profile.update({
+            where: { userId: p.userId },
+            data: { activitiesCompletedCount: { increment: 1 } },
+          });
+          await this.prisma.$transaction((tx) =>
+            upsertYearStats(tx, p.userId, { activitiesCompletedCount: 1 }),
+          );
+        }),
+      ).catch(() => undefined);
       this.realtime.toRoom(chatRoom(a.id), ChatEvents.ActivityUpdated, {
         activityId: a.id,
       });
