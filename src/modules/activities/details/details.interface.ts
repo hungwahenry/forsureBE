@@ -19,6 +19,7 @@ export interface ActivityDetailsDto {
   participantCount: number;
   genderPreference: ActivityGenderPreference;
   status: ActivityStatus;
+  memoriesShareablePublicly: boolean;
   host: ActivityParticipantDto;
   members: ActivityParticipantDto[];
   pinnedMessage: ChatMessageDto | null;

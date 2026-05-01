@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import {
   ActivityRole,
   ActivityStatus,
+  PostVisibility,
   type Activity,
   type Prisma,
 } from '@prisma/client';
@@ -111,9 +112,22 @@ export class ManageActivityService {
       data.genderPreference = dto.genderPreference;
     }
 
-    const updated = await this.prisma.activity.update({
-      where: { id: activityId },
-      data,
+    if (dto.memoriesShareablePublicly !== undefined) {
+      data.memoriesShareablePublicly = dto.memoriesShareablePublicly;
+    }
+
+    const updated = await this.prisma.$transaction(async (tx) => {
+      const next = await tx.activity.update({
+        where: { id: activityId },
+        data,
+      });
+      if (dto.memoriesShareablePublicly === false) {
+        await tx.activityPost.updateMany({
+          where: { activityId, visibility: PostVisibility.PUBLIC },
+          data: { visibility: PostVisibility.PARTICIPANTS },
+        });
+      }
+      return next;
     });
 
     this.realtime.toRoom(chatRoom(activityId), ChatEvents.ActivityUpdated, {

@@ -26,6 +26,7 @@ model User {
   activityParticipations ActivityParticipant[]
   chatMessages           ChatMessage[]
   reportsFiled           Report[]
+  activityPosts          ActivityPost[]
 }
 
 enum UserStatus {
@@ -107,6 +108,7 @@ model Activity {
   participantCount Int                      @default(0)
   genderPreference ActivityGenderPreference
   status           ActivityStatus           @default(OPEN)
+  memoriesShareablePublicly Boolean         @default(false)
   pinnedMessageId  String?                  @unique
   createdAt        DateTime                 @default(now()) @db.Timestamptz(3)
   updatedAt        DateTime                 @updatedAt @db.Timestamptz(3)
@@ -114,6 +116,7 @@ model Activity {
   participants  ActivityParticipant[]
   chatMessages  ChatMessage[]
   pinnedMessage ChatMessage?          @relation("ActivityPinnedMessage", fields: [pinnedMessageId], references: [id], onDelete: SetNull)
+  posts         ActivityPost[]
 
   @@index([startsAt])
   @@index([status, startsAt])
@@ -186,6 +189,7 @@ enum ReportTargetType {
   USER
   ACTIVITY
   MESSAGE
+  POST
 }
 
 enum ReportStatus {
@@ -228,4 +232,42 @@ model Report {
   @@unique([reporterId, targetType, targetId])
   @@index([targetType, targetId])
   @@index([status, createdAt])
+}
+
+// ----- Memories (Activity Posts) -----
+
+enum PostVisibility {
+  PARTICIPANTS
+  PUBLIC
+}
+
+model ActivityPost {
+  id         String         @id // pst_...
+  activityId String
+  authorId   String
+  caption    String?
+  visibility PostVisibility
+  createdAt  DateTime       @default(now()) @db.Timestamptz(3)
+  updatedAt  DateTime       @updatedAt @db.Timestamptz(3)
+
+  activity Activity            @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  author   User                @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  photos   ActivityPostPhoto[]
+
+  @@unique([activityId, authorId])
+  @@index([activityId, createdAt])
+  @@index([visibility, createdAt])
+  @@index([authorId, createdAt])
+}
+
+model ActivityPostPhoto {
+  id        String   @id // pph_...
+  postId    String
+  imageKey  String
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+
+  post ActivityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([postId, sortOrder])
 }

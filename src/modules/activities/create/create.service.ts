@@ -39,6 +39,7 @@ export class CreateActivityService {
           placeLng: dto.placeLng,
           capacity: dto.capacity,
           genderPreference: dto.genderPreference,
+          memoriesShareablePublicly: dto.memoriesShareablePublicly ?? false,
         },
       });
       await tx.activityParticipant.create({

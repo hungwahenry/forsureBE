@@ -1,11 +1,13 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ActivityGenderPreference } from '@prisma/client';
 import { Transform, Type } from 'class-transformer';
 import {
+  IsBoolean,
   IsDate,
   IsEnum,
   IsInt,
   IsNumber,
+  IsOptional,
   IsString,
   Length,
   Max,
@@ -79,4 +81,13 @@ export class CreateActivityDto {
   @ApiProperty({ enum: ActivityGenderPreference })
   @IsEnum(ActivityGenderPreference)
   genderPreference!: ActivityGenderPreference;
+
+  @ApiPropertyOptional({
+    description:
+      'Allow memories from this activity to appear on Explore. Defaults to false.',
+    default: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  memoriesShareablePublicly?: boolean;
 }

@@ -8,6 +8,8 @@ import { JoinActivityController } from './join/join.controller';
 import { JoinActivityService } from './join/join.service';
 import { ManageActivityController } from './manage/manage.controller';
 import { ManageActivityService } from './manage/manage.service';
+import { PostsController } from './posts/posts.controller';
+import { PostsService } from './posts/posts.service';
 import { AutoDoneScheduler } from './scheduled/auto-done.scheduler';
 
 @Module({
@@ -17,6 +19,7 @@ import { AutoDoneScheduler } from './scheduled/auto-done.scheduler';
     JoinActivityController,
     ManageActivityController,
     ActivityDetailsController,
+    PostsController,
   ],
   providers: [
     CreateActivityService,
@@ -24,7 +27,8 @@ import { AutoDoneScheduler } from './scheduled/auto-done.scheduler';
     ManageActivityService,
     ActivityDetailsService,
     AutoDoneScheduler,
+    PostsService,
   ],
-  exports: [CreateActivityService, JoinActivityService],
+  exports: [CreateActivityService, JoinActivityService, PostsService],
 })
 export class ActivitiesModule {}

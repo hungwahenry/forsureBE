@@ -121,6 +121,13 @@ export class ReportsService {
         });
         return row !== null;
       }
+      case ReportTargetType.POST: {
+        const row = await this.prisma.activityPost.findUnique({
+          where: { id: targetId },
+          select: { id: true },
+        });
+        return row !== null;
+      }
     }
   }
 }

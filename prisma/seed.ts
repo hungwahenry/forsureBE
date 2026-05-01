@@ -115,6 +115,21 @@ const REASONS: ReasonSeed[] = [
     sortOrder: 120,
   },
   {
+    code: 'nudity',
+    label: 'Nudity or sexual content',
+    isGeneral: false,
+    applicableTo: [ReportTargetType.POST],
+    sortOrder: 130,
+  },
+  {
+    code: 'violates_privacy',
+    label: 'Posted without consent',
+    description: 'Photos of someone who did not agree to be shared.',
+    isGeneral: false,
+    applicableTo: [ReportTargetType.POST],
+    sortOrder: 140,
+  },
+  {
     code: 'other',
     label: 'Something else',
     description: 'Tell us what happened in the details.',

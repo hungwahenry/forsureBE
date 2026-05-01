@@ -68,6 +68,7 @@ export class ActivityDetailsService {
       participantCount: activity.participantCount,
       genderPreference: activity.genderPreference,
       status: activity.status,
+      memoriesShareablePublicly: activity.memoriesShareablePublicly,
       host: this.serializeParticipant(host),
       members: members.map((m) => this.serializeParticipant(m)),
       pinnedMessage: activity.pinnedMessage

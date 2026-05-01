@@ -19,6 +19,7 @@ import { HealthModule } from './health/health.module';
 import { ActivitiesModule } from './modules/activities/activities.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { ChatsModule } from './modules/chats/chats.module';
+import { ExploreModule } from './modules/explore/explore.module';
 import { FeedModule } from './modules/feed/feed.module';
 import { OnboardingModule } from './modules/onboarding/onboarding.module';
 import { PlacesModule } from './modules/places/places.module';
@@ -79,6 +80,7 @@ import { StorageModule } from './storage/storage.module';
     PlacesModule,
     ChatsModule,
     ReportsModule,
+    ExploreModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })

@@ -2,6 +2,7 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { ActivityGenderPreference } from '@prisma/client';
 import { Transform, Type } from 'class-transformer';
 import {
+  IsBoolean,
   IsDate,
   IsEnum,
   IsInt,
@@ -82,4 +83,12 @@ export class EditActivityDto {
   @IsOptional()
   @IsEnum(ActivityGenderPreference)
   genderPreference?: ActivityGenderPreference;
+
+  @ApiPropertyOptional({
+    description:
+      'Whether memories from this activity can appear on Explore. Flipping to false downgrades any existing PUBLIC posts.',
+  })
+  @IsOptional()
+  @IsBoolean()
+  memoriesShareablePublicly?: boolean;
 }

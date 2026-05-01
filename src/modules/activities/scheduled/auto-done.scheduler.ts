@@ -22,7 +22,10 @@ export class AutoDoneScheduler {
   async maturedToDone(): Promise<void> {
     const cutoff = new Date(Date.now() - DONE_AFTER_MS);
     const matured = await this.prisma.activity.findMany({
-      where: { status: ActivityStatus.OPEN, startsAt: { lt: cutoff } },
+      where: {
+        status: { in: [ActivityStatus.OPEN, ActivityStatus.FULL] },
+        startsAt: { lt: cutoff },
+      },
       select: {
         id: true,
         participants: {
@@ -37,7 +40,7 @@ export class AutoDoneScheduler {
     await this.prisma.activity.updateMany({
       where: {
         id: { in: matured.map((a) => a.id) },
-        status: ActivityStatus.OPEN,
+        status: { in: [ActivityStatus.OPEN, ActivityStatus.FULL] },
       },
       data: { status: ActivityStatus.DONE },
     });
