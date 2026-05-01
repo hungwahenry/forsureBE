@@ -25,6 +25,7 @@ model User {
   refreshTokens          RefreshToken[]
   activityParticipations ActivityParticipant[]
   chatMessages           ChatMessage[]
+  reportsFiled           Report[]
 }
 
 enum UserStatus {
@@ -177,4 +178,54 @@ model ChatMessage {
   pinnedInActivity Activity?  @relation("ActivityPinnedMessage")
 
   @@index([activityId, createdAt])
+}
+
+// ----- Reports -----
+
+enum ReportTargetType {
+  USER
+  ACTIVITY
+  MESSAGE
+}
+
+enum ReportStatus {
+  PENDING
+  REVIEWED
+  DISMISSED
+}
+
+model ReportReason {
+  id           String             @id // rsn_...
+  code         String             @unique
+  label        String
+  description  String?
+  applicableTo ReportTargetType[]
+  isGeneral    Boolean            @default(false)
+  active       Boolean            @default(true)
+  sortOrder    Int                @default(0)
+  createdAt    DateTime           @default(now()) @db.Timestamptz(3)
+
+  reports Report[]
+
+  @@index([active, isGeneral])
+}
+
+model Report {
+  id         String           @id // rep_...
+  reporterId String
+  targetType ReportTargetType
+  targetId   String
+  reasonId   String
+  details    String?
+  status     ReportStatus     @default(PENDING)
+  createdAt  DateTime         @default(now()) @db.Timestamptz(3)
+  reviewedAt DateTime?        @db.Timestamptz(3)
+  reviewedBy String?
+
+  reporter User         @relation(fields: [reporterId], references: [id], onDelete: Cascade)
+  reason   ReportReason @relation(fields: [reasonId], references: [id])
+
+  @@unique([reporterId, targetType, targetId])
+  @@index([targetType, targetId])
+  @@index([status, createdAt])
 }

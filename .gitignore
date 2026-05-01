@@ -29,6 +29,9 @@ coverage/
 # Prisma local artifacts
 prisma/*.db
 prisma/migrations/dev.db*
+prisma/seed.js
+prisma/seed.js.map
+prisma/seed.d.ts
 
 # Local storage driver dump
 uploads/
