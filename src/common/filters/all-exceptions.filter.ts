@@ -18,7 +18,7 @@ import { AppException } from '../exceptions/app.exception';
 interface ErrorEnvelope {
   success: false;
   error: {
-    code: ErrorCode | string;
+    code: string;
     message: string;
     details?: unknown;
   };
@@ -30,6 +30,17 @@ interface NestValidationErrorBody {
   error?: string;
   statusCode?: number;
 }
+
+const BAD_REQUEST: number = HttpStatus.BAD_REQUEST;
+
+const STATUS_TO_CODE: Record<number, ErrorCode> = {
+  [HttpStatus.UNAUTHORIZED]: ErrorCode.AUTH_UNAUTHORIZED,
+  [HttpStatus.FORBIDDEN]: ErrorCode.AUTH_FORBIDDEN,
+  [HttpStatus.NOT_FOUND]: ErrorCode.RESOURCE_NOT_FOUND,
+  [HttpStatus.CONFLICT]: ErrorCode.RESOURCE_CONFLICT,
+  [HttpStatus.TOO_MANY_REQUESTS]: ErrorCode.RATE_LIMITED,
+  [HttpStatus.BAD_REQUEST]: ErrorCode.VALIDATION_FAILED,
+};
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
@@ -116,7 +127,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       message?: unknown;
     };
 
-    if (status === HttpStatus.BAD_REQUEST && Array.isArray(body.message)) {
+    if (status === BAD_REQUEST && Array.isArray(body.message)) {
       return {
         status,
         body: {
@@ -149,23 +160,10 @@ export class AllExceptionsFilter implements ExceptionFilter {
     };
   }
 
-  private codeForStatus(status: number): ErrorCode | string {
-    switch (status) {
-      case HttpStatus.UNAUTHORIZED:
-        return ErrorCode.AUTH_UNAUTHORIZED;
-      case HttpStatus.FORBIDDEN:
-        return ErrorCode.AUTH_FORBIDDEN;
-      case HttpStatus.NOT_FOUND:
-        return ErrorCode.RESOURCE_NOT_FOUND;
-      case HttpStatus.CONFLICT:
-        return ErrorCode.RESOURCE_CONFLICT;
-      case HttpStatus.TOO_MANY_REQUESTS:
-        return ErrorCode.RATE_LIMITED;
-      case HttpStatus.BAD_REQUEST:
-        return ErrorCode.VALIDATION_FAILED;
-      default:
-        return status >= 500 ? ErrorCode.INTERNAL_ERROR : `HTTP_${status}`;
-    }
+  private codeForStatus(status: number): string {
+    const mapped = STATUS_TO_CODE[status];
+    if (mapped) return mapped;
+    return status >= 500 ? ErrorCode.INTERNAL_ERROR : `HTTP_${status}`;
   }
 
   private defaultMessageForStatus(status: number): string {

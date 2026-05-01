@@ -24,7 +24,6 @@ model User {
   profile                Profile?
   emailVerifications     EmailVerification[]
   refreshTokens          RefreshToken[]
-  activities             Activity[]
   activityParticipations ActivityParticipant[]
   chatMessages           ChatMessage[]
 }
@@ -99,8 +98,6 @@ enum Gender {
 
 model Activity {
   id               String                   @id // act_...
-  authorUserId     String
-  author           User                     @relation(fields: [authorUserId], references: [id], onDelete: Cascade)
   emoji            String
   title            String
   startsAt         DateTime                 @db.Timestamptz(3)
@@ -114,9 +111,6 @@ model Activity {
   participantCount Int                      @default(0)
   genderPreference ActivityGenderPreference
   status           ActivityStatus           @default(OPEN)
-  // Host's last-read marker for this activity's chat. Participants use
-  // ActivityParticipant.lastReadAt — the host has no participant row.
-  hostLastReadAt   DateTime?                @db.Timestamptz(3)
   createdAt        DateTime                 @default(now()) @db.Timestamptz(3)
   updatedAt        DateTime                 @updatedAt @db.Timestamptz(3)
 
@@ -125,7 +119,6 @@ model Activity {
 
   @@index([startsAt])
   @@index([status, startsAt])
-  @@index([authorUserId, createdAt])
 }
 
 enum ActivityStatus {
@@ -141,12 +134,22 @@ enum ActivityGenderPreference {
   FEMALE
 }
 
+enum ActivityRole {
+  HOST
+  MEMBER
+}
+
+// Single source of truth for "who is in this activity." The host is just a
+// participant with role=HOST — created in the same transaction as the
+// Activity itself. A partial unique index in migration SQL enforces exactly
+// one HOST per activity.
 model ActivityParticipant {
-  id         String    @id // ap_...
+  id         String       @id // ap_...
   activityId String
   userId     String
-  joinedAt   DateTime  @default(now()) @db.Timestamptz(3)
-  lastReadAt DateTime? @db.Timestamptz(3)
+  role       ActivityRole @default(MEMBER)
+  joinedAt   DateTime     @default(now()) @db.Timestamptz(3)
+  lastReadAt DateTime?    @db.Timestamptz(3)
 
   activity Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
   user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -154,13 +157,14 @@ model ActivityParticipant {
   @@unique([activityId, userId])
   @@index([userId, joinedAt])
   @@index([activityId])
+  @@index([activityId, role])
 }
 
 // ----- Chat -----
 
-// One chat per Activity. Chat membership = activity.author OR an
-// ActivityParticipant row. There is no separate Chat entity — activityId
-// is the chat reference everywhere.
+// One chat per Activity. Chat membership = exists ActivityParticipant row.
+// Host vs member is just `role` — both are full chat members; only delete
+// uses the role to gate "host can delete anyone's message."
 model ChatMessage {
   id              String    @id // msg_...
   activityId      String

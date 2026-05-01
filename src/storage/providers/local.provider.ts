@@ -19,7 +19,8 @@ export class LocalStorageProvider implements StorageProvider {
       .replace(/\/$/, '');
   }
 
-  async put(key: string, body: Buffer, _opts: PutOptions): Promise<void> {
+  async put(key: string, body: Buffer, opts: PutOptions): Promise<void> {
+    void opts;
     const filePath = path.join(this.baseDir, key);
     await fs.mkdir(path.dirname(filePath), { recursive: true });
     await fs.writeFile(filePath, body);

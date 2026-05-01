@@ -1,6 +1,3 @@
-// Opaque cursor for backwards-in-time message pagination.
-// Format: base64(`${createdAtMs}:${messageId}`).
-
 export interface MessageCursor {
   createdAtMs: number;
   id: string;

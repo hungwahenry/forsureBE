@@ -14,7 +14,7 @@ import { LocationDto } from './location.dto';
 
 export class CompleteOnboardingDto {
   @ApiProperty({ example: 'henry' })
-  @Transform(({ value }) =>
+  @Transform(({ value }: { value: unknown }) =>
     typeof value === 'string' ? value.trim().toLowerCase() : value,
   )
   @IsString()
@@ -23,7 +23,9 @@ export class CompleteOnboardingDto {
   username!: string;
 
   @ApiProperty({ example: 'Henry' })
-  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
   @IsString()
   @Length(1, 50)
   displayName!: string;

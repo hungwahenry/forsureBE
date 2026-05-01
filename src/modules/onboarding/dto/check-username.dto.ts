@@ -6,7 +6,7 @@ export const USERNAME_PATTERN = /^[a-z][a-z0-9_]{2,19}$/;
 
 export class CheckUsernameDto {
   @ApiProperty({ example: 'henry' })
-  @Transform(({ value }) =>
+  @Transform(({ value }: { value: unknown }) =>
     typeof value === 'string' ? value.trim().toLowerCase() : value,
   )
   @IsString()

@@ -85,8 +85,7 @@ export class AuthService {
         template: 'otp',
         data: { code, ttlMinutes: OTP_TTL_MIN },
       });
-    } catch (err) {
-      // In dev, never block the auth flow on email delivery — the OTP is in logs.
+    } catch (err: unknown) {
       if (this.isProd) throw err;
       this.logger.error({ err }, 'Email send failed (continuing in dev)');
     }
@@ -198,10 +197,6 @@ export class AuthService {
     return { user, onboardingRequired: !user.onboardingCompletedAt };
   }
 
-  /**
-   * Issue an access token only — used after onboarding completes so the
-   * `onboarded: true` claim takes effect without forcing a refresh round-trip.
-   */
   async issueAccessToken(
     userId: string,
     claims: { onboarded: boolean },

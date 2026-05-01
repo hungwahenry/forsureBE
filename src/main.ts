@@ -5,6 +5,7 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
+import type { ServerResponse } from 'http';
 import { Logger } from 'nestjs-pino';
 import * as path from 'path';
 import { AppModule } from './app.module';
@@ -43,7 +44,7 @@ async function bootstrap() {
     );
     app.useStaticAssets(uploadsDir, {
       prefix: '/static/',
-      setHeaders: (res) =>
+      setHeaders: (res: ServerResponse) =>
         res.setHeader('Cache-Control', 'public, max-age=31536000, immutable'),
     });
   }

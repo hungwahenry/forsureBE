@@ -7,6 +7,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import type { Request } from 'express';
 import { LoggerModule } from 'nestjs-pino';
 import { v7 as uuidv7 } from 'uuid';
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
@@ -21,6 +22,7 @@ import { FeedModule } from './modules/feed/feed.module';
 import { OnboardingModule } from './modules/onboarding/onboarding.module';
 import { PlacesModule } from './modules/places/places.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { RealtimeModule } from './realtime/realtime.module';
 import { StorageModule } from './storage/storage.module';
 
 @Module({
@@ -35,7 +37,9 @@ import { StorageModule } from './storage/storage.module';
           genReqId: (req) =>
             (req.headers['x-request-id'] as string | undefined) ??
             `req_${uuidv7().replace(/-/g, '')}`,
-          customProps: (req) => ({ requestId: (req as any).requestId }),
+          customProps: (req) => ({
+            requestId: (req as unknown as Request).requestId,
+          }),
           transport:
             config.get('NODE_ENV', { infer: true }) === 'production'
               ? undefined
@@ -64,6 +68,7 @@ import { StorageModule } from './storage/storage.module';
     StorageModule,
     HealthModule,
     AuthModule,
+    RealtimeModule,
     OnboardingModule,
     ActivitiesModule,
     FeedModule,

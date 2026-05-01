@@ -1,6 +1,3 @@
-/**
- * Raw row shape returned by the feed SQL query — internal to FeedService.
- */
 export interface FeedRow {
   id: string;
   emoji: string;
@@ -10,7 +7,7 @@ export interface FeedRow {
   placeLat: number;
   placeLng: number;
   capacity: number;
-  authorUserId: string;
+  hostUserId: string;
   participantCount: number;
   distanceKm: number;
   bucket: number;
@@ -21,14 +18,10 @@ export interface FeedRow {
   genderPreference: 'ALL' | 'MALE' | 'FEMALE';
 }
 
-/**
- * One row in the feed response. Shape is mirrored on the frontend.
- */
 export interface FeedItem {
   id: string;
   emoji: string;
   title: string;
-  /** ISO datetime string. */
   startsAt: string;
   place: { name: string; lat: number; lng: number };
   capacity: number;
@@ -41,9 +34,6 @@ export interface FeedItem {
     displayName: string;
     avatarUrl: string;
   };
-  /** Up to 3 most-recent participant avatars (excludes host). Use with `goingCount` for stack + overflow. */
   participantAvatarUrls: string[];
-  /** Total people going (host + participants). */
   goingCount: number;
-  isOwn: boolean;
 }

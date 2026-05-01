@@ -1,38 +1,12 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import {
-  IsInt,
-  IsNumber,
-  IsOptional,
-  IsString,
-  Max,
-  Min,
-} from 'class-validator';
+import { IsNumber, Max, Min } from 'class-validator';
+import { CursorPaginationDto } from '../../../common/dto/pagination.dto';
 
 export const FEED_DEFAULT_RADIUS_KM = 25;
 export const FEED_MAX_RADIUS_KM = 100;
-export const FEED_DEFAULT_LIMIT = 20;
-export const FEED_MAX_LIMIT = 100;
 
-export class FeedQueryDto {
-  @ApiPropertyOptional({
-    description: 'Opaque cursor returned by a previous page response.',
-  })
-  @IsOptional()
-  @IsString()
-  cursor?: string;
-
-  @ApiPropertyOptional({
-    description: `Page size (1-${FEED_MAX_LIMIT}, default ${FEED_DEFAULT_LIMIT}).`,
-    default: FEED_DEFAULT_LIMIT,
-  })
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  @Max(FEED_MAX_LIMIT)
-  limit: number = FEED_DEFAULT_LIMIT;
-
+export class FeedQueryDto extends CursorPaginationDto {
   @ApiPropertyOptional({
     description: 'Viewer device latitude.',
     example: 6.4541,
@@ -57,7 +31,6 @@ export class FeedQueryDto {
     description: `Search radius in km (1-${FEED_MAX_RADIUS_KM}, default ${FEED_DEFAULT_RADIUS_KM}).`,
     default: FEED_DEFAULT_RADIUS_KM,
   })
-  @IsOptional()
   @Type(() => Number)
   @IsNumber()
   @Min(1)

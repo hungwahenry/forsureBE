@@ -21,13 +21,17 @@ export class CreateActivityDto {
     description:
       'Single emoji codepoint (allow up to 10 chars for ZWJ sequences).',
   })
-  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
   @IsString()
   @Length(1, 10)
   emoji!: string;
 
   @ApiProperty({ example: 'watch the new wicked' })
-  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
   @IsString()
   @Length(1, ACTIVITY_TITLE_MAX)
   title!: string;
@@ -41,7 +45,9 @@ export class CreateActivityDto {
   startsAt!: Date;
 
   @ApiProperty({ example: 'AMC Lekki' })
-  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
   @IsString()
   @Length(1, 200)
   placeName!: string;

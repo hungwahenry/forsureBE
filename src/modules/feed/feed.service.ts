@@ -49,7 +49,7 @@ export class FeedService {
         a.capacity,
         a."genderPreference",
         a."participantCount",
-        a."authorUserId",
+        host."userId" AS "hostUserId",
         prof.username AS "hostUsername",
         prof."displayName" AS "hostDisplayName",
         prof."avatarKey" AS "hostAvatarKey",
@@ -58,7 +58,7 @@ export class FeedService {
             SELECT pp."avatarKey" AS av
             FROM "ActivityParticipant" ap
             JOIN "Profile" pp ON pp."userId" = ap."userId"
-            WHERE ap."activityId" = a.id
+            WHERE ap."activityId" = a.id AND ap."role" = 'MEMBER'
             ORDER BY ap."joinedAt" DESC
             LIMIT 3
           ) sub
@@ -69,7 +69,9 @@ export class FeedService {
         ) / 1000.0 AS "distanceKm",
         FLOOR(EXTRACT(EPOCH FROM a."startsAt") / 43200)::int AS bucket
       FROM "Activity" a
-      JOIN "Profile" prof ON prof."userId" = a."authorUserId"
+      JOIN "ActivityParticipant" host
+        ON host."activityId" = a.id AND host."role" = 'HOST'
+      JOIN "Profile" prof ON prof."userId" = host."userId"
       WHERE a.status = 'OPEN'
         AND a."startsAt" >= NOW() + INTERVAL '30 minutes'
         AND a."startsAt" <= NOW() + INTERVAL '25 days'
@@ -122,7 +124,7 @@ export class FeedService {
         spotsLeft: r.capacity - participantCount,
         distanceKm: Number(r.distanceKm),
         host: {
-          id: r.authorUserId,
+          id: r.hostUserId,
           username: r.hostUsername,
           displayName: r.hostDisplayName,
           avatarUrl: this.storage.publicUrl(r.hostAvatarKey),
@@ -130,9 +132,7 @@ export class FeedService {
         participantAvatarUrls: (r.participantAvatarKeys ?? []).map((key) =>
           this.storage.publicUrl(key),
         ),
-        // Host counts as 1 going.
-        goingCount: participantCount + 1,
-        isOwn: r.authorUserId === viewerUserId,
+        goingCount: participantCount,
       };
     });
 

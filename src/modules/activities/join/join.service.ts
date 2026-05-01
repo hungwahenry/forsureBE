@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { ActivityStatus } from '@prisma/client';
+import { ActivityRole, ActivityStatus } from '@prisma/client';
 import { ErrorCode } from '../../../common/constants/error-codes';
 import { AppException } from '../../../common/exceptions/app.exception';
 import { createId } from '../../../common/utils/id';
 import { PrismaService } from '../../../prisma/prisma.service';
-import { ChatsGateway } from '../../chats/chats.gateway';
+import { MembershipService } from '../../chats/membership/membership.service';
 import { isGenderAllowedForActivity } from '../gender-policy';
 
 const MIN_LEAD_TIME_MS = 30 * 60_000; // 30 minutes — matches create rule
@@ -13,7 +13,7 @@ const MIN_LEAD_TIME_MS = 30 * 60_000; // 30 minutes — matches create rule
 export class JoinActivityService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly chatsGateway: ChatsGateway,
+    private readonly membership: MembershipService,
   ) {}
 
   async join(viewerUserId: string, activityId: string): Promise<void> {
@@ -32,11 +32,6 @@ export class JoinActivityService {
       if (activity.startsAt.getTime() < Date.now() + MIN_LEAD_TIME_MS) {
         throw new AppException(ErrorCode.RESOURCE_CONFLICT, {
           message: 'This activity has already started or starts too soon.',
-        });
-      }
-      if (activity.authorUserId === viewerUserId) {
-        throw new AppException(ErrorCode.VALIDATION_FAILED, {
-          message: "You're the host of this activity.",
         });
       }
 
@@ -67,10 +62,11 @@ export class JoinActivityService {
             id: createId('ap'),
             activityId,
             userId: viewerUserId,
+            role: ActivityRole.MEMBER,
           },
         });
       } catch (err: unknown) {
-        // Unique constraint on (activityId, userId): user already joined.
+        // Unique on (activityId, userId): viewer is the host or already joined.
         if (
           typeof err === 'object' &&
           err !== null &&
@@ -78,22 +74,27 @@ export class JoinActivityService {
           (err as { code: string }).code === 'P2002'
         ) {
           throw new AppException(ErrorCode.RESOURCE_CONFLICT, {
-            message: "You're already going.",
+            message: "You're already in this activity.",
           });
         }
         throw err;
       }
     });
+
+    await this.membership.addToChat(viewerUserId, activityId);
   }
 
   async leave(viewerUserId: string, activityId: string): Promise<void> {
-    // Idempotent — deleting a non-existent participant is a no-op.
+    // Idempotent — and host can never leave their own activity.
     const result = await this.prisma.activityParticipant.deleteMany({
-      where: { activityId, userId: viewerUserId },
+      where: {
+        activityId,
+        userId: viewerUserId,
+        role: ActivityRole.MEMBER,
+      },
     });
     if (result.count > 0) {
-      // Boot any open sockets the user has in this chat room.
-      await this.chatsGateway.kickFromChat(activityId, viewerUserId);
+      await this.membership.removeFromChat(viewerUserId, activityId);
     }
   }
 }

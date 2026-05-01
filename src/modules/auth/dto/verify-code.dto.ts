@@ -4,7 +4,7 @@ import { IsEmail, IsString, Length, Matches, MaxLength } from 'class-validator';
 
 export class VerifyCodeDto {
   @ApiProperty({ example: 'henry@forsure.app' })
-  @Transform(({ value }) =>
+  @Transform(({ value }: { value: unknown }) =>
     typeof value === 'string' ? value.trim().toLowerCase() : value,
   )
   @IsEmail()

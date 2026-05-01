@@ -1,13 +1,13 @@
 import { Module } from '@nestjs/common';
-import { AuthModule } from '../auth/auth.module';
-import { ChatsController } from './chats.controller';
-import { ChatsGateway } from './chats.gateway';
-import { ChatsService } from './chats.service';
+import { InboxController } from './inbox/inbox.controller';
+import { InboxService } from './inbox/inbox.service';
+import { MembershipService } from './membership/membership.service';
+import { MessagesController } from './messages/messages.controller';
+import { MessagesService } from './messages/messages.service';
 
 @Module({
-  imports: [AuthModule],
-  controllers: [ChatsController],
-  providers: [ChatsService, ChatsGateway],
-  exports: [ChatsService, ChatsGateway],
+  controllers: [InboxController, MessagesController],
+  providers: [InboxService, MessagesService, MembershipService],
+  exports: [MembershipService],
 })
 export class ChatsModule {}

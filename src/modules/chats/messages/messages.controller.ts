@@ -20,43 +20,33 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
-import { CurrentUser } from '../../common/decorators/current-user.decorator';
-import type { AuthenticatedUser } from '../../common/decorators/current-user.decorator';
-import { ChatsService } from './chats.service';
+import { CurrentUser } from '../../../common/decorators/current-user.decorator';
+import type { AuthenticatedUser } from '../../../common/decorators/current-user.decorator';
 import { ListMessagesDto } from './dto/list-messages.dto';
 import { SendMessageDto } from './dto/send-message.dto';
-
-const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
+import { MAX_IMAGE_BYTES } from './messages.images';
+import { MessagesService } from './messages.service';
 
 @ApiTags('chats')
 @ApiBearerAuth()
-@Controller('chats')
-export class ChatsController {
-  constructor(private readonly chats: ChatsService) {}
+@Controller('chats/:activityId')
+export class MessagesController {
+  constructor(private readonly messages: MessagesService) {}
 
-  @Get()
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({
-    summary: "List the viewer's chats (one per activity they host or joined).",
-  })
-  list(@CurrentUser() user: AuthenticatedUser) {
-    return this.chats.listChats(user.id);
-  }
-
-  @Get(':activityId/messages')
+  @Get('messages')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Paginate chat messages newest-first; cursor walks backwards.',
   })
-  listMessages(
+  list(
     @CurrentUser() user: AuthenticatedUser,
     @Param('activityId') activityId: string,
     @Query() dto: ListMessagesDto,
   ) {
-    return this.chats.listMessages(user.id, activityId, dto);
+    return this.messages.listMessages(user.id, activityId, dto);
   }
 
-  @Post(':activityId/messages')
+  @Post('messages')
   @HttpCode(HttpStatus.CREATED)
   @UseInterceptors(
     FileInterceptor('image', { limits: { fileSize: MAX_IMAGE_BYTES } }),
@@ -80,29 +70,27 @@ export class ChatsController {
     @UploadedFile(new ParseFilePipeBuilder().build({ fileIsRequired: false }))
     image: Express.Multer.File | undefined,
   ) {
-    return this.chats.sendMessage(user.id, activityId, dto, image);
+    return this.messages.sendMessage(user.id, activityId, dto, image);
   }
 
-  @Delete(':activityId/messages/:messageId')
+  @Delete('messages/:messageId')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({
-    summary: 'Hard-delete a message. Sender or host only.',
-  })
+  @ApiOperation({ summary: 'Hard-delete a message. Sender or host only.' })
   delete(
     @CurrentUser() user: AuthenticatedUser,
     @Param('activityId') activityId: string,
     @Param('messageId') messageId: string,
   ) {
-    return this.chats.deleteMessage(user.id, activityId, messageId);
+    return this.messages.deleteMessage(user.id, activityId, messageId);
   }
 
-  @Post(':activityId/read')
+  @Post('read')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Mark the chat as read up to now.' })
   markRead(
     @CurrentUser() user: AuthenticatedUser,
     @Param('activityId') activityId: string,
   ) {
-    return this.chats.markRead(user.id, activityId);
+    return this.messages.markRead(user.id, activityId);
   }
 }
