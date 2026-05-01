@@ -2,7 +2,6 @@ import { ChatMessageKind, Prisma } from '@prisma/client';
 import type { PrismaService } from '../../../prisma/prisma.service';
 import type { MessageCursor } from './messages.cursor';
 
-// Shared include tree — keeps query results and the serializer agreed on shape.
 export const messageInclude = {
   sender: { include: { profile: true } },
   parent: { include: { sender: { include: { profile: true } } } },

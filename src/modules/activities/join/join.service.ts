@@ -8,6 +8,7 @@ import { MembershipService } from '../../chats/membership/membership.service';
 import { isGenderAllowedForActivity } from '../gender-policy';
 
 const MIN_LEAD_TIME_MS = 30 * 60_000; // 30 minutes — matches create rule
+const MAX_CONCURRENT_ACTIVITIES = 10;
 
 @Injectable()
 export class JoinActivityService {
@@ -53,6 +54,18 @@ export class JoinActivityService {
       if (activity.participantCount >= activity.capacity) {
         throw new AppException(ErrorCode.RESOURCE_CONFLICT, {
           message: 'This activity is full.',
+        });
+      }
+
+      const activeCount = await tx.activityParticipant.count({
+        where: {
+          userId: viewerUserId,
+          activity: { status: ActivityStatus.OPEN },
+        },
+      });
+      if (activeCount >= MAX_CONCURRENT_ACTIVITIES) {
+        throw new AppException(ErrorCode.RESOURCE_CONFLICT, {
+          message: `You can't join more than ${MAX_CONCURRENT_ACTIVITIES} activities at a time.`,
         });
       }
 
