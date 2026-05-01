@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { ActivityRole, Prisma } from '@prisma/client';
 import type { CursorPage } from '../../common/dto/pagination.dto';
 import { PrismaService } from '../../prisma/prisma.service';
 import {
@@ -89,6 +89,15 @@ export class ExploreService {
             title: true,
             startsAt: true,
             placeName: true,
+            participants: {
+              where: { role: ActivityRole.HOST },
+              select: {
+                user: {
+                  select: { profile: { select: { username: true } } },
+                },
+              },
+              take: 1,
+            },
           },
         },
       },

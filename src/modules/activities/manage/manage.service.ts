@@ -54,7 +54,18 @@ export class ManageActivityService {
     dto: EditActivityDto,
   ): Promise<Activity> {
     const activity = await this.requireHost(userId, activityId);
-    if (activity.status !== ActivityStatus.OPEN) {
+
+    const planningFieldsChanged =
+      dto.emoji !== undefined ||
+      dto.title !== undefined ||
+      dto.startsAt !== undefined ||
+      dto.placeName !== undefined ||
+      dto.placeLat !== undefined ||
+      dto.placeLng !== undefined ||
+      dto.capacity !== undefined ||
+      dto.genderPreference !== undefined;
+
+    if (planningFieldsChanged && activity.status !== ActivityStatus.OPEN) {
       throw new AppException(ErrorCode.RESOURCE_CONFLICT, {
         message: 'Only OPEN activities can be edited.',
       });

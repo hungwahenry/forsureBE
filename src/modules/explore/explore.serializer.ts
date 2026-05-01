@@ -19,6 +19,7 @@ export interface ExplorePostActivityDto {
   title: string;
   startsAt: string;
   placeName: string;
+  hostUsername: string;
 }
 
 export interface ExplorePostDto {
@@ -33,7 +34,11 @@ export interface ExplorePostDto {
 export type ExplorePostRow = ActivityPost & {
   photos: ActivityPostPhoto[];
   author: User & { profile: Profile | null };
-  activity: Pick<Activity, 'id' | 'emoji' | 'title' | 'startsAt' | 'placeName'>;
+  activity: Pick<Activity, 'id' | 'emoji' | 'title' | 'startsAt' | 'placeName'> & {
+    participants: Array<{
+      user: { profile: { username: string } | null };
+    }>;
+  };
 };
 
 export function serializeExplorePost(
@@ -43,6 +48,12 @@ export function serializeExplorePost(
   if (!p.author.profile) {
     throw new AppException(ErrorCode.INTERNAL_ERROR, {
       message: 'Post author is missing a profile.',
+    });
+  }
+  const host = p.activity.participants[0];
+  if (!host?.user.profile) {
+    throw new AppException(ErrorCode.INTERNAL_ERROR, {
+      message: 'Activity is missing a host profile.',
     });
   }
   return {
@@ -68,6 +79,7 @@ export function serializeExplorePost(
       title: p.activity.title,
       startsAt: p.activity.startsAt.toISOString(),
       placeName: p.activity.placeName,
+      hostUsername: host.user.profile.username,
     },
   };
 }
