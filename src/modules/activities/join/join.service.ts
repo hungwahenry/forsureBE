@@ -4,13 +4,17 @@ import { ErrorCode } from '../../../common/constants/error-codes';
 import { AppException } from '../../../common/exceptions/app.exception';
 import { createId } from '../../../common/utils/id';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { ChatsGateway } from '../../chats/chats.gateway';
 import { isGenderAllowedForActivity } from '../gender-policy';
 
 const MIN_LEAD_TIME_MS = 30 * 60_000; // 30 minutes — matches create rule
 
 @Injectable()
 export class JoinActivityService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly chatsGateway: ChatsGateway,
+  ) {}
 
   async join(viewerUserId: string, activityId: string): Promise<void> {
     await this.prisma.$transaction(async (tx) => {
@@ -84,8 +88,12 @@ export class JoinActivityService {
 
   async leave(viewerUserId: string, activityId: string): Promise<void> {
     // Idempotent — deleting a non-existent participant is a no-op.
-    await this.prisma.activityParticipant.deleteMany({
+    const result = await this.prisma.activityParticipant.deleteMany({
       where: { activityId, userId: viewerUserId },
     });
+    if (result.count > 0) {
+      // Boot any open sockets the user has in this chat room.
+      await this.chatsGateway.kickFromChat(activityId, viewerUserId);
+    }
   }
 }

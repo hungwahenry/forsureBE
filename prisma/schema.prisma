@@ -26,6 +26,7 @@ model User {
   refreshTokens          RefreshToken[]
   activities             Activity[]
   activityParticipations ActivityParticipant[]
+  chatMessages           ChatMessage[]
 }
 
 enum UserStatus {
@@ -113,10 +114,14 @@ model Activity {
   participantCount Int                      @default(0)
   genderPreference ActivityGenderPreference
   status           ActivityStatus           @default(OPEN)
+  // Host's last-read marker for this activity's chat. Participants use
+  // ActivityParticipant.lastReadAt — the host has no participant row.
+  hostLastReadAt   DateTime?                @db.Timestamptz(3)
   createdAt        DateTime                 @default(now()) @db.Timestamptz(3)
   updatedAt        DateTime                 @updatedAt @db.Timestamptz(3)
 
   participants ActivityParticipant[]
+  chatMessages ChatMessage[]
 
   @@index([startsAt])
   @@index([status, startsAt])
@@ -137,10 +142,11 @@ enum ActivityGenderPreference {
 }
 
 model ActivityParticipant {
-  id         String   @id // ap_...
+  id         String    @id // ap_...
   activityId String
   userId     String
-  joinedAt   DateTime @default(now()) @db.Timestamptz(3)
+  joinedAt   DateTime  @default(now()) @db.Timestamptz(3)
+  lastReadAt DateTime? @db.Timestamptz(3)
 
   activity Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
   user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -148,4 +154,26 @@ model ActivityParticipant {
   @@unique([activityId, userId])
   @@index([userId, joinedAt])
   @@index([activityId])
+}
+
+// ----- Chat -----
+
+// One chat per Activity. Chat membership = activity.author OR an
+// ActivityParticipant row. There is no separate Chat entity — activityId
+// is the chat reference everywhere.
+model ChatMessage {
+  id              String    @id // msg_...
+  activityId      String
+  senderUserId    String
+  body            String?
+  imageKey        String?
+  parentMessageId String?
+  createdAt       DateTime  @default(now()) @db.Timestamptz(3)
+
+  activity Activity      @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  sender   User          @relation(fields: [senderUserId], references: [id], onDelete: Cascade)
+  parent   ChatMessage?  @relation("MessageReplies", fields: [parentMessageId], references: [id], onDelete: SetNull)
+  replies  ChatMessage[] @relation("MessageReplies")
+
+  @@index([activityId, createdAt])
 }

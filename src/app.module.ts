@@ -16,6 +16,7 @@ import { EmailModule } from './email/email.module';
 import { HealthModule } from './health/health.module';
 import { ActivitiesModule } from './modules/activities/activities.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { ChatsModule } from './modules/chats/chats.module';
 import { FeedModule } from './modules/feed/feed.module';
 import { OnboardingModule } from './modules/onboarding/onboarding.module';
 import { PlacesModule } from './modules/places/places.module';
@@ -67,6 +68,7 @@ import { StorageModule } from './storage/storage.module';
     ActivitiesModule,
     FeedModule,
     PlacesModule,
+    ChatsModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
