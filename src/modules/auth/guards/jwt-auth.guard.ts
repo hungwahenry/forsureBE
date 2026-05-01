@@ -20,7 +20,11 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     return super.canActivate(context);
   }
 
-  handleRequest<T>(err: Error | null, user: T, info: { name?: string } | null): T {
+  handleRequest<T>(
+    err: Error | null,
+    user: T,
+    info: { name?: string } | null,
+  ): T {
     if (err || !user) {
       if (info?.name === 'TokenExpiredError') {
         throw new AppException(ErrorCode.AUTH_TOKEN_EXPIRED);

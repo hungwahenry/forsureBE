@@ -44,10 +44,7 @@ async function bootstrap() {
     app.useStaticAssets(uploadsDir, {
       prefix: '/static/',
       setHeaders: (res) =>
-        res.setHeader(
-          'Cache-Control',
-          'public, max-age=31536000, immutable',
-        ),
+        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable'),
     });
   }
 

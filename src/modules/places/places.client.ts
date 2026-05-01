@@ -83,11 +83,12 @@ export class GooglePlacesClient {
     const data = (await res.json()) as GoogleAutocompleteResponse;
     return (data.suggestions ?? [])
       .map((s) => s.placePrediction)
-      .filter((p): p is NonNullable<typeof p> & { placeId: string } =>
-        // Keep only real venues — `establishment` is Google's umbrella tag
-        // for businesses / POIs (restaurants, parks, gyms, cinemas, ...).
-        // Drops neighborhoods, sublocalities, addresses, regions, countries.
-        Boolean(p?.placeId) && (p?.types?.includes('establishment') ?? false),
+      .filter(
+        (p): p is NonNullable<typeof p> & { placeId: string } =>
+          // Keep only real venues — `establishment` is Google's umbrella tag
+          // for businesses / POIs (restaurants, parks, gyms, cinemas, ...).
+          // Drops neighborhoods, sublocalities, addresses, regions, countries.
+          Boolean(p?.placeId) && (p?.types?.includes('establishment') ?? false),
       )
       .map((p) => ({
         id: p.placeId,

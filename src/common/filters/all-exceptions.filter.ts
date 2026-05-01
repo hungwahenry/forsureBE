@@ -164,9 +164,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       case HttpStatus.BAD_REQUEST:
         return ErrorCode.VALIDATION_FAILED;
       default:
-        return status >= 500
-          ? ErrorCode.INTERNAL_ERROR
-          : `HTTP_${status}`;
+        return status >= 500 ? ErrorCode.INTERNAL_ERROR : `HTTP_${status}`;
     }
   }
 

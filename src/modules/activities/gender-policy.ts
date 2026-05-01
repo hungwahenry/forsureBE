@@ -14,8 +14,10 @@ export function isGenderAllowedForActivity(
   pref: ActivityGenderPreference,
 ): boolean {
   if (pref === ActivityGenderPreference.ALL) return true;
-  if (pref === ActivityGenderPreference.MALE) return viewerGender === Gender.MALE;
-  if (pref === ActivityGenderPreference.FEMALE) return viewerGender === Gender.FEMALE;
+  if (pref === ActivityGenderPreference.MALE)
+    return viewerGender === Gender.MALE;
+  if (pref === ActivityGenderPreference.FEMALE)
+    return viewerGender === Gender.FEMALE;
   return false;
 }
 

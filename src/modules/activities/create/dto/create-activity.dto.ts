@@ -18,7 +18,8 @@ export const ACTIVITY_CAPACITY_MAX = 25;
 export class CreateActivityDto {
   @ApiProperty({
     example: '🎬',
-    description: 'Single emoji codepoint (allow up to 10 chars for ZWJ sequences).',
+    description:
+      'Single emoji codepoint (allow up to 10 chars for ZWJ sequences).',
   })
   @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   @IsString()

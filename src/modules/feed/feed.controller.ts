@@ -17,10 +17,7 @@ export class FeedController {
     summary:
       'Discover activities — gender-filtered, geo-bounded, ordered by 12h-bucket then distance.',
   })
-  list(
-    @CurrentUser() user: AuthenticatedUser,
-    @Query() query: FeedQueryDto,
-  ) {
+  list(@CurrentUser() user: AuthenticatedUser, @Query() query: FeedQueryDto) {
     return this.feed.getFeed(user.id, query);
   }
 }

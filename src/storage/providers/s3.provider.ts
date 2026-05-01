@@ -19,8 +19,8 @@ export class S3StorageProvider implements StorageProvider {
       region: config.get('S3_REGION', { infer: true })!,
       endpoint: config.get('S3_ENDPOINT', { infer: true }),
       credentials: {
-        accessKeyId: config.get('S3_ACCESS_KEY_ID', { infer: true })!,
-        secretAccessKey: config.get('S3_SECRET_ACCESS_KEY', { infer: true })!,
+        accessKeyId: config.get('S3_ACCESS_KEY_ID', { infer: true }),
+        secretAccessKey: config.get('S3_SECRET_ACCESS_KEY', { infer: true }),
       },
       forcePathStyle: true,
       requestChecksumCalculation: 'WHEN_REQUIRED',

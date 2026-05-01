@@ -72,7 +72,9 @@ export class AuthController {
   @SkipOnboarding()
   @ApiBearerAuth()
   @Get('me')
-  @ApiOperation({ summary: 'Return the authenticated user and onboarding state' })
+  @ApiOperation({
+    summary: 'Return the authenticated user and onboarding state',
+  })
   async me(@CurrentUser() user: AuthenticatedUser) {
     return this.auth.getMe(user.id);
   }

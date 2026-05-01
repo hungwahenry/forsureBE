@@ -23,14 +23,12 @@ export const envSchema = z
     JWT_ACCESS_TTL: durationString.default('15m'),
     JWT_REFRESH_TTL: durationString.default('30d'),
 
-    CORS_ORIGINS: z
-      .string()
-      .transform((v) =>
-        v
-          .split(',')
-          .map((o) => o.trim())
-          .filter(Boolean),
-      ),
+    CORS_ORIGINS: z.string().transform((v) =>
+      v
+        .split(',')
+        .map((o) => o.trim())
+        .filter(Boolean),
+    ),
 
     // --- Email (Resend) ---
     RESEND_API_KEY: z.string().min(1),

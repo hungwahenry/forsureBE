@@ -139,4 +139,3 @@ export class FeedService {
     return { items, pageInfo: { nextCursor, hasMore } };
   }
 }
-

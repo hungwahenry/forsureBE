@@ -1,6 +1,13 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsInt, IsNumber, IsOptional, IsString, Max, Min } from 'class-validator';
+import {
+  IsInt,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Max,
+  Min,
+} from 'class-validator';
 
 export const FEED_DEFAULT_RADIUS_KM = 25;
 export const FEED_MAX_RADIUS_KM = 100;
@@ -26,14 +33,20 @@ export class FeedQueryDto {
   @Max(FEED_MAX_LIMIT)
   limit: number = FEED_DEFAULT_LIMIT;
 
-  @ApiPropertyOptional({ description: 'Viewer device latitude.', example: 6.4541 })
+  @ApiPropertyOptional({
+    description: 'Viewer device latitude.',
+    example: 6.4541,
+  })
   @Type(() => Number)
   @IsNumber()
   @Min(-90)
   @Max(90)
   lat!: number;
 
-  @ApiPropertyOptional({ description: 'Viewer device longitude.', example: 3.3947 })
+  @ApiPropertyOptional({
+    description: 'Viewer device longitude.',
+    example: 3.3947,
+  })
   @Type(() => Number)
   @IsNumber()
   @Min(-180)

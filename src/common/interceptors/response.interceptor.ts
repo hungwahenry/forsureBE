@@ -19,10 +19,7 @@ export interface SuccessEnvelope<T> {
 export class ResponseInterceptor implements NestInterceptor {
   constructor(private readonly reflector: Reflector) {}
 
-  intercept(
-    context: ExecutionContext,
-    next: CallHandler,
-  ): Observable<unknown> {
+  intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     const skip = this.reflector.getAllAndOverride<boolean>(
       SKIP_RESPONSE_ENVELOPE,
       [context.getHandler(), context.getClass()],

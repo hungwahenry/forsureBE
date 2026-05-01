@@ -23,9 +23,7 @@ export class CompleteOnboardingDto {
   username!: string;
 
   @ApiProperty({ example: 'Henry' })
-  @Transform(({ value }) =>
-    typeof value === 'string' ? value.trim() : value,
-  )
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   @IsString()
   @Length(1, 50)
   displayName!: string;
@@ -40,8 +38,7 @@ export class CompleteOnboardingDto {
   gender!: Gender;
 
   @ApiProperty({
-    description:
-      'Storage key returned by POST /onboarding/avatar. Required.',
+    description: 'Storage key returned by POST /onboarding/avatar. Required.',
   })
   @IsString()
   @Length(1, 200)

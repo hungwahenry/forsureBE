@@ -38,10 +38,7 @@ export class EmailService {
     });
 
     if (error) {
-      this.logger.error(
-        { err: error, to, template },
-        'Email delivery failed',
-      );
+      this.logger.error({ err: error, to, template }, 'Email delivery failed');
       throw new Error(`Email delivery failed: ${error.message}`);
     }
   }

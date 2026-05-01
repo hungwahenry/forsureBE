@@ -65,10 +65,7 @@ export class OnboardingController {
   })
   async uploadAvatar(
     @CurrentUser() user: AuthenticatedUser,
-    @UploadedFile(
-      new ParseFilePipeBuilder()
-        .build({ fileIsRequired: true }),
-    )
+    @UploadedFile(new ParseFilePipeBuilder().build({ fileIsRequired: true }))
     file: Express.Multer.File,
   ) {
     return this.onboarding.uploadAvatar(user.id, file);
