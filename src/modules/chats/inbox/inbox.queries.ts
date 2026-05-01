@@ -53,7 +53,7 @@ export async function findChatPreviews(
         AND m."senderUserId" != ${userId}
         AND (me."lastReadAt" IS NULL OR m."createdAt" > me."lastReadAt")
     ) unread ON true
-    ORDER BY COALESCE(last."createdAt", a."startsAt") DESC
+    ORDER BY COALESCE(last."createdAt", a."createdAt") DESC
   `;
 
   return rows.map((r) => ({
