@@ -8,15 +8,21 @@ import { PrismaService } from '../../../prisma/prisma.service';
 import { RealtimeService } from '../../../realtime/realtime.service';
 import { STORAGE_PROVIDER_TOKEN } from '../../../storage/storage.interface';
 import type { StorageProvider } from '../../../storage/storage.interface';
+import {
+  decodeTsIdCursor,
+  encodeTsIdCursor,
+} from '../../../common/utils/cursor';
 import { ChatEvents, chatRoom } from '../chats.events';
-import type { ChatMessageDto, UploadedImageFile } from '../chats.interface';
+import type { UploadedImageFile } from '../chats.interface';
 import { MembershipService } from '../membership/membership.service';
 import { ListMessagesDto } from './dto/list-messages.dto';
 import { SendMessageDto } from './dto/send-message.dto';
-import { decodeMessageCursor, encodeMessageCursor } from './messages.cursor';
 import { processAndStoreChatImage } from './messages.images';
 import * as queries from './messages.queries';
-import { serializeMessage } from './messages.serializer';
+import {
+  serializeMessage,
+  type ChatMessageDto,
+} from './messages.serializer';
 
 @Injectable()
 export class MessagesService {
@@ -35,7 +41,7 @@ export class MessagesService {
   ): Promise<CursorPage<ChatMessageDto>> {
     await this.membership.requireChatMembership(userId, activityId);
 
-    const cursor = dto.cursor ? decodeMessageCursor(dto.cursor) : null;
+    const cursor = dto.cursor ? decodeTsIdCursor(dto.cursor) : null;
     const rows = await queries.findMessagesPage(
       this.prisma,
       activityId,
@@ -48,8 +54,8 @@ export class MessagesService {
     const last = page[page.length - 1];
     const nextCursor =
       hasMore && last
-        ? encodeMessageCursor({
-            createdAtMs: last.createdAt.getTime(),
+        ? encodeTsIdCursor({
+            ts: last.createdAt.getTime(),
             id: last.id,
           })
         : null;

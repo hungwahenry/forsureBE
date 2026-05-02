@@ -1,13 +1,16 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { ActivityRole, Prisma } from '@prisma/client';
 import type { CursorPage } from '../../common/dto/pagination.dto';
+import {
+  decodeTsIdCursor,
+  encodeTsIdCursor,
+} from '../../common/utils/cursor';
 import { PrismaService } from '../../prisma/prisma.service';
 import {
   STORAGE_PROVIDER_TOKEN,
   type StorageProvider,
 } from '../../storage/storage.interface';
 import { ExploreQueryDto } from './dto/explore.dto';
-import { decodeExploreCursor, encodeExploreCursor } from './explore.cursor';
+import { findPostsByIds, findPublicPostIds } from './explore.queries';
 import {
   serializeExplorePost,
   type ExplorePostDto,
@@ -15,11 +18,6 @@ import {
 } from './explore.serializer';
 
 const WINDOW_DAYS = 30;
-
-interface IdRow {
-  id: string;
-  createdAt: Date;
-}
 
 @Injectable()
 export class ExploreService {
@@ -32,39 +30,25 @@ export class ExploreService {
   async listPublicPosts(
     query: ExploreQueryDto,
   ): Promise<CursorPage<ExplorePostDto>> {
-    const cursor = query.cursor ? decodeExploreCursor(query.cursor) : null;
-    const radiusMeters = query.radiusKm * 1000;
+    const cursor = query.cursor ? decodeTsIdCursor(query.cursor) : null;
     const limit = query.limit;
 
-    const idRows = await this.prisma.$queryRaw<IdRow[]>`
-      SELECT p.id, p."createdAt"
-      FROM "ActivityPost" p
-      JOIN "Activity" a ON a.id = p."activityId"
-      WHERE p.visibility = 'PUBLIC'
-        AND a.status = 'DONE'
-        AND a."memoriesShareablePublicly" = true
-        AND p."createdAt" >= NOW() - (${WINDOW_DAYS} || ' days')::interval
-        AND ST_DWithin(
-          a."placePoint",
-          ST_SetSRID(ST_MakePoint(${query.lng}, ${query.lat}), 4326)::geography,
-          ${radiusMeters}
-        )
-        ${
-          cursor
-            ? Prisma.sql`AND (p."createdAt", p.id) < (to_timestamp(${cursor.createdAtMs} / 1000.0), ${cursor.id})`
-            : Prisma.empty
-        }
-      ORDER BY p."createdAt" DESC, p.id DESC
-      LIMIT ${limit + 1}
-    `;
+    const idRows = await findPublicPostIds(this.prisma, {
+      lat: query.lat,
+      lng: query.lng,
+      radiusMeters: query.radiusKm * 1000,
+      windowDays: WINDOW_DAYS,
+      cursor,
+      limit: limit + 1,
+    });
 
     const hasMore = idRows.length > limit;
     const page = hasMore ? idRows.slice(0, limit) : idRows;
     const last = page[page.length - 1];
     const nextCursor =
       hasMore && last
-        ? encodeExploreCursor({
-            createdAtMs: last.createdAt.getTime(),
+        ? encodeTsIdCursor({
+            ts: last.createdAt.getTime(),
             id: last.id,
           })
         : null;
@@ -74,32 +58,7 @@ export class ExploreService {
     }
 
     const ids = page.map((r) => r.id);
-    const rows = (await this.prisma.activityPost.findMany({
-      where: { id: { in: ids } },
-      include: {
-        photos: true,
-        author: { include: { profile: true } },
-        activity: {
-          select: {
-            id: true,
-            emoji: true,
-            title: true,
-            startsAt: true,
-            placeName: true,
-            participants: {
-              where: { role: ActivityRole.HOST },
-              select: {
-                user: {
-                  select: { profile: { select: { username: true } } },
-                },
-              },
-              take: 1,
-            },
-          },
-        },
-      },
-    })) as ExplorePostRow[];
-
+    const rows = await findPostsByIds(this.prisma, ids);
     const byId = new Map(rows.map((r) => [r.id, r]));
     const ordered = ids
       .map((id) => byId.get(id))

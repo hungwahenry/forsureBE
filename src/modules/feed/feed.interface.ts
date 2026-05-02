@@ -18,22 +18,3 @@ export interface FeedRow {
   genderPreference: 'ALL' | 'MALE' | 'FEMALE';
 }
 
-export interface FeedItem {
-  id: string;
-  emoji: string;
-  title: string;
-  startsAt: string;
-  place: { name: string; lat: number; lng: number };
-  capacity: number;
-  genderPreference: 'ALL' | 'MALE' | 'FEMALE';
-  spotsLeft: number;
-  distanceKm: number;
-  host: {
-    id: string;
-    username: string;
-    displayName: string;
-    avatarUrl: string;
-  };
-  participantAvatarUrls: string[];
-  goingCount: number;
-}

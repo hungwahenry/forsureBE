@@ -1,8 +1,29 @@
+import type { ChatMessageKind } from '@prisma/client';
 import { ErrorCode } from '../../../common/constants/error-codes';
 import { AppException } from '../../../common/exceptions/app.exception';
 import type { StorageProvider } from '../../../storage/storage.interface';
-import type { ChatMessageDto } from '../chats.interface';
 import type { MessageWithRelations } from './messages.queries';
+
+export interface ChatMessageDto {
+  id: string;
+  activityId: string;
+  kind: ChatMessageKind;
+  body: string | null;
+  imageUrl: string | null;
+  createdAt: string;
+  sender: {
+    id: string;
+    username: string;
+    displayName: string;
+    avatarUrl: string;
+  };
+  parent: {
+    id: string;
+    body: string | null;
+    hasImage: boolean;
+    sender: { id: string; username: string };
+  } | null;
+}
 
 export function serializeMessage(
   storage: StorageProvider,

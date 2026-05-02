@@ -73,6 +73,7 @@ model Profile {
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   username    String   @unique
   displayName String
+  bio         String?
   dateOfBirth DateTime @db.Timestamptz(3)
   gender      Gender
   avatarKey   String

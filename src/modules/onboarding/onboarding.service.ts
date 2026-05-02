@@ -8,6 +8,10 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { STORAGE_PROVIDER_TOKEN } from '../../storage/storage.interface';
 import type { StorageProvider } from '../../storage/storage.interface';
 import { CompleteOnboardingDto } from './dto/complete-onboarding.dto';
+import {
+  serializeAvatarUpload,
+  type AvatarUploadDto,
+} from './onboarding.serializer';
 
 const MIN_AGE_YEARS = 18;
 const MAX_AVATAR_BYTES = 10 * 1024 * 1024;
@@ -53,7 +57,7 @@ export class OnboardingService {
   async uploadAvatar(
     userId: string,
     file: UploadedAvatarFile | undefined,
-  ): Promise<{ key: string; url: string }> {
+  ): Promise<AvatarUploadDto> {
     if (!file) {
       throw new AppException(ErrorCode.VALIDATION_FAILED, {
         message: 'No file provided.',
@@ -82,7 +86,7 @@ export class OnboardingService {
       cacheControl: 'public, max-age=31536000, immutable',
     });
 
-    return { key, url: this.storage.publicUrl(key) };
+    return serializeAvatarUpload(this.storage, key);
   }
 
   async complete(

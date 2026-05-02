@@ -26,7 +26,7 @@ import {
 const POST_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
 
 @Injectable()
-export class PostsService {
+export class ActivityPostsService {
   constructor(
     private readonly prisma: PrismaService,
     @Inject(STORAGE_PROVIDER_TOKEN)

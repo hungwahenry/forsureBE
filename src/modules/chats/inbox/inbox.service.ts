@@ -1,8 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
-import type { ChatPreviewDto } from '../chats.interface';
 import { findChatPreviews } from './inbox.queries';
-import { serializePreview } from './inbox.serializer';
+import {
+  serializePreview,
+  type ChatPreviewDto,
+} from './inbox.serializer';
 
 @Injectable()
 export class InboxService {

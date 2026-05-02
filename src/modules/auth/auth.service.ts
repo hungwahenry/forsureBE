@@ -12,19 +12,20 @@ import {
   STORAGE_PROVIDER_TOKEN,
   type StorageProvider,
 } from '../../storage/storage.interface';
+import {
+  serializeAccessToken,
+  serializeAuthMe,
+  serializeTokenPair,
+  type AccessTokenDto,
+  type AuthMeDto,
+  type TokenPairDto,
+} from './auth.serializer';
 import { generateOtp, generateRefreshToken, sha256 } from './utils/crypto';
 import { parseDurationToMs } from './utils/duration';
 
 const OTP_TTL_MIN = 10;
 const OTP_MAX_ATTEMPTS = 5;
 const OTP_RESEND_COOLDOWN_MS = 60_000;
-
-export interface TokenPair {
-  accessToken: string;
-  accessTokenExpiresAt: string;
-  refreshToken: string;
-  refreshTokenExpiresAt: string;
-}
 
 export interface ClientContext {
   ipAddress?: string;
@@ -101,7 +102,7 @@ export class AuthService {
     email: string,
     code: string,
     ctx: ClientContext,
-  ): Promise<TokenPair & { user: User; onboardingRequired: boolean }> {
+  ): Promise<TokenPairDto & { user: User; onboardingRequired: boolean }> {
     const verification = await this.prisma.emailVerification.findFirst({
       where: { email, consumedAt: null, expiresAt: { gt: new Date() } },
       orderBy: { createdAt: 'desc' },
@@ -163,7 +164,7 @@ export class AuthService {
     };
   }
 
-  async refresh(refreshToken: string, ctx: ClientContext): Promise<TokenPair> {
+  async refresh(refreshToken: string, ctx: ClientContext): Promise<TokenPairDto> {
     const tokenHash = sha256(refreshToken);
     const stored = await this.prisma.refreshToken.findUnique({
       where: { tokenHash },
@@ -194,43 +195,33 @@ export class AuthService {
     });
   }
 
-  async getMe(userId: string): Promise<{
-    user: User & { avatarUrl: string };
-    onboardingRequired: boolean;
-  }> {
+  async getMe(userId: string): Promise<AuthMeDto> {
     const user = await this.prisma.user.findUniqueOrThrow({
       where: { id: userId },
       include: { profile: { select: { avatarKey: true } } },
     });
-    const { profile, ...rest } = user;
-    const avatarUrl = profile ? this.storage.publicUrl(profile.avatarKey) : '';
-    return {
-      user: { ...rest, avatarUrl },
-      onboardingRequired: !user.onboardingCompletedAt,
-    };
+    return serializeAuthMe(this.storage, user);
   }
 
   async issueAccessToken(
     userId: string,
     claims: { onboarded: boolean },
-  ): Promise<{ accessToken: string; accessTokenExpiresAt: string }> {
+  ): Promise<AccessTokenDto> {
     const accessToken = await this.jwt.signAsync(
       { sub: userId, onboarded: claims.onboarded },
       { expiresIn: Math.floor(this.accessTtlMs / 1000) },
     );
-    return {
+    return serializeAccessToken(
       accessToken,
-      accessTokenExpiresAt: new Date(
-        Date.now() + this.accessTtlMs,
-      ).toISOString(),
-    };
+      new Date(Date.now() + this.accessTtlMs),
+    );
   }
 
   private async issueTokenPair(
     userId: string,
     claims: { onboarded: boolean },
     ctx: ClientContext,
-  ): Promise<TokenPair> {
+  ): Promise<TokenPairDto> {
     const access = await this.issueAccessToken(userId, claims);
 
     const refreshToken = generateRefreshToken();
@@ -247,10 +238,6 @@ export class AuthService {
       },
     });
 
-    return {
-      ...access,
-      refreshToken,
-      refreshTokenExpiresAt: expiresAt.toISOString(),
-    };
+    return serializeTokenPair(access, refreshToken, expiresAt);
   }
 }

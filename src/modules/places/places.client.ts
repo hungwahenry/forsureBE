@@ -3,12 +3,15 @@ import { ConfigService } from '@nestjs/config';
 import { ErrorCode } from '../../common/constants/error-codes';
 import { AppException } from '../../common/exceptions/app.exception';
 import type { Env } from '../../config/env.schema';
+import { RetrieveParams, SuggestParams } from './places.interface';
 import {
-  PlaceDetails,
-  PlaceSuggestion,
-  RetrieveParams,
-  SuggestParams,
-} from './places.interface';
+  serializePlaceDetails,
+  serializeSuggestion,
+  type GoogleAutocompletePrediction,
+  type GooglePlaceDetailsResponse,
+  type PlaceDetails,
+  type PlaceSuggestion,
+} from './places.serializer';
 import { placesFetch } from './utils/places-fetch';
 
 const BASE_URL = 'https://places.googleapis.com/v1';
@@ -26,23 +29,7 @@ const PLACE_DETAILS_FIELD_MASK = ['id', 'formattedAddress', 'location'].join(
 const PROXIMITY_RADIUS_METERS = 50_000;
 
 interface GoogleAutocompleteResponse {
-  suggestions?: Array<{
-    placePrediction?: {
-      placeId?: string;
-      text?: { text?: string };
-      structuredFormat?: {
-        mainText?: { text?: string };
-        secondaryText?: { text?: string };
-      };
-      types?: string[];
-    };
-  }>;
-}
-
-interface GooglePlaceDetailsResponse {
-  id?: string;
-  formattedAddress?: string;
-  location?: { latitude: number; longitude: number };
+  suggestions?: Array<{ placePrediction?: GoogleAutocompletePrediction }>;
 }
 
 @Injectable()
@@ -82,19 +69,8 @@ export class GooglePlacesClient {
 
     const data = (await res.json()) as GoogleAutocompleteResponse;
     return (data.suggestions ?? [])
-      .map((s) => s.placePrediction)
-      .filter(
-        (p): p is NonNullable<typeof p> & { placeId: string } =>
-          // Keep only real venues — `establishment` is Google's umbrella tag
-          // for businesses / POIs (restaurants, parks, gyms, cinemas, ...).
-          // Drops neighborhoods, sublocalities, addresses, regions, countries.
-          Boolean(p?.placeId) && (p?.types?.includes('establishment') ?? false),
-      )
-      .map((p) => ({
-        id: p.placeId,
-        name: p.structuredFormat?.mainText?.text ?? p.text?.text ?? '',
-        description: p.structuredFormat?.secondaryText?.text ?? '',
-      }));
+      .map((s) => serializeSuggestion(s.placePrediction))
+      .filter((s): s is PlaceSuggestion => s !== null);
   }
 
   async retrieve(
@@ -114,19 +90,7 @@ export class GooglePlacesClient {
     if (!res.ok) throw await this.toError(res, 'retrieve');
 
     const data = (await res.json()) as GooglePlaceDetailsResponse;
-    if (!data.location) {
-      throw new AppException(ErrorCode.RESOURCE_NOT_FOUND, {
-        message: 'Place not found.',
-      });
-    }
-    return {
-      id: data.id ?? id,
-      // Google: name intentionally not requested (Pro tier). Frontend uses
-      // the suggestion's name as the canonical display value.
-      address: data.formattedAddress ?? '',
-      lat: data.location.latitude,
-      lng: data.location.longitude,
-    };
+    return serializePlaceDetails(id, data);
   }
 
   private async toError(res: Response, op: string): Promise<AppException> {

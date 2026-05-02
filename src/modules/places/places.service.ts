@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { RetrievePlaceDto } from './dto/retrieve.dto';
 import { SuggestPlacesDto } from './dto/suggest.dto';
-import type { PlaceDetails, PlaceSuggestion } from './places.interface';
 import { GooglePlacesClient } from './places.client';
+import type { PlaceDetails, PlaceSuggestion } from './places.serializer';
 
 @Injectable()
 export class PlacesService {

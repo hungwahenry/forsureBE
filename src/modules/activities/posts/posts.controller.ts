@@ -23,7 +23,7 @@ import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../../../common/decorators/current-user.decorator';
 import { UpsertPostDto } from './dto/upsert-post.dto';
 import { POST_MAX_IMAGE_BYTES, POST_MAX_PHOTOS } from './posts.images';
-import { PostsService } from './posts.service';
+import { ActivityPostsService } from './posts.service';
 
 const fileInterceptor = FilesInterceptor('images', POST_MAX_PHOTOS, {
   limits: { fileSize: POST_MAX_IMAGE_BYTES },
@@ -32,8 +32,8 @@ const fileInterceptor = FilesInterceptor('images', POST_MAX_PHOTOS, {
 @ApiTags('activities')
 @ApiBearerAuth()
 @Controller('activities/:activityId/posts')
-export class PostsController {
-  constructor(private readonly posts: PostsService) {}
+export class ActivityPostsController {
+  constructor(private readonly posts: ActivityPostsService) {}
 
   @Get()
   @HttpCode(HttpStatus.OK)

@@ -1,6 +1,6 @@
 import { ChatMessageKind, Prisma } from '@prisma/client';
+import type { TimestampIdCursor } from '../../../common/utils/cursor';
 import type { PrismaService } from '../../../prisma/prisma.service';
-import type { MessageCursor } from './messages.cursor';
 
 export const messageInclude = {
   sender: { include: { profile: true } },
@@ -24,7 +24,7 @@ interface CreateMessageInput {
 export async function findMessagesPage(
   prisma: PrismaService,
   activityId: string,
-  cursor: MessageCursor | null,
+  cursor: TimestampIdCursor | null,
   limit: number,
 ): Promise<MessageWithRelations[]> {
   return prisma.chatMessage.findMany({
@@ -33,10 +33,10 @@ export async function findMessagesPage(
       ...(cursor
         ? {
             OR: [
-              { createdAt: { lt: new Date(cursor.createdAtMs) } },
+              { createdAt: { lt: new Date(cursor.ts) } },
               {
                 AND: [
-                  { createdAt: new Date(cursor.createdAtMs) },
+                  { createdAt: new Date(cursor.ts) },
                   { id: { lt: cursor.id } },
                 ],
               },
