@@ -8,7 +8,6 @@ import {
 import { ErrorCode } from '../../../common/constants/error-codes';
 import { AppException } from '../../../common/exceptions/app.exception';
 import { createId } from '../../../common/utils/id';
-import { upsertYearStats } from '../../../common/utils/stats';
 import { PrismaService } from '../../../prisma/prisma.service';
 import {
   STORAGE_PROVIDER_TOKEN,
@@ -142,12 +141,6 @@ export class PostsService {
           where: { id: activityId },
           data: { postCount: { increment: 1 } },
         }),
-        this.prisma.$transaction((tx) =>
-          upsertYearStats(tx, userId, {
-            memoriesPostedCount: 1,
-            photosSharedCount: imageKeys.length,
-          }),
-        ),
       ]).catch(() => undefined);
 
       return serializePost(this.storage, created);

@@ -3,7 +3,6 @@ import { ActivityRole, ActivityStatus } from '@prisma/client';
 import { ErrorCode } from '../../../common/constants/error-codes';
 import { AppException } from '../../../common/exceptions/app.exception';
 import { createId } from '../../../common/utils/id';
-import { upsertYearStats } from '../../../common/utils/stats';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { MembershipService } from '../../chats/membership/membership.service';
 import { isGenderAllowedForActivity } from '../gender-policy';
@@ -79,11 +78,14 @@ export class JoinActivityService {
             role: ActivityRole.MEMBER,
           },
         });
+        await tx.activity.update({
+          where: { id: activityId },
+          data: { participantCount: { increment: 1 } },
+        });
         await tx.profile.update({
           where: { userId: viewerUserId },
           data: { activitiesJoinedCount: { increment: 1 } },
         });
-        await upsertYearStats(tx, viewerUserId, { activitiesJoinedCount: 1 });
       } catch (err: unknown) {
         // Unique on (activityId, userId): viewer is the host or already joined.
         if (
@@ -105,14 +107,27 @@ export class JoinActivityService {
 
   async leave(viewerUserId: string, activityId: string): Promise<void> {
     // Idempotent — and host can never leave their own activity.
-    const result = await this.prisma.activityParticipant.deleteMany({
-      where: {
-        activityId,
-        userId: viewerUserId,
-        role: ActivityRole.MEMBER,
-      },
+    const removed = await this.prisma.$transaction(async (tx) => {
+      const result = await tx.activityParticipant.deleteMany({
+        where: {
+          activityId,
+          userId: viewerUserId,
+          role: ActivityRole.MEMBER,
+        },
+      });
+      if (result.count > 0) {
+        await tx.activity.update({
+          where: { id: activityId },
+          data: { participantCount: { decrement: 1 } },
+        });
+        await tx.profile.update({
+          where: { userId: viewerUserId },
+          data: { activitiesJoinedCount: { decrement: 1 } },
+        });
+      }
+      return result.count > 0;
     });
-    if (result.count > 0) {
+    if (removed) {
       await this.membership.removeFromChat(viewerUserId, activityId);
     }
   }

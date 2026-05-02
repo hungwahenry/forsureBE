@@ -3,7 +3,6 @@ import { ActivityRole, type Activity } from '@prisma/client';
 import { ErrorCode } from '../../../common/constants/error-codes';
 import { AppException } from '../../../common/exceptions/app.exception';
 import { createId } from '../../../common/utils/id';
-import { upsertYearStats } from '../../../common/utils/stats';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { MembershipService } from '../../chats/membership/membership.service';
 import { CreateActivityDto } from './dto/create-activity.dto';
@@ -41,6 +40,7 @@ export class CreateActivityService {
           capacity: dto.capacity,
           genderPreference: dto.genderPreference,
           memoriesShareablePublicly: dto.memoriesShareablePublicly ?? false,
+          participantCount: 1,
         },
       });
       await tx.activityParticipant.create({
@@ -53,9 +53,11 @@ export class CreateActivityService {
       });
       await tx.profile.update({
         where: { userId: authorUserId },
-        data: { activitiesHostedCount: { increment: 1 } },
+        data: {
+          activitiesHostedCount: { increment: 1 },
+          activitiesJoinedCount: { increment: 1 },
+        },
       });
-      await upsertYearStats(tx, authorUserId, { activitiesHostedCount: 1 });
       return created;
     });
 

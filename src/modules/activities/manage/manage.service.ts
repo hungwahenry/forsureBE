@@ -8,7 +8,6 @@ import {
 } from '@prisma/client';
 import { ErrorCode } from '../../../common/constants/error-codes';
 import { AppException } from '../../../common/exceptions/app.exception';
-import { upsertYearStats } from '../../../common/utils/stats';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { ChatEvents, chatRoom } from '../../chats/chats.events';
 import { MembershipService } from '../../chats/membership/membership.service';
@@ -159,25 +158,10 @@ export class ManageActivityService {
       });
     }
 
-    // Fetch all participant userIds before cancelling.
-    const participants = await this.prisma.activityParticipant.findMany({
-      where: { activityId },
-      select: { userId: true },
-    });
-
     const updated = await this.prisma.activity.update({
       where: { id: activityId },
       data: { status: ActivityStatus.CANCELLED },
     });
-
-    // Increment year stats for all participants (fire-and-forget).
-    void Promise.all(
-      participants.map((p) =>
-        this.prisma.$transaction((tx) =>
-          upsertYearStats(tx, p.userId, { activitiesCancelledCount: 1 }),
-        ),
-      ),
-    ).catch(() => undefined);
 
     await this.messages.postSystemMessage(
       activityId,
@@ -212,8 +196,18 @@ export class ManageActivityService {
       });
     }
 
-    await this.prisma.activityParticipant.delete({
-      where: { activityId_userId: { activityId, userId: targetUserId } },
+    await this.prisma.$transaction(async (tx) => {
+      await tx.activityParticipant.delete({
+        where: { activityId_userId: { activityId, userId: targetUserId } },
+      });
+      await tx.activity.update({
+        where: { id: activityId },
+        data: { participantCount: { decrement: 1 } },
+      });
+      await tx.profile.update({
+        where: { userId: targetUserId },
+        data: { activitiesJoinedCount: { decrement: 1 } },
+      });
     });
 
     await this.membership.removeFromChat(targetUserId, activityId);

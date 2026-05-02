@@ -4,7 +4,6 @@ import { ErrorCode } from '../../../common/constants/error-codes';
 import type { CursorPage } from '../../../common/dto/pagination.dto';
 import { AppException } from '../../../common/exceptions/app.exception';
 import { createId } from '../../../common/utils/id';
-import { upsertYearStats } from '../../../common/utils/stats';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { RealtimeService } from '../../../realtime/realtime.service';
 import { STORAGE_PROVIDER_TOKEN } from '../../../storage/storage.interface';
@@ -125,9 +124,6 @@ export class MessagesService {
         where: { id: activityId },
         data: { messageCount: { increment: 1 } },
       }),
-      this.prisma.$transaction((tx) =>
-        upsertYearStats(tx, userId, { messagesSentCount: 1 }),
-      ),
     ]).catch(() => undefined);
 
     const dtoOut = serializeMessage(this.storage, created);
