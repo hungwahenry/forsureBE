@@ -2,6 +2,7 @@ import type {
   Activity,
   ActivityPost,
   ActivityPostPhoto,
+  ActivityRole,
   Profile,
   User,
 } from '@prisma/client';
@@ -20,6 +21,8 @@ export interface ExplorePostActivityDto {
   startsAt: string;
   placeName: string;
   hostUsername: string;
+  participantCount: number;
+  participantAvatarUrls: string[];
 }
 
 export interface ExplorePostDto {
@@ -36,10 +39,13 @@ export type ExplorePostRow = ActivityPost & {
   author: User & { profile: Profile | null };
   activity: Pick<
     Activity,
-    'id' | 'emoji' | 'title' | 'startsAt' | 'placeName'
+    'id' | 'emoji' | 'title' | 'startsAt' | 'placeName' | 'participantCount'
   > & {
     participants: Array<{
-      user: { profile: { username: string } | null };
+      role: ActivityRole;
+      user: {
+        profile: { username: string; avatarKey: string } | null;
+      };
     }>;
   };
 };
@@ -53,12 +59,15 @@ export function serializeExplorePost(
       message: 'Post author is missing a profile.',
     });
   }
-  const host = p.activity.participants[0];
+  const host = p.activity.participants.find((part) => part.role === 'HOST');
   if (!host?.user.profile) {
     throw new AppException(ErrorCode.INTERNAL_ERROR, {
       message: 'Activity is missing a host profile.',
     });
   }
+  const participantAvatarUrls = p.activity.participants
+    .filter((part) => part.user.profile != null)
+    .map((part) => storage.publicUrl(part.user.profile!.avatarKey));
   return {
     id: p.id,
     caption: p.caption,
@@ -83,6 +92,8 @@ export function serializeExplorePost(
       startsAt: p.activity.startsAt.toISOString(),
       placeName: p.activity.placeName,
       hostUsername: host.user.profile.username,
+      participantCount: p.activity.participantCount,
+      participantAvatarUrls,
     },
   };
 }

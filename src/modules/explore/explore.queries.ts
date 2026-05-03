@@ -1,4 +1,4 @@
-import { ActivityRole, Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import type { TimestampIdCursor } from '../../common/utils/cursor';
 import type { PrismaService } from '../../prisma/prisma.service';
 import type { ExplorePostRow } from './explore.serializer';
@@ -61,14 +61,21 @@ export async function findPostsByIds(
           title: true,
           startsAt: true,
           placeName: true,
+          participantCount: true,
           participants: {
-            where: { role: ActivityRole.HOST },
             select: {
+              role: true,
               user: {
-                select: { profile: { select: { username: true } } },
+                select: {
+                  profile: {
+                    select: { username: true, avatarKey: true },
+                  },
+                },
               },
             },
-            take: 1,
+            // role 'HOST' sorts before 'MEMBER' alphabetically — host comes first.
+            orderBy: [{ role: 'asc' }, { joinedAt: 'desc' }],
+            take: 3,
           },
         },
       },

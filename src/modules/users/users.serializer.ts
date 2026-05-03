@@ -99,6 +99,7 @@ export interface UserPostDto {
     title: string;
     startsAt: string;
     placeName: string;
+    participantCount: number;
   };
 }
 
@@ -183,6 +184,7 @@ export type UserPostRow = ActivityPost & {
     title: string;
     startsAt: Date;
     placeName: string;
+    participantCount: number;
   };
 };
 
@@ -208,6 +210,7 @@ export function serializeUserPost(
       title: p.activity.title,
       startsAt: p.activity.startsAt.toISOString(),
       placeName: p.activity.placeName,
+      participantCount: p.activity.participantCount,
     },
   };
 }
