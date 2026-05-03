@@ -52,6 +52,10 @@ export const envSchema = z
 
     // Places (search/autocomplete via Google Places New) ---
     GOOGLE_PLACES_API_KEY: z.string().min(1),
+
+    // --- Push notifications (Expo) ---
+    // Optional: enables higher rate limits + receipt fetching from Expo's push service.
+    EXPO_ACCESS_TOKEN: z.string().optional(),
   })
   .superRefine((env, ctx) => {
     if (env.STORAGE_DRIVER === 's3') {

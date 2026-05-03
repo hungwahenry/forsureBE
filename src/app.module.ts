@@ -21,6 +21,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { ChatsModule } from './modules/chats/chats.module';
 import { ExploreModule } from './modules/explore/explore.module';
 import { FeedModule } from './modules/feed/feed.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 import { OnboardingModule } from './modules/onboarding/onboarding.module';
 import { PlacesModule } from './modules/places/places.module';
 import { ReportsModule } from './modules/reports/reports.module';
@@ -83,6 +84,7 @@ import { StorageModule } from './storage/storage.module';
     ReportsModule,
     ExploreModule,
     UsersModule,
+    NotificationsModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })

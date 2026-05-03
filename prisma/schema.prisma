@@ -20,13 +20,15 @@ model User {
   createdAt             DateTime   @default(now()) @db.Timestamptz(3)
   updatedAt             DateTime   @updatedAt @db.Timestamptz(3)
 
-  profile                Profile?
-  emailVerifications     EmailVerification[]
-  refreshTokens          RefreshToken[]
-  activityParticipations ActivityParticipant[]
-  chatMessages           ChatMessage[]
-  reportsFiled           Report[]
-  activityPosts          ActivityPost[]
+  profile                 Profile?
+  emailVerifications      EmailVerification[]
+  refreshTokens           RefreshToken[]
+  activityParticipations  ActivityParticipant[]
+  chatMessages            ChatMessage[]
+  reportsFiled            Report[]
+  activityPosts           ActivityPost[]
+  notificationDevices     NotificationDevice[]
+  notificationPreferences NotificationPreference[]
 }
 
 enum UserStatus {
@@ -68,27 +70,27 @@ model RefreshToken {
 // ----- Profile -----
 
 model Profile {
-  id          String   @id // prf_...
-  userId      String   @unique
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  username    String   @unique
-  displayName String
-  bio         String?
-  dateOfBirth DateTime @db.Timestamptz(3)
-  gender      Gender
-  avatarKey   String
-  locationLat Float
-  locationLng Float
-  locationPoint Unsupported("geography(Point, 4326)")?
-  placeName   String
-  activitiesHostedCount Int @default(0)
-  activitiesJoinedCount Int @default(0)
-  activitiesCompletedCount Int @default(0)
-  messagesSentCount    Int @default(0)
-  memoriesPostedCount  Int @default(0)
-  photosSharedCount    Int @default(0)
-  createdAt   DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt   DateTime @updatedAt @db.Timestamptz(3)
+  id                       String                                 @id // prf_...
+  userId                   String                                 @unique
+  user                     User                                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  username                 String                                 @unique
+  displayName              String
+  bio                      String?
+  dateOfBirth              DateTime                               @db.Timestamptz(3)
+  gender                   Gender
+  avatarKey                String
+  locationLat              Float
+  locationLng              Float
+  locationPoint            Unsupported("geography(Point, 4326)")?
+  placeName                String
+  activitiesHostedCount    Int                                    @default(0)
+  activitiesJoinedCount    Int                                    @default(0)
+  activitiesCompletedCount Int                                    @default(0)
+  messagesSentCount        Int                                    @default(0)
+  memoriesPostedCount      Int                                    @default(0)
+  photosSharedCount        Int                                    @default(0)
+  createdAt                DateTime                               @default(now()) @db.Timestamptz(3)
+  updatedAt                DateTime                               @updatedAt @db.Timestamptz(3)
 }
 
 enum Gender {
@@ -101,24 +103,24 @@ enum Gender {
 // ----- Activities -----
 
 model Activity {
-  id               String                   @id // act_...
-  emoji            String
-  title            String
-  startsAt         DateTime                 @db.Timestamptz(3)
-  placeName        String
-  placeLat         Float
-  placeLng         Float
-  placePoint       Unsupported("geography(Point, 4326)")?
-  capacity         Int
-  participantCount Int                      @default(0)
-  messageCount     Int                      @default(0)
-  postCount        Int                      @default(0)
-  genderPreference ActivityGenderPreference
-  status           ActivityStatus           @default(OPEN)
-  memoriesShareablePublicly Boolean         @default(false)
-  pinnedMessageId  String?                  @unique
-  createdAt        DateTime                 @default(now()) @db.Timestamptz(3)
-  updatedAt        DateTime                 @updatedAt @db.Timestamptz(3)
+  id                        String                                 @id // act_...
+  emoji                     String
+  title                     String
+  startsAt                  DateTime                               @db.Timestamptz(3)
+  placeName                 String
+  placeLat                  Float
+  placeLng                  Float
+  placePoint                Unsupported("geography(Point, 4326)")?
+  capacity                  Int
+  participantCount          Int                                    @default(0)
+  messageCount              Int                                    @default(0)
+  postCount                 Int                                    @default(0)
+  genderPreference          ActivityGenderPreference
+  status                    ActivityStatus                         @default(OPEN)
+  memoriesShareablePublicly Boolean                                @default(false)
+  pinnedMessageId           String?                                @unique
+  createdAt                 DateTime                               @default(now()) @db.Timestamptz(3)
+  updatedAt                 DateTime                               @updatedAt @db.Timestamptz(3)
 
   participants  ActivityParticipant[]
   chatMessages  ChatMessage[]
@@ -181,11 +183,11 @@ model ChatMessage {
   parentMessageId String?
   createdAt       DateTime        @default(now()) @db.Timestamptz(3)
 
-  activity      Activity      @relation(fields: [activityId], references: [id], onDelete: Cascade)
-  sender        User          @relation(fields: [senderUserId], references: [id], onDelete: Cascade)
-  parent        ChatMessage?  @relation("MessageReplies", fields: [parentMessageId], references: [id], onDelete: SetNull)
-  replies       ChatMessage[] @relation("MessageReplies")
-  pinnedInActivity Activity?  @relation("ActivityPinnedMessage")
+  activity         Activity      @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  sender           User          @relation(fields: [senderUserId], references: [id], onDelete: Cascade)
+  parent           ChatMessage?  @relation("MessageReplies", fields: [parentMessageId], references: [id], onDelete: SetNull)
+  replies          ChatMessage[] @relation("MessageReplies")
+  pinnedInActivity Activity?     @relation("ActivityPinnedMessage")
 
   @@index([activityId, createdAt])
 }
@@ -279,3 +281,44 @@ model ActivityPostPhoto {
   @@index([postId, sortOrder])
 }
 
+// ----- Notifications -----
+
+enum DevicePlatform {
+  IOS
+  ANDROID
+  WEB
+}
+
+enum NotificationChannel {
+  PUSH
+  EMAIL
+}
+
+model NotificationDevice {
+  id         String         @id // ndv_...
+  userId     String
+  user       User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Globally unique. If a different user signs in on this device, upsert reassigns userId.
+  token      String         @unique
+  platform   DevicePlatform
+  lastSeenAt DateTime       @default(now()) @db.Timestamptz(3)
+  createdAt  DateTime       @default(now()) @db.Timestamptz(3)
+  updatedAt  DateTime       @updatedAt @db.Timestamptz(3)
+
+  @@index([userId])
+}
+
+// Per-event, per-channel opt-in/out. Missing row = use the code's default in NOTIFICATION_EVENT_DEFAULTS.
+// `eventCode` is a string (not enum) so adding events is a code-only change with no migration.
+model NotificationPreference {
+  userId    String
+  user      User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  eventCode String
+  channel   NotificationChannel
+  enabled   Boolean
+  createdAt DateTime            @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime            @updatedAt @db.Timestamptz(3)
+
+  @@id([userId, eventCode, channel])
+  @@index([userId])
+}
