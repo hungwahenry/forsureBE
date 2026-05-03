@@ -12,17 +12,9 @@ export interface PreferenceEntryDto {
 }
 
 export interface PreferencesDto {
-  /**
-   * Full matrix of (event × channel) entries. Defaults overlaid with the
-   * user's stored overrides — frontend gets the resolved final state.
-   */
   entries: PreferenceEntryDto[];
 }
 
-/**
- * Build the resolved preferences view: for each known (event, channel) pair,
- * use the user's row if present, otherwise the code-level default.
- */
 export function serializePreferences(
   rows: NotificationPreference[],
 ): PreferencesDto {

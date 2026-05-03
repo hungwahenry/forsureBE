@@ -42,7 +42,7 @@
     "cookie-parser": "^1.4.7",
     "expo-device": "^55.0.15",
     "expo-notifications": "^55.0.22",
-    "expo-server-sdk": "^6.1.0",
+    "expo-server-sdk": "^5.0.0",
     "helmet": "^8.1.0",
     "ioredis": "^5.10.1",
     "nestjs-pino": "^4.6.1",
@@ -101,6 +101,9 @@
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
     },
+    "transformIgnorePatterns": [
+      "/node_modules/(?!(uuid|expo-server-sdk))"
+    ],
     "collectCoverageFrom": [
       "**/*.(t|j)s"
     ],

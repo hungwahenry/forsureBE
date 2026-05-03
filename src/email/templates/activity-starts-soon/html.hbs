@@ -1,0 +1,20 @@
+{{#> _layout title="Heads up — your hangout starts soon" preheader=(concat activityEmoji " " activityTitle " · " whenLabel " · " placeName)}}
+  <h1 style="font-size:18px;margin:0 0 12px;color:#111;">Starting in ~1 hour</h1>
+  <div style="font-size:24px;font-weight:700;color:#111;margin:0 0 16px;">
+    {{activityEmoji}} {{activityTitle}}
+  </div>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;border-radius:8px;padding:16px;margin:0 0 24px;">
+    <tr>
+      <td style="font-size:14px;color:#555;line-height:1.7;">
+        <strong style="color:#111;">when</strong> &middot; {{whenLabel}}<br />
+        <strong style="color:#111;">where</strong> &middot; {{placeName}}<br />
+        {{#if hostUsername}}
+          <strong style="color:#111;">host</strong> &middot; @{{hostUsername}}
+        {{/if}}
+      </td>
+    </tr>
+  </table>
+  <p style="margin:0;font-size:13px;color:#888;line-height:1.5;">
+    Open forsure for the latest details and to chat with everyone going.
+  </p>
+{{/_layout}}

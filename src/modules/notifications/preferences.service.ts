@@ -61,10 +61,6 @@ export class PreferencesService {
     return this.list(userId);
   }
 
-  /**
-   * Worker-side check: is this (user, event, channel) currently enabled?
-   * Used by the notifications processor before fanning out a message.
-   */
   async isEnabled(
     userId: string,
     event: NotificationEventCode,

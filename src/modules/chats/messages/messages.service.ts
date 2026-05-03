@@ -12,6 +12,7 @@ import {
   decodeTsIdCursor,
   encodeTsIdCursor,
 } from '../../../common/utils/cursor';
+import { ChatNotifications } from '../../notifications/producers/chat.producer';
 import { ChatEvents, chatRoom } from '../chats.events';
 import type { UploadedImageFile } from '../chats.interface';
 import { MembershipService } from '../membership/membership.service';
@@ -32,6 +33,7 @@ export class MessagesService {
     private readonly storage: StorageProvider,
     private readonly realtime: RealtimeService,
     private readonly membership: MembershipService,
+    private readonly notifications: ChatNotifications,
   ) {}
 
   async listMessages(
@@ -136,6 +138,7 @@ export class MessagesService {
     this.realtime.toRoom(chatRoom(activityId), ChatEvents.MessageNew, {
       message: dtoOut,
     });
+    void this.notifications.chatMessage(created.id);
     return dtoOut;
   }
 

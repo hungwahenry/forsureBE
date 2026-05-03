@@ -15,6 +15,7 @@ import {
 } from '../../../storage/storage.interface';
 import type { UploadedImageFile } from '../../chats/chats.interface';
 import { MembershipService } from '../../chats/membership/membership.service';
+import { MemoryNotifications } from '../../notifications/producers/memory.producer';
 import { UpsertPostDto } from './dto/upsert-post.dto';
 import { POST_MAX_PHOTOS, processAndStorePostImage } from './posts.images';
 import {
@@ -32,6 +33,7 @@ export class ActivityPostsService {
     @Inject(STORAGE_PROVIDER_TOKEN)
     private readonly storage: StorageProvider,
     private readonly membership: MembershipService,
+    private readonly notifications: MemoryNotifications,
   ) {}
 
   async listPosts(
@@ -143,6 +145,7 @@ export class ActivityPostsService {
         }),
       ]).catch(() => undefined);
 
+      void this.notifications.newMemory(created.id);
       return serializePost(this.storage, created);
     }
 

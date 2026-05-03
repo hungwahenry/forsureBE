@@ -4,6 +4,7 @@ import { ErrorCode } from '../../../common/constants/error-codes';
 import { AppException } from '../../../common/exceptions/app.exception';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { RealtimeService } from '../../../realtime/realtime.service';
+import { ChatNotifications } from '../../notifications/producers/chat.producer';
 import { ChatEvents, chatRoom } from '../chats.events';
 import { MembershipService } from '../membership/membership.service';
 
@@ -13,6 +14,7 @@ export class PinService {
     private readonly prisma: PrismaService,
     private readonly realtime: RealtimeService,
     private readonly membership: MembershipService,
+    private readonly notifications: ChatNotifications,
   ) {}
 
   async pin(
@@ -43,6 +45,7 @@ export class PinService {
     this.realtime.toRoom(chatRoom(activityId), ChatEvents.ActivityUpdated, {
       activityId,
     });
+    void this.notifications.pinned(activityId, messageId, userId);
   }
 
   async unpin(userId: string, activityId: string): Promise<void> {

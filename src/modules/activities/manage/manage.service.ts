@@ -12,6 +12,7 @@ import { PrismaService } from '../../../prisma/prisma.service';
 import { ChatEvents, chatRoom } from '../../chats/chats.events';
 import { MembershipService } from '../../chats/membership/membership.service';
 import { MessagesService } from '../../chats/messages/messages.service';
+import { ActivityLifecycleNotifications } from '../../notifications/producers/activity-lifecycle.producer';
 import { RealtimeService } from '../../../realtime/realtime.service';
 import { EditActivityDto } from './dto/edit-activity.dto';
 
@@ -24,6 +25,7 @@ export class ManageActivityService {
     private readonly realtime: RealtimeService,
     private readonly membership: MembershipService,
     private readonly messages: MessagesService,
+    private readonly notifications: ActivityLifecycleNotifications,
   ) {}
 
   private async requireHost(
@@ -171,6 +173,7 @@ export class ManageActivityService {
     this.realtime.toRoom(chatRoom(activityId), ChatEvents.ActivityUpdated, {
       activityId,
     });
+    void this.notifications.cancellation(activityId);
     return updated;
   }
 
@@ -218,5 +221,6 @@ export class ManageActivityService {
       hostUserId,
       `host removed @${username}`,
     );
+    void this.notifications.leave(activityId, targetUserId, true);
   }
 }

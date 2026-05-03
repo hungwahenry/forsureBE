@@ -5,6 +5,7 @@ import { AppException } from '../../../common/exceptions/app.exception';
 import { createId } from '../../../common/utils/id';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { MembershipService } from '../../chats/membership/membership.service';
+import { ActivityLifecycleNotifications } from '../../notifications/producers/activity-lifecycle.producer';
 import { isGenderAllowedForActivity } from '../gender-policy';
 
 const MIN_LEAD_TIME_MS = 30 * 60_000; // 30 minutes — matches create rule
@@ -15,6 +16,7 @@ export class JoinActivityService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly membership: MembershipService,
+    private readonly notifications: ActivityLifecycleNotifications,
   ) {}
 
   async join(viewerUserId: string, activityId: string): Promise<void> {
@@ -103,6 +105,7 @@ export class JoinActivityService {
     });
 
     await this.membership.addToChat(viewerUserId, activityId);
+    void this.notifications.join(activityId, viewerUserId);
   }
 
   async leave(viewerUserId: string, activityId: string): Promise<void> {
@@ -129,6 +132,7 @@ export class JoinActivityService {
     });
     if (removed) {
       await this.membership.removeFromChat(viewerUserId, activityId);
+      void this.notifications.leave(activityId, viewerUserId, false);
     }
   }
 }

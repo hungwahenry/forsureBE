@@ -5,15 +5,15 @@ import type { NotificationEventCode } from '../../../common/constants/notificati
 
 export const NOTIFICATIONS_QUEUE = 'notifications';
 
-/**
- * One job shape for every event. The processor dispatches by `event`.
- * `payload` is intentionally loose — the per-event handler types it.
- */
 export interface NotificationJob {
   event: NotificationEventCode;
-  /** Targets are user ids; sender is excluded by the producer, not the worker. */
   recipientUserIds: string[];
   payload: Record<string, unknown>;
+}
+
+interface EnqueueOpts {
+  dedupKey?: string;
+  retainCompletedSeconds?: number;
 }
 
 @Injectable()
@@ -22,11 +22,14 @@ export class NotificationsQueue {
     @InjectQueue(NOTIFICATIONS_QUEUE) private readonly queue: Queue<NotificationJob>,
   ) {}
 
-  async enqueue(job: NotificationJob): Promise<void> {
+  async enqueue(job: NotificationJob, opts: EnqueueOpts = {}): Promise<void> {
     if (job.recipientUserIds.length === 0) return;
+    const completion = opts.retainCompletedSeconds
+      ? { age: opts.retainCompletedSeconds }
+      : { count: 1000 };
     await this.queue.add(job.event, job, {
-      // De-dupe on (event + sorted recipients + payload) signature if needed later.
-      removeOnComplete: { count: 1000 },
+      ...(opts.dedupKey ? { jobId: opts.dedupKey } : {}),
+      removeOnComplete: completion,
       removeOnFail: { count: 5000 },
       attempts: 3,
       backoff: { type: 'exponential', delay: 5000 },
