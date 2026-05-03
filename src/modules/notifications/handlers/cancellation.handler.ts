@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { NOTIFICATION_EVENT } from '../../../common/constants/notification-events';
-import { sendPushToUsers } from './handler.helpers';
+import { deliverNotification } from './deliver';
 import type {
   HandlerContext,
   HandlerJob,
@@ -20,7 +20,7 @@ export class CancellationHandler implements NotificationHandler<CancellationPayl
     ctx: HandlerContext,
     job: HandlerJob<CancellationPayload>,
   ): Promise<void> {
-    await sendPushToUsers(
+    await deliverNotification(
       ctx,
       NOTIFICATION_EVENT.CANCELLATION,
       job.recipientUserIds,

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { NOTIFICATION_EVENT } from '../../../common/constants/notification-events';
-import { sendPushToUsers } from './handler.helpers';
+import { deliverNotification } from './deliver';
 import type {
   HandlerContext,
   HandlerJob,
@@ -20,7 +20,7 @@ export interface LeavePayload {
 export class LeaveHandler implements NotificationHandler<LeavePayload> {
   async handle(ctx: HandlerContext, job: HandlerJob<LeavePayload>): Promise<void> {
     const verb = job.payload.wasKicked ? 'was removed' : 'left';
-    await sendPushToUsers(
+    await deliverNotification(
       ctx,
       NOTIFICATION_EVENT.LEAVE,
       job.recipientUserIds,

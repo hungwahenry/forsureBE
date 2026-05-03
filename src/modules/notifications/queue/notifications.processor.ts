@@ -3,6 +3,8 @@ import { Logger } from '@nestjs/common';
 import { Job } from 'bullmq';
 import { EmailService } from '../../../email/email.service';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { InboxService } from '../../inbox/inbox.service';
+import { PreferencesService } from '../../preferences/preferences.service';
 import { DevicesService } from '../devices.service';
 import { ExpoPushService } from '../expo-push.service';
 import { ActivityStart1hHandler } from '../handlers/activity-start-1h.handler';
@@ -16,7 +18,6 @@ import type {
   HandlerContext,
   NotificationHandler,
 } from '../handlers/handler.types';
-import { PreferencesService } from '../preferences.service';
 import {
   NOTIFICATIONS_QUEUE,
   type NotificationJob,
@@ -38,6 +39,7 @@ export class NotificationsProcessor extends WorkerHost {
     email: EmailService,
     preferences: PreferencesService,
     devices: DevicesService,
+    inbox: InboxService,
     chatMessage: ChatMessageHandler,
     join: JoinHandler,
     leave: LeaveHandler,
@@ -47,7 +49,7 @@ export class NotificationsProcessor extends WorkerHost {
     activityStart1h: ActivityStart1hHandler,
   ) {
     super();
-    this.ctx = { prisma, expo, email, preferences, devices };
+    this.ctx = { prisma, expo, email, preferences, devices, inbox };
     this.handlers = {
       CHAT_MESSAGE: chatMessage,
       REPLY: chatMessage,

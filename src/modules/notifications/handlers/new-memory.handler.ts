@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { NOTIFICATION_EVENT } from '../../../common/constants/notification-events';
-import { sendPushToUsers } from './handler.helpers';
+import { deliverNotification } from './deliver';
 import type {
   HandlerContext,
   HandlerJob,
@@ -23,7 +23,7 @@ export class NewMemoryHandler implements NotificationHandler<NewMemoryPayload> {
   ): Promise<void> {
     const photoLabel =
       job.payload.photoCount === 1 ? 'a memory' : `${job.payload.photoCount} memories`;
-    await sendPushToUsers(
+    await deliverNotification(
       ctx,
       NOTIFICATION_EVENT.NEW_MEMORY,
       job.recipientUserIds,

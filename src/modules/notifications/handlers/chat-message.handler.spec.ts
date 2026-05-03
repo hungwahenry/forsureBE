@@ -7,9 +7,15 @@ interface TokenRow {
 }
 
 function makeCtx(tokens: TokenRow[] = []): HandlerContext {
+  const findMany = jest.fn().mockImplementation((args: { where?: { userId?: { in?: string[] } } }) => {
+    const ids = args?.where?.userId?.in ?? [];
+    return Promise.resolve(
+      tokens.filter((t) => ids.includes(t.userId)).map((t) => ({ token: t.token })),
+    );
+  });
   return {
     prisma: {
-      notificationDevice: { findMany: jest.fn().mockResolvedValue(tokens) },
+      notificationDevice: { findMany },
       user: { findMany: jest.fn().mockResolvedValue([]) },
     } as never,
     expo: {
@@ -18,6 +24,7 @@ function makeCtx(tokens: TokenRow[] = []): HandlerContext {
     email: { send: jest.fn() } as never,
     preferences: { isEnabled: jest.fn().mockResolvedValue(true) } as never,
     devices: { deleteStaleTokens: jest.fn() } as never,
+    inbox: { write: jest.fn().mockResolvedValue(undefined) } as never,
   };
 }
 

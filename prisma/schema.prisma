@@ -29,6 +29,7 @@ model User {
   activityPosts           ActivityPost[]
   notificationDevices     NotificationDevice[]
   notificationPreferences NotificationPreference[]
+  notifications           Notification[]
 }
 
 enum UserStatus {
@@ -308,8 +309,21 @@ model NotificationDevice {
   @@index([userId])
 }
 
-// Per-event, per-channel opt-in/out. Missing row = use the code's default in NOTIFICATION_EVENT_DEFAULTS.
-// `eventCode` is a string (not enum) so adding events is a code-only change with no migration.
+model Notification {
+  id        String    @id // ntn_...
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  eventCode String
+  title     String
+  body      String
+  data      Json
+  readAt    DateTime? @db.Timestamptz(3)
+  createdAt DateTime  @default(now()) @db.Timestamptz(3)
+
+  @@index([userId, createdAt])
+  @@index([userId, readAt])
+}
+
 model NotificationPreference {
   userId    String
   user      User                @relation(fields: [userId], references: [id], onDelete: Cascade)

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { NOTIFICATION_EVENT } from '../../../common/constants/notification-events';
-import { sendEmailToUsers, sendPushToUsers } from './handler.helpers';
+import { deliverNotification } from './deliver';
 import type {
   HandlerContext,
   HandlerJob,
@@ -29,7 +29,7 @@ export class ActivityStart1hHandler
 
     const title = `${payload.activityEmoji} ${payload.activityTitle}`;
     const body = `${payload.whenLabel} · ${payload.placeName}`;
-    await sendPushToUsers(
+    await deliverNotification(
       ctx,
       NOTIFICATION_EVENT.ACTIVITY_START_1H,
       recipientUserIds,
@@ -37,21 +37,15 @@ export class ActivityStart1hHandler
         title: `starting in ~1 hour`,
         body: `${title} · ${body}`,
         data: { type: 'activity', activityId: payload.activityId },
-      },
-    );
-
-    await sendEmailToUsers(
-      ctx,
-      NOTIFICATION_EVENT.ACTIVITY_START_1H,
-      recipientUserIds,
-      {
-        template: 'activity-starts-soon',
-        data: {
-          activityEmoji: payload.activityEmoji,
-          activityTitle: payload.activityTitle,
-          hostUsername: payload.hostUsername,
-          whenLabel: payload.whenLabel,
-          placeName: payload.placeName,
+        email: {
+          template: 'activity-starts-soon',
+          data: {
+            activityEmoji: payload.activityEmoji,
+            activityTitle: payload.activityTitle,
+            hostUsername: payload.hostUsername,
+            whenLabel: payload.whenLabel,
+            placeName: payload.placeName,
+          },
         },
       },
     );

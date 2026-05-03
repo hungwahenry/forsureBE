@@ -11,7 +11,7 @@ import type { PreferenceUpdateDto } from './dto/update-preferences.dto';
 import {
   serializePreferences,
   type PreferencesDto,
-} from './notifications.serializer';
+} from './preferences.serializer';
 import type { NotificationChannel } from '@prisma/client';
 
 @Injectable()

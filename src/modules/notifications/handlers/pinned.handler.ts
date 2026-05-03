@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { NOTIFICATION_EVENT } from '../../../common/constants/notification-events';
-import { sendPushToUsers } from './handler.helpers';
+import { deliverNotification } from './deliver';
 import type {
   HandlerContext,
   HandlerJob,
@@ -18,7 +18,7 @@ export interface PinnedPayload {
 @Injectable()
 export class PinnedHandler implements NotificationHandler<PinnedPayload> {
   async handle(ctx: HandlerContext, job: HandlerJob<PinnedPayload>): Promise<void> {
-    await sendPushToUsers(
+    await deliverNotification(
       ctx,
       NOTIFICATION_EVENT.PINNED,
       job.recipientUserIds,

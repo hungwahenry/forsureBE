@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { NOTIFICATION_EVENT } from '../../../common/constants/notification-events';
-import { sendPushToUsers } from './handler.helpers';
+import { deliverNotification } from './deliver';
 import type {
   HandlerContext,
   HandlerJob,
@@ -38,7 +38,7 @@ export class ChatMessageHandler implements NotificationHandler<ChatMessagePayloa
       : recipientUserIds;
 
     if (payload.parentAuthorUserId) {
-      await sendPushToUsers(
+      await deliverNotification(
         ctx,
         NOTIFICATION_EVENT.REPLY,
         [payload.parentAuthorUserId],
@@ -51,7 +51,7 @@ export class ChatMessageHandler implements NotificationHandler<ChatMessagePayloa
       );
     }
 
-    await sendPushToUsers(ctx, NOTIFICATION_EVENT.CHAT_MESSAGE, others, {
+    await deliverNotification(ctx, NOTIFICATION_EVENT.CHAT_MESSAGE, others, {
       title,
       body,
       threadId: `chat:${payload.activityId}`,

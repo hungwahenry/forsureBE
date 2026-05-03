@@ -2,6 +2,8 @@ import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import type { Env } from '../../config/env.schema';
+import { InboxModule } from '../inbox/inbox.module';
+import { PreferencesModule } from '../preferences/preferences.module';
 import { DevicesService } from './devices.service';
 import { ExpoPushService } from './expo-push.service';
 import { ActivityStart1hHandler } from './handlers/activity-start-1h.handler';
@@ -12,7 +14,6 @@ import { LeaveHandler } from './handlers/leave.handler';
 import { NewMemoryHandler } from './handlers/new-memory.handler';
 import { PinnedHandler } from './handlers/pinned.handler';
 import { NotificationsController } from './notifications.controller';
-import { PreferencesService } from './preferences.service';
 import { ActivityLifecycleNotifications } from './producers/activity-lifecycle.producer';
 import { ActivityReminderNotifications } from './producers/activity-reminder.producer';
 import { ChatNotifications } from './producers/chat.producer';
@@ -25,6 +26,8 @@ import { NotificationsProcessor } from './queue/notifications.processor';
 
 @Module({
   imports: [
+    InboxModule,
+    PreferencesModule,
     BullModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -39,7 +42,6 @@ import { NotificationsProcessor } from './queue/notifications.processor';
   controllers: [NotificationsController],
   providers: [
     DevicesService,
-    PreferencesService,
     ExpoPushService,
     NotificationsQueue,
     NotificationsProcessor,
