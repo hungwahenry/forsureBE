@@ -92,7 +92,7 @@ export class OnboardingService {
   async complete(
     userId: string,
     dto: CompleteOnboardingDto,
-  ): Promise<{ user: User; profile: Profile }> {
+  ): Promise<{ user: User & { avatarUrl: string }; profile: Profile }> {
     if (calculateAge(dto.dateOfBirth) < MIN_AGE_YEARS) {
       throw new AppException(ErrorCode.VALIDATION_FAILED, {
         message: 'You must be 18 or older to use forsure.',
@@ -135,7 +135,13 @@ export class OnboardingService {
           where: { id: userId },
           data: { onboardingCompletedAt: new Date() },
         });
-        return { user, profile };
+        return {
+          user: {
+            ...user,
+            avatarUrl: this.storage.publicUrl(profile.avatarKey),
+          },
+          profile,
+        };
       });
     } catch (e) {
       if (
