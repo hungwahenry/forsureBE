@@ -33,6 +33,8 @@ model User {
   blocksMade              UserBlock[]              @relation("Blocker")
   blocksReceived          UserBlock[]              @relation("Blocked")
   stepUpChallenges        StepUpChallenge[]
+  emailChangeChallenges   EmailChangeChallenge[]
+  dataExportRequests      DataExportRequest[]
 }
 
 enum UserStatus {
@@ -322,6 +324,38 @@ model UserBlock {
 
   @@unique([blockerId, blockedId])
   @@index([blockedId])
+}
+
+model DataExportRequest {
+  id            String    @id // exp_...
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// PENDING | COMPLETED | FAILED — string so adding states is migration-free.
+  status        String    @default("PENDING")
+  storageKey    String?
+  downloadToken String?   @unique
+  expiresAt     DateTime? @db.Timestamptz(3)
+  consumedAt    DateTime? @db.Timestamptz(3)
+  completedAt   DateTime? @db.Timestamptz(3)
+  failedAt      DateTime? @db.Timestamptz(3)
+  errorMessage  String?
+  createdAt     DateTime  @default(now()) @db.Timestamptz(3)
+
+  @@index([userId, createdAt])
+}
+
+model EmailChangeChallenge {
+  id         String    @id // ech_...
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  newEmail   String
+  codeHash   String
+  attempts   Int       @default(0)
+  expiresAt  DateTime  @db.Timestamptz(3)
+  consumedAt DateTime? @db.Timestamptz(3)
+  createdAt  DateTime  @default(now()) @db.Timestamptz(3)
+
+  @@index([userId, consumedAt])
 }
 
 model StepUpChallenge {

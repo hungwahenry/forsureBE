@@ -1,12 +1,17 @@
 import {
   DeleteObjectCommand,
+  GetObjectCommand,
   PutObjectCommand,
   S3Client,
 } from '@aws-sdk/client-s3';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { Env } from '../../config/env.schema';
-import { PutOptions, StorageProvider } from '../storage.interface';
+import {
+  FetchedObject,
+  PutOptions,
+  StorageProvider,
+} from '../storage.interface';
 
 @Injectable()
 export class S3StorageProvider implements StorageProvider {
@@ -42,6 +47,23 @@ export class S3StorageProvider implements StorageProvider {
         CacheControl: opts.cacheControl,
       }),
     );
+  }
+
+  async get(key: string): Promise<FetchedObject> {
+    const res = await this.client.send(
+      new GetObjectCommand({ Bucket: this.bucket, Key: key }),
+    );
+    if (!res.Body) {
+      throw new Error(`Storage object missing: ${key}`);
+    }
+    const chunks: Buffer[] = [];
+    for await (const chunk of res.Body as AsyncIterable<Buffer>) {
+      chunks.push(chunk);
+    }
+    return {
+      body: Buffer.concat(chunks),
+      contentType: res.ContentType ?? 'application/octet-stream',
+    };
   }
 
   async delete(key: string): Promise<void> {
