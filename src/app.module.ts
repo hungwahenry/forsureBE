@@ -21,6 +21,7 @@ import { ActivitiesModule } from './modules/activities/activities.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { BlocksModule } from './modules/blocks/blocks.module';
 import { ChatsModule } from './modules/chats/chats.module';
+import { EggsModule } from './modules/eggs/eggs.module';
 import { ExploreModule } from './modules/explore/explore.module';
 import { FeedModule } from './modules/feed/feed.module';
 import { InboxModule } from './modules/inbox/inbox.module';
@@ -95,6 +96,7 @@ import { StorageModule } from './storage/storage.module';
     BlocksModule,
     StepUpModule,
     AccountModule,
+    EggsModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })

@@ -35,6 +35,7 @@ model User {
   stepUpChallenges        StepUpChallenge[]
   emailChangeChallenges   EmailChangeChallenge[]
   dataExportRequests      DataExportRequest[]
+  easterEggDiscoveries    EasterEggDiscovery[]
 }
 
 enum UserStatus {
@@ -342,6 +343,18 @@ model DataExportRequest {
   createdAt     DateTime  @default(now()) @db.Timestamptz(3)
 
   @@index([userId, createdAt])
+}
+
+model EasterEggDiscovery {
+  id           String   @id // egd_...
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// Identifier for the egg (e.g. 'credits'). String so adding eggs is migration-free.
+  eggCode      String
+  discoveredAt DateTime @default(now()) @db.Timestamptz(3)
+
+  @@unique([userId, eggCode])
+  @@index([eggCode, discoveredAt])
 }
 
 model EmailChangeChallenge {
