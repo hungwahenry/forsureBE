@@ -1,0 +1,12 @@
+{{#> _layout title="Confirm this action" preheader=(concat "Confirm code: " code)}}
+  <h1 style="font-size:18px;margin:0 0 12px;color:#111;">Confirm action</h1>
+  <p style="margin:0 0 24px;color:#555;line-height:1.5;">
+    Use this code in the app to {{actionLabel}}. It expires in {{ttlMinutes}} minutes.
+  </p>
+  <div style="font-size:32px;font-weight:700;letter-spacing:8px;text-align:center;background:#f4f4f5;border-radius:8px;padding:20px;color:#111;">
+    {{code}}
+  </div>
+  <p style="margin:24px 0 0;font-size:13px;color:#888;line-height:1.5;">
+    If you didn't request this, ignore this email and consider changing your sign-in habits — someone may have your email open.
+  </p>
+{{/_layout}}

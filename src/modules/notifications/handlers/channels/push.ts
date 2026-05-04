@@ -14,10 +14,6 @@ export interface PushSpec {
   threadId?: string;
 }
 
-/**
- * Send a push to each user whose PUSH preference is on for `event`. Reaps
- * tokens that come back as DeviceNotRegistered.
- */
 export async function sendPush(
   ctx: HandlerContext,
   event: NotificationEventCode,

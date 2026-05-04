@@ -16,8 +16,10 @@ import { ConfigModule } from './config/config.module';
 import type { Env } from './config/env.schema';
 import { EmailModule } from './email/email.module';
 import { HealthModule } from './health/health.module';
+import { AccountModule } from './modules/account/account.module';
 import { ActivitiesModule } from './modules/activities/activities.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { BlocksModule } from './modules/blocks/blocks.module';
 import { ChatsModule } from './modules/chats/chats.module';
 import { ExploreModule } from './modules/explore/explore.module';
 import { FeedModule } from './modules/feed/feed.module';
@@ -27,6 +29,7 @@ import { OnboardingModule } from './modules/onboarding/onboarding.module';
 import { PlacesModule } from './modules/places/places.module';
 import { PreferencesModule } from './modules/preferences/preferences.module';
 import { ReportsModule } from './modules/reports/reports.module';
+import { StepUpModule } from './modules/step-up/step-up.module';
 import { UsersModule } from './modules/users/users.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { RealtimeModule } from './realtime/realtime.module';
@@ -89,6 +92,9 @@ import { StorageModule } from './storage/storage.module';
     InboxModule,
     PreferencesModule,
     NotificationsModule,
+    BlocksModule,
+    StepUpModule,
+    AccountModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })

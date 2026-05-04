@@ -12,6 +12,7 @@ import {
   decodeTsIdCursor,
   encodeTsIdCursor,
 } from '../../../common/utils/cursor';
+import { BlocksService } from '../../blocks/blocks.service';
 import { ChatNotifications } from '../../notifications/producers/chat.producer';
 import { ChatEvents, chatRoom } from '../chats.events';
 import type { UploadedImageFile } from '../chats.interface';
@@ -34,6 +35,7 @@ export class MessagesService {
     private readonly realtime: RealtimeService,
     private readonly membership: MembershipService,
     private readonly notifications: ChatNotifications,
+    private readonly blocks: BlocksService,
   ) {}
 
   async listMessages(
@@ -97,6 +99,12 @@ export class MessagesService {
       });
     }
 
+    if (await this.hasBlockingParticipant(userId, activityId)) {
+      throw new AppException(ErrorCode.AUTH_FORBIDDEN, {
+        message: "You can't send messages here.",
+      });
+    }
+
     if (dto.parentMessageId) {
       const parentActivityId = await queries.findReplyTargetActivityId(
         this.prisma,
@@ -140,6 +148,27 @@ export class MessagesService {
     });
     void this.notifications.chatMessage(created.id);
     return dtoOut;
+  }
+
+  /**
+   * Returns true if any other participant in the activity has either blocked
+   * the sender or been blocked by them. Used to gate sendMessage so blocked
+   * pairs can't talk through a shared activity chat.
+   */
+  private async hasBlockingParticipant(
+    senderUserId: string,
+    activityId: string,
+  ): Promise<boolean> {
+    const others = await this.prisma.activityParticipant.findMany({
+      where: { activityId, userId: { not: senderUserId } },
+      select: { userId: true },
+    });
+    for (const p of others) {
+      if (await this.blocks.isEitherBlocked(senderUserId, p.userId)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   async deleteMessage(

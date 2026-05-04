@@ -12,6 +12,7 @@ import {
   decodeTsIdCursor,
   encodeTsIdCursor,
 } from '../../common/utils/cursor';
+import { BlocksService } from '../blocks/blocks.service';
 import { ListUserActivitiesDto } from './dto/list-user-activities.dto';
 import { ListUserPostsDto } from './dto/list-user-posts.dto';
 import {
@@ -33,6 +34,7 @@ export class UsersService {
     private readonly prisma: PrismaService,
     @Inject(STORAGE_PROVIDER_TOKEN)
     private readonly storage: StorageProvider,
+    private readonly blocks: BlocksService,
   ) {}
 
   async getMyProfile(viewerUserId: string): Promise<MyProfileDto> {
@@ -62,6 +64,11 @@ export class UsersService {
     if (profile.userId === viewerUserId) {
       return serializeMyProfile(this.storage, profile.user);
     }
+    if (await this.blocks.isEitherBlocked(viewerUserId, profile.userId)) {
+      throw new AppException(ErrorCode.RESOURCE_NOT_FOUND, {
+        message: 'No user with that username.',
+      });
+    }
     return serializePublicProfile(this.storage, profile.user);
   }
 
@@ -80,6 +87,14 @@ export class UsersService {
       });
     }
     const isSelf = target.userId === viewerUserId;
+    if (
+      !isSelf &&
+      (await this.blocks.isEitherBlocked(viewerUserId, target.userId))
+    ) {
+      throw new AppException(ErrorCode.RESOURCE_NOT_FOUND, {
+        message: 'No user with that username.',
+      });
+    }
     const cursor = query.cursor ? decodeTsIdCursor(query.cursor) : null;
 
     const rows = (await this.prisma.activityPost.findMany({
@@ -155,6 +170,14 @@ export class UsersService {
       });
     }
     const isSelf = target.userId === viewerUserId;
+    if (
+      !isSelf &&
+      (await this.blocks.isEitherBlocked(viewerUserId, target.userId))
+    ) {
+      throw new AppException(ErrorCode.RESOURCE_NOT_FOUND, {
+        message: 'No user with that username.',
+      });
+    }
     const cursor = query.cursor ? decodeTsIdCursor(query.cursor) : null;
 
     const rows = (await this.prisma.activityParticipant.findMany({

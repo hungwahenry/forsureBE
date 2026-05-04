@@ -4,6 +4,7 @@ import { ErrorCode } from '../../../common/constants/error-codes';
 import { AppException } from '../../../common/exceptions/app.exception';
 import { createId } from '../../../common/utils/id';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { BlocksService } from '../../blocks/blocks.service';
 import { MembershipService } from '../../chats/membership/membership.service';
 import { ActivityLifecycleNotifications } from '../../notifications/producers/activity-lifecycle.producer';
 import { isGenderAllowedForActivity } from '../gender-policy';
@@ -17,6 +18,7 @@ export class JoinActivityService {
     private readonly prisma: PrismaService,
     private readonly membership: MembershipService,
     private readonly notifications: ActivityLifecycleNotifications,
+    private readonly blocks: BlocksService,
   ) {}
 
   async join(viewerUserId: string, activityId: string): Promise<void> {
@@ -56,6 +58,19 @@ export class JoinActivityService {
       if (activity.participantCount >= activity.capacity) {
         throw new AppException(ErrorCode.RESOURCE_CONFLICT, {
           message: 'This activity is full.',
+        });
+      }
+
+      const host = await tx.activityParticipant.findFirst({
+        where: { activityId, role: ActivityRole.HOST },
+        select: { userId: true },
+      });
+      if (
+        host &&
+        (await this.blocks.isEitherBlocked(viewerUserId, host.userId))
+      ) {
+        throw new AppException(ErrorCode.AUTH_FORBIDDEN, {
+          message: "You can't join this activity.",
         });
       }
 

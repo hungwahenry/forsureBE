@@ -5,6 +5,11 @@ import { User } from '@prisma/client';
 import { ErrorCode } from '../../common/constants/error-codes';
 import { AppException } from '../../common/exceptions/app.exception';
 import { createId } from '../../common/utils/id';
+import {
+  OTP_RESEND_COOLDOWN_MS,
+  OTP_TTL_MIN,
+  verifyOtp,
+} from '../../common/utils/otp';
 import type { Env } from '../../config/env.schema';
 import { EmailService } from '../../email/email.service';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -23,9 +28,6 @@ import {
 import { generateOtp, generateRefreshToken, sha256 } from './utils/crypto';
 import { parseDurationToMs } from './utils/duration';
 
-const OTP_TTL_MIN = 10;
-const OTP_MAX_ATTEMPTS = 5;
-const OTP_RESEND_COOLDOWN_MS = 60_000;
 
 export interface ClientContext {
   ipAddress?: string;
@@ -104,33 +106,42 @@ export class AuthService {
     ctx: ClientContext,
   ): Promise<TokenPairDto & { user: User; onboardingRequired: boolean }> {
     const verification = await this.prisma.emailVerification.findFirst({
-      where: { email, consumedAt: null, expiresAt: { gt: new Date() } },
+      where: { email, consumedAt: null },
       orderBy: { createdAt: 'desc' },
     });
-
     if (!verification) {
       throw new AppException(ErrorCode.AUTH_INVALID_CREDENTIALS, {
         message: 'Code expired or invalid. Request a new one.',
       });
     }
 
-    if (verification.attempts >= OTP_MAX_ATTEMPTS) {
+    const result = verifyOtp({
+      storedHash: verification.codeHash,
+      attempts: verification.attempts,
+      expiresAt: verification.expiresAt,
+      candidate: code,
+    });
+
+    if (!result.ok) {
+      if (result.reason === 'MISMATCH') {
+        await this.prisma.emailVerification.update({
+          where: { id: verification.id },
+          data: { attempts: { increment: 1 } },
+        });
+        throw new AppException(ErrorCode.AUTH_INVALID_CREDENTIALS, {
+          message: 'Incorrect code.',
+        });
+      }
+      // EXPIRED or TOO_MANY_ATTEMPTS: burn the row so it can't be retried.
       await this.prisma.emailVerification.update({
         where: { id: verification.id },
         data: { consumedAt: new Date() },
       });
       throw new AppException(ErrorCode.AUTH_INVALID_CREDENTIALS, {
-        message: 'Too many attempts. Request a new code.',
-      });
-    }
-
-    if (sha256(code) !== verification.codeHash) {
-      await this.prisma.emailVerification.update({
-        where: { id: verification.id },
-        data: { attempts: { increment: 1 } },
-      });
-      throw new AppException(ErrorCode.AUTH_INVALID_CREDENTIALS, {
-        message: 'Incorrect code.',
+        message:
+          result.reason === 'EXPIRED'
+            ? 'Code expired. Request a new one.'
+            : 'Too many attempts. Request a new code.',
       });
     }
 
