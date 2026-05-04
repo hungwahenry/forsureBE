@@ -38,8 +38,6 @@ export class ProfileEditService {
       data.locationLng = dto.location.lng;
     }
     if (Object.keys(data).length > 0) {
-      // `locationPoint` is a GENERATED ALWAYS column — Postgres recomputes it
-      // from `locationLat`/`locationLng`, so this single update is enough.
       await this.prisma.profile.update({ where: { userId }, data });
     }
     return this.loadMyProfile(userId);
