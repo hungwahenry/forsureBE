@@ -1,15 +1,15 @@
 import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { CurrentUser } from '../../common/decorators/current-user.decorator';
-import type { AuthenticatedUser } from '../../common/decorators/current-user.decorator';
-import { AccountService } from './account.service';
+import { CurrentUser } from '../../../common/decorators/current-user.decorator';
+import type { AuthenticatedUser } from '../../../common/decorators/current-user.decorator';
+import { DeleteAccountService } from './delete.service';
 import { DeleteMeDto } from './dto/delete-me.dto';
 
 @ApiTags('account')
 @ApiBearerAuth()
 @Controller('account')
-export class AccountController {
-  constructor(private readonly account: AccountService) {}
+export class DeleteAccountController {
+  constructor(private readonly deleteAccount: DeleteAccountService) {}
 
   @Post('delete')
   @HttpCode(HttpStatus.NO_CONTENT)
@@ -21,6 +21,6 @@ export class AccountController {
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: DeleteMeDto,
   ): Promise<void> {
-    await this.account.deleteMe(user.id, dto.challengeId, dto.code);
+    await this.deleteAccount.deleteMe(user.id, dto.challengeId, dto.code);
   }
 }

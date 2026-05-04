@@ -1,8 +1,11 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Prisma, Profile, User } from '@prisma/client';
-import sharp from 'sharp';
 import { ErrorCode } from '../../common/constants/error-codes';
 import { AppException } from '../../common/exceptions/app.exception';
+import {
+  processAndStoreAvatar,
+  type UploadedAvatarFile,
+} from '../../common/utils/avatar';
 import { createId } from '../../common/utils/id';
 import { PrismaService } from '../../prisma/prisma.service';
 import { STORAGE_PROVIDER_TOKEN } from '../../storage/storage.interface';
@@ -14,8 +17,6 @@ import {
 } from './onboarding.serializer';
 
 const MIN_AGE_YEARS = 18;
-const MAX_AVATAR_BYTES = 10 * 1024 * 1024;
-const ALLOWED_AVATAR_MIME = new Set(['image/jpeg', 'image/png', 'image/webp']);
 const RESERVED_USERNAMES = new Set([
   'admin',
   'administrator',
@@ -30,12 +31,6 @@ const RESERVED_USERNAMES = new Set([
   'about',
   'settings',
 ]);
-
-interface UploadedAvatarFile {
-  buffer: Buffer;
-  mimetype: string;
-  size: number;
-}
 
 @Injectable()
 export class OnboardingService {
@@ -58,34 +53,7 @@ export class OnboardingService {
     userId: string,
     file: UploadedAvatarFile | undefined,
   ): Promise<AvatarUploadDto> {
-    if (!file) {
-      throw new AppException(ErrorCode.VALIDATION_FAILED, {
-        message: 'No file provided.',
-      });
-    }
-    if (!ALLOWED_AVATAR_MIME.has(file.mimetype)) {
-      throw new AppException(ErrorCode.VALIDATION_FAILED, {
-        message: 'Avatar must be a JPEG, PNG, or WEBP image.',
-      });
-    }
-    if (file.size > MAX_AVATAR_BYTES) {
-      throw new AppException(ErrorCode.VALIDATION_FAILED, {
-        message: 'Avatar exceeds 10MB.',
-      });
-    }
-
-    const processed = await sharp(file.buffer)
-      .rotate() // honor EXIF orientation before metadata is dropped
-      .resize(1024, 1024, { fit: 'inside', withoutEnlargement: true })
-      .webp({ quality: 85 })
-      .toBuffer();
-
-    const key = `avatars/${userId}_${Date.now()}.webp`;
-    await this.storage.put(key, processed, {
-      contentType: 'image/webp',
-      cacheControl: 'public, max-age=31536000, immutable',
-    });
-
+    const key = await processAndStoreAvatar(this.storage, userId, file);
     return serializeAvatarUpload(this.storage, key);
   }
 
