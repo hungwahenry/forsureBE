@@ -1,0 +1,29 @@
+[Unit]
+Description=forsure backend (NestJS)
+After=network.target postgresql.service redis-server.service
+Wants=postgresql.service redis-server.service
+
+[Service]
+Type=simple
+User=deploy
+Group=deploy
+WorkingDirectory=/srv/forsure-be
+EnvironmentFile=/srv/forsure-be/.env
+ExecStart=/usr/bin/node dist/main
+Restart=always
+RestartSec=5
+
+# Stdout/stderr go to journald → query with `journalctl -u forsure-be -f`.
+StandardOutput=journal
+StandardError=journal
+
+# Hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/srv/forsure-be
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target
