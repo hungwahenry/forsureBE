@@ -8,10 +8,7 @@ import {
   STORAGE_PROVIDER_TOKEN,
   type StorageProvider,
 } from '../../storage/storage.interface';
-import {
-  decodeTsIdCursor,
-  encodeTsIdCursor,
-} from '../../common/utils/cursor';
+import { decodeTsIdCursor, encodeTsIdCursor } from '../../common/utils/cursor';
 import { BlocksService } from '../blocks/blocks.service';
 import { ListUserActivitiesDto } from './dto/list-user-activities.dto';
 import { ListUserPostsDto } from './dto/list-user-posts.dto';
@@ -186,9 +183,7 @@ export class UsersService {
         ...(isSelf ? {} : { role: ActivityRole.HOST }),
         activity: {
           status: ActivityStatus.DONE,
-          ...(cursor
-            ? { startsAt: { lt: new Date(cursor.ts) } }
-            : {}),
+          ...(cursor ? { startsAt: { lt: new Date(cursor.ts) } } : {}),
         },
       },
       include: {

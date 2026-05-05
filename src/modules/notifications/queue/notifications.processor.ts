@@ -73,7 +73,7 @@ export class NotificationsProcessor extends WorkerHost {
         recipientUserIds: job.data.recipientUserIds,
         payload: job.data.payload as never,
       });
-    } catch (err) {
+    } catch (err: unknown) {
       this.logger.error(
         { err, jobId: job.id, event: job.data.event },
         'Notification handler failed',

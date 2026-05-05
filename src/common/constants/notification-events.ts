@@ -23,10 +23,6 @@ export interface NotificationEventDefaults {
   email: boolean;
 }
 
-/**
- * Default channel-by-channel state when a user has no explicit preference row.
- * The worker reads this overlaid with the user's overrides.
- */
 export const NOTIFICATION_EVENT_DEFAULTS: Record<
   NotificationEventCode,
   NotificationEventDefaults
@@ -41,7 +37,6 @@ export const NOTIFICATION_EVENT_DEFAULTS: Record<
   ACTIVITY_START_1H: { push: true, email: true },
 };
 
-/** Quick lookup for channel-specific defaults. */
 export function getEventDefault(
   event: NotificationEventCode,
   channel: NotificationChannel,

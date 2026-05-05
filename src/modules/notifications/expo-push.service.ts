@@ -1,6 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Expo, type ExpoPushMessage, type ExpoPushTicket } from 'expo-server-sdk';
+import {
+  Expo,
+  type ExpoPushMessage,
+  type ExpoPushTicket,
+} from 'expo-server-sdk';
 import type { Env } from '../../config/env.schema';
 
 export interface SendResult {
@@ -35,7 +39,7 @@ export class ExpoPushService {
       try {
         const part = await this.expo.sendPushNotificationsAsync(chunk);
         tickets.push(...part);
-      } catch (err) {
+      } catch (err: unknown) {
         this.logger.error({ err }, 'Expo push delivery failed for chunk');
       }
     }

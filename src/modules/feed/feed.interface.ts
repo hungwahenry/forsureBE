@@ -17,4 +17,3 @@ export interface FeedRow {
   participantAvatarKeys: string[] | null;
   genderPreference: 'ALL' | 'MALE' | 'FEMALE';
 }
-

@@ -22,7 +22,7 @@ export class BlocksController {
 
   @Get()
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: "Users the caller has blocked." })
+  @ApiOperation({ summary: 'Users the caller has blocked.' })
   async list(@CurrentUser() user: AuthenticatedUser) {
     return { items: await this.blocks.listBlocked(user.id) };
   }

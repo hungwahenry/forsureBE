@@ -1,4 +1,7 @@
-import type { NotificationChannel, NotificationPreference } from '@prisma/client';
+import type {
+  NotificationChannel,
+  NotificationPreference,
+} from '@prisma/client';
 import {
   NOTIFICATION_EVENT_CODES,
   NOTIFICATION_EVENT_DEFAULTS,

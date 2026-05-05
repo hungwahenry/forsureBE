@@ -21,7 +21,10 @@ export interface ChatMessagePayload {
 
 @Injectable()
 export class ChatMessageHandler implements NotificationHandler<ChatMessagePayload> {
-  async handle(ctx: HandlerContext, job: HandlerJob<ChatMessagePayload>): Promise<void> {
+  async handle(
+    ctx: HandlerContext,
+    job: HandlerJob<ChatMessagePayload>,
+  ): Promise<void> {
     const { recipientUserIds, payload } = job;
     if (recipientUserIds.length === 0) return;
 

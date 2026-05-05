@@ -17,10 +17,7 @@ export class StepUpController {
     summary:
       'Start a step-up challenge for a sensitive action. Emails an OTP and returns a challenge id; the action endpoint then takes { challengeId, code }.',
   })
-  start(
-    @CurrentUser() user: AuthenticatedUser,
-    @Body() dto: StartStepUpDto,
-  ) {
+  start(@CurrentUser() user: AuthenticatedUser, @Body() dto: StartStepUpDto) {
     return this.stepUp.start(user.id, dto.action);
   }
 }

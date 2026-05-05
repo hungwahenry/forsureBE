@@ -1,10 +1,6 @@
 import { ErrorCode } from '../constants/error-codes';
 import { AppException } from '../exceptions/app.exception';
 
-/**
- * Generic base64url + JSON cursor encoder. Use directly when a module needs
- * a cursor shape different from the standard `{ ts, id }` (e.g. feed).
- */
 export function encodeCursor<T>(value: T): string {
   return Buffer.from(JSON.stringify(value), 'utf8').toString('base64url');
 }
@@ -14,7 +10,9 @@ export function decodeCursor<T>(
   validate: (parsed: unknown) => parsed is T,
 ): T {
   try {
-    const parsed = JSON.parse(Buffer.from(raw, 'base64url').toString('utf8'));
+    const parsed: unknown = JSON.parse(
+      Buffer.from(raw, 'base64url').toString('utf8'),
+    );
     if (!validate(parsed)) throw new Error('malformed cursor');
     return parsed;
   } catch {
@@ -24,12 +22,6 @@ export function decodeCursor<T>(
   }
 }
 
-/**
- * Standard chronological cursor — millisecond timestamp + id tiebreaker.
- * Used wherever the listing is ordered by `createdAt` (or `startsAt`) DESC
- * with `id` as the secondary sort key. Shared by chats/messages, explore,
- * users posts, users activities.
- */
 export interface TimestampIdCursor {
   ts: number;
   id: string;

@@ -1,6 +1,3 @@
-/**
- * 12-hour clock with `am`/`pm` suffix. `0` minutes are dropped: `3pm`, `3:30pm`.
- */
 export function formatTime(d: Date): string {
   const hours24 = d.getHours();
   const minutes = d.getMinutes();

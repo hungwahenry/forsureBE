@@ -19,7 +19,8 @@ interface EnqueueOpts {
 @Injectable()
 export class NotificationsQueue {
   constructor(
-    @InjectQueue(NOTIFICATIONS_QUEUE) private readonly queue: Queue<NotificationJob>,
+    @InjectQueue(NOTIFICATIONS_QUEUE)
+    private readonly queue: Queue<NotificationJob>,
   ) {}
 
   async enqueue(job: NotificationJob, opts: EnqueueOpts = {}): Promise<void> {

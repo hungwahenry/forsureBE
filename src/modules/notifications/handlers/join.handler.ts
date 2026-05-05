@@ -16,7 +16,10 @@ export interface JoinPayload {
 
 @Injectable()
 export class JoinHandler implements NotificationHandler<JoinPayload> {
-  async handle(ctx: HandlerContext, job: HandlerJob<JoinPayload>): Promise<void> {
+  async handle(
+    ctx: HandlerContext,
+    job: HandlerJob<JoinPayload>,
+  ): Promise<void> {
     await deliverNotification(
       ctx,
       NOTIFICATION_EVENT.JOIN,

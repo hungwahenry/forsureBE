@@ -1,10 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import type { CursorPage } from '../../common/dto/pagination.dto';
-import {
-  decodeTsIdCursor,
-  encodeTsIdCursor,
-} from '../../common/utils/cursor';
+import { decodeTsIdCursor, encodeTsIdCursor } from '../../common/utils/cursor';
 import { createId } from '../../common/utils/id';
 import { PrismaService } from '../../prisma/prisma.service';
 import type { ListNotificationsDto } from './dto/list-notifications.dto';

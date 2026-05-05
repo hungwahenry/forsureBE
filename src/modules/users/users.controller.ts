@@ -30,7 +30,7 @@ export class UsersController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary:
-      "Public profile by username. Returns the self-shape when the viewer matches.",
+      'Public profile by username. Returns the self-shape when the viewer matches.',
   })
   byUsername(
     @CurrentUser() user: AuthenticatedUser,
@@ -43,7 +43,7 @@ export class UsersController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary:
-      "Memory posts authored by the user. Strangers see only PUBLIC posts on shareable, DONE activities; self sees everything.",
+      'Memory posts authored by the user. Strangers see only PUBLIC posts on shareable, DONE activities; self sees everything.',
   })
   posts(
     @CurrentUser() user: AuthenticatedUser,
@@ -57,7 +57,7 @@ export class UsersController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary:
-      "Past DONE activities the user attended. Strangers see only ones they hosted; self sees both hosted and joined.",
+      'Past DONE activities the user attended. Strangers see only ones they hosted; self sees both hosted and joined.',
   })
   activities(
     @CurrentUser() user: AuthenticatedUser,

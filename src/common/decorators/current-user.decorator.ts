@@ -6,7 +6,6 @@ export interface AuthenticatedUser {
   onboarded: boolean;
 }
 
-/** Resolves the currently authenticated user from the JWT-attached request.user. */
 export const CurrentUser = createParamDecorator(
   (_data: unknown, ctx: ExecutionContext): AuthenticatedUser => {
     const req = ctx.switchToHttp().getRequest<Request>();

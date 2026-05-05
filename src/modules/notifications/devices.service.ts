@@ -40,7 +40,7 @@ export class DevicesService {
     });
   }
 
- async unregister(userId: string, token: string): Promise<void> {
+  async unregister(userId: string, token: string): Promise<void> {
     await this.prisma.notificationDevice.deleteMany({
       where: { userId, token },
     });

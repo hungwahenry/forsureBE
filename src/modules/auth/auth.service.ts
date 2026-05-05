@@ -28,7 +28,6 @@ import {
 import { generateOtp, generateRefreshToken, sha256 } from './utils/crypto';
 import { parseDurationToMs } from './utils/duration';
 
-
 export interface ClientContext {
   ipAddress?: string;
   userAgent?: string;
@@ -175,7 +174,10 @@ export class AuthService {
     };
   }
 
-  async refresh(refreshToken: string, ctx: ClientContext): Promise<TokenPairDto> {
+  async refresh(
+    refreshToken: string,
+    ctx: ClientContext,
+  ): Promise<TokenPairDto> {
     const tokenHash = sha256(refreshToken);
     const stored = await this.prisma.refreshToken.findUnique({
       where: { tokenHash },

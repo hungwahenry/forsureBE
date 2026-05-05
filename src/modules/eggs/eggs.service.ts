@@ -7,7 +7,10 @@ export class EggsService {
   constructor(private readonly prisma: PrismaService) {}
 
   /** Idempotent: returns the original discoveredAt if already recorded. */
-  async record(userId: string, eggCode: string): Promise<{ discoveredAt: Date }> {
+  async record(
+    userId: string,
+    eggCode: string,
+  ): Promise<{ discoveredAt: Date }> {
     const discovery = await this.prisma.easterEggDiscovery.upsert({
       where: { userId_eggCode: { userId, eggCode } },
       create: { id: createId('egd'), userId, eggCode },

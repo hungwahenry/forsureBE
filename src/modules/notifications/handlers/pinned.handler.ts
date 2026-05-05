@@ -17,7 +17,10 @@ export interface PinnedPayload {
 
 @Injectable()
 export class PinnedHandler implements NotificationHandler<PinnedPayload> {
-  async handle(ctx: HandlerContext, job: HandlerJob<PinnedPayload>): Promise<void> {
+  async handle(
+    ctx: HandlerContext,
+    job: HandlerJob<PinnedPayload>,
+  ): Promise<void> {
     await deliverNotification(
       ctx,
       NOTIFICATION_EVENT.PINNED,

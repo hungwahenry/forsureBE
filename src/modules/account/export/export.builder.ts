@@ -15,104 +15,112 @@ export class ExportBuilder {
   ) {}
 
   async build(userId: string): Promise<Buffer> {
-    const [user, profile, participations, messages, posts, prefs, blocks, inbox] =
-      await Promise.all([
-        this.prisma.user.findUniqueOrThrow({
-          where: { id: userId },
-          select: {
-            email: true,
-            createdAt: true,
-            emailVerifiedAt: true,
-            lastLoginAt: true,
-          },
-        }),
-        this.prisma.profile.findUnique({
-          where: { userId },
-          select: {
-            username: true,
-            displayName: true,
-            bio: true,
-            dateOfBirth: true,
-            gender: true,
-            avatarKey: true,
-            placeName: true,
-            locationLat: true,
-            locationLng: true,
-            createdAt: true,
-          },
-        }),
-        this.prisma.activityParticipant.findMany({
-          where: { userId },
-          select: {
-            role: true,
-            joinedAt: true,
-            activity: {
-              select: {
-                id: true,
-                emoji: true,
-                title: true,
-                startsAt: true,
-                placeName: true,
-                placeLat: true,
-                placeLng: true,
-                status: true,
-                createdAt: true,
-              },
+    const [
+      user,
+      profile,
+      participations,
+      messages,
+      posts,
+      prefs,
+      blocks,
+      inbox,
+    ] = await Promise.all([
+      this.prisma.user.findUniqueOrThrow({
+        where: { id: userId },
+        select: {
+          email: true,
+          createdAt: true,
+          emailVerifiedAt: true,
+          lastLoginAt: true,
+        },
+      }),
+      this.prisma.profile.findUnique({
+        where: { userId },
+        select: {
+          username: true,
+          displayName: true,
+          bio: true,
+          dateOfBirth: true,
+          gender: true,
+          avatarKey: true,
+          placeName: true,
+          locationLat: true,
+          locationLng: true,
+          createdAt: true,
+        },
+      }),
+      this.prisma.activityParticipant.findMany({
+        where: { userId },
+        select: {
+          role: true,
+          joinedAt: true,
+          activity: {
+            select: {
+              id: true,
+              emoji: true,
+              title: true,
+              startsAt: true,
+              placeName: true,
+              placeLat: true,
+              placeLng: true,
+              status: true,
+              createdAt: true,
             },
           },
-          orderBy: { joinedAt: 'desc' },
-        }),
-        this.prisma.chatMessage.findMany({
-          where: { senderUserId: userId },
-          select: {
-            id: true,
-            activityId: true,
-            kind: true,
-            body: true,
-            imageKey: true,
-            parentMessageId: true,
-            createdAt: true,
+        },
+        orderBy: { joinedAt: 'desc' },
+      }),
+      this.prisma.chatMessage.findMany({
+        where: { senderUserId: userId },
+        select: {
+          id: true,
+          activityId: true,
+          kind: true,
+          body: true,
+          imageKey: true,
+          parentMessageId: true,
+          createdAt: true,
+        },
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.activityPost.findMany({
+        where: { authorId: userId },
+        select: {
+          id: true,
+          activityId: true,
+          caption: true,
+          visibility: true,
+          createdAt: true,
+          updatedAt: true,
+          photos: {
+            select: { id: true, imageKey: true, sortOrder: true },
+            orderBy: { sortOrder: 'asc' },
           },
-          orderBy: { createdAt: 'desc' },
-        }),
-        this.prisma.activityPost.findMany({
-          where: { authorId: userId },
-          select: {
-            id: true,
-            activityId: true,
-            caption: true,
-            visibility: true,
-            createdAt: true,
-            updatedAt: true,
-            photos: {
-              select: { id: true, imageKey: true, sortOrder: true },
-              orderBy: { sortOrder: 'asc' },
-            },
-          },
-          orderBy: { createdAt: 'desc' },
-        }),
-        this.prisma.notificationPreference.findMany({
-          where: { userId },
-          select: { eventCode: true, channel: true, enabled: true },
-        }),
-        this.prisma.userBlock.findMany({
-          where: { blockerId: userId },
-          select: { blockedId: true, createdAt: true },
-        }),
-        this.prisma.notification.findMany({
-          where: { userId },
-          select: {
-            id: true,
-            eventCode: true,
-            title: true,
-            body: true,
-            data: true,
-            readAt: true,
-            createdAt: true,
-          },
-          orderBy: { createdAt: 'desc' },
-        }),
-      ]);
+        },
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.notificationPreference.findMany({
+        where: { userId },
+        select: { eventCode: true, channel: true, enabled: true },
+      }),
+      this.prisma.userBlock.findMany({
+        where: { blockerId: userId },
+        select: { blockedId: true, createdAt: true },
+      }),
+      this.prisma.notification.findMany({
+        where: { userId },
+        select: {
+          id: true,
+          eventCode: true,
+          title: true,
+          body: true,
+          data: true,
+          readAt: true,
+          createdAt: true,
+        },
+        orderBy: { createdAt: 'desc' },
+      }),
+    ]);
 
     const json = {
       exportedAt: new Date().toISOString(),

@@ -47,9 +47,7 @@ export class DataExportProcessor extends WorkerHost {
         cacheControl: 'no-store',
       });
 
-      const expiresAt = new Date(
-        Date.now() + DOWNLOAD_TTL_HOURS * 60 * 60_000,
-      );
+      const expiresAt = new Date(Date.now() + DOWNLOAD_TTL_HOURS * 60 * 60_000);
       await this.prisma.dataExportRequest.update({
         where: { id: requestId },
         data: {
@@ -75,7 +73,7 @@ export class DataExportProcessor extends WorkerHost {
           ttlHours: DOWNLOAD_TTL_HOURS,
         },
       });
-    } catch (err) {
+    } catch (err: unknown) {
       this.logger.error(
         { err, jobId: job.id, requestId },
         'Data export job failed',

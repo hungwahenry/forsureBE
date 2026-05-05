@@ -22,7 +22,9 @@ export class NewMemoryHandler implements NotificationHandler<NewMemoryPayload> {
     job: HandlerJob<NewMemoryPayload>,
   ): Promise<void> {
     const photoLabel =
-      job.payload.photoCount === 1 ? 'a memory' : `${job.payload.photoCount} memories`;
+      job.payload.photoCount === 1
+        ? 'a memory'
+        : `${job.payload.photoCount} memories`;
     await deliverNotification(
       ctx,
       NOTIFICATION_EVENT.NEW_MEMORY,

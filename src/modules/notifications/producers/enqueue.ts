@@ -30,7 +30,7 @@ export async function enqueueIfBuilt(
         retainCompletedSeconds: built.retainCompletedSeconds,
       },
     );
-  } catch (err) {
+  } catch (err: unknown) {
     log.error({ err, event }, 'Failed to enqueue notification');
   }
 }

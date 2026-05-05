@@ -94,7 +94,7 @@ export class StepUpService {
           actionLabel: STEP_UP_ACTION_LABEL[action],
         },
       });
-    } catch (err) {
+    } catch (err: unknown) {
       if (this.isProd) throw err;
       this.logger.error({ err }, 'Step-up email failed (continuing in dev)');
     }

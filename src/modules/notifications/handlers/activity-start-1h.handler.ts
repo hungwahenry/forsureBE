@@ -18,9 +18,7 @@ export interface ActivityStart1hPayload {
 }
 
 @Injectable()
-export class ActivityStart1hHandler
-  implements NotificationHandler<ActivityStart1hPayload>
-{
+export class ActivityStart1hHandler implements NotificationHandler<ActivityStart1hPayload> {
   async handle(
     ctx: HandlerContext,
     job: HandlerJob<ActivityStart1hPayload>,

@@ -32,7 +32,9 @@ export class InboxController {
 
   @Get('unread-count')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Count of unread notifications for the bell badge.' })
+  @ApiOperation({
+    summary: 'Count of unread notifications for the bell badge.',
+  })
   async unreadCount(@CurrentUser() user: AuthenticatedUser) {
     return { count: await this.inbox.unreadCount(user.id) };
   }

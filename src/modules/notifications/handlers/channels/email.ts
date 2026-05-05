@@ -19,9 +19,16 @@ export async function sendEmail(
   await Promise.all(
     recipients.map(async ({ userId, email }) => {
       try {
-        await ctx.email.send({ to: email, template: spec.template, data: spec.data });
-      } catch (err) {
-        log.error({ err, userId, template: spec.template }, 'Email send failed');
+        await ctx.email.send({
+          to: email,
+          template: spec.template,
+          data: spec.data,
+        });
+      } catch (err: unknown) {
+        log.error(
+          { err, userId, template: spec.template },
+          'Email send failed',
+        );
       }
     }),
   );

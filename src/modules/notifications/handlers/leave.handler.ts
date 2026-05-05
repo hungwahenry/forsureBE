@@ -18,7 +18,10 @@ export interface LeavePayload {
 
 @Injectable()
 export class LeaveHandler implements NotificationHandler<LeavePayload> {
-  async handle(ctx: HandlerContext, job: HandlerJob<LeavePayload>): Promise<void> {
+  async handle(
+    ctx: HandlerContext,
+    job: HandlerJob<LeavePayload>,
+  ): Promise<void> {
     const verb = job.payload.wasKicked ? 'was removed' : 'left';
     await deliverNotification(
       ctx,

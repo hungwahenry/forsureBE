@@ -32,9 +32,7 @@ export class DataExportService {
   ) {}
 
   async request(userId: string): Promise<RequestExportResult> {
-    const cutoff = new Date(
-      Date.now() - REQUEST_COOLDOWN_HOURS * 60 * 60_000,
-    );
+    const cutoff = new Date(Date.now() - REQUEST_COOLDOWN_HOURS * 60 * 60_000);
     const recent = await this.prisma.dataExportRequest.findFirst({
       where: {
         userId,
@@ -45,8 +43,7 @@ export class DataExportService {
     });
     if (recent) {
       throw new AppException(ErrorCode.RESOURCE_CONFLICT, {
-        message:
-          'You already have a recent export. Try again in 24 hours.',
+        message: 'You already have a recent export. Try again in 24 hours.',
       });
     }
 
@@ -90,9 +87,7 @@ export class DataExportService {
       data: { consumedAt: new Date() },
     });
     // Best-effort cleanup of the blob.
-    void this.storage
-      .delete(request.storageKey)
-      .catch(() => undefined);
+    void this.storage.delete(request.storageKey).catch(() => undefined);
 
     return {
       body: fetched.body,
