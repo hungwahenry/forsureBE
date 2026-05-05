@@ -26,10 +26,14 @@ export async function findMessagesPage(
   activityId: string,
   cursor: TimestampIdCursor | null,
   limit: number,
+  blockedSenderIds: string[],
 ): Promise<MessageWithRelations[]> {
   return prisma.chatMessage.findMany({
     where: {
       activityId,
+      ...(blockedSenderIds.length > 0
+        ? { senderUserId: { notIn: blockedSenderIds } }
+        : {}),
       ...(cursor
         ? {
             OR: [

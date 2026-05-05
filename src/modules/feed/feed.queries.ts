@@ -1,7 +1,4 @@
-import {
-  type ActivityGenderPreference,
-  Prisma,
-} from '@prisma/client';
+import { type ActivityGenderPreference, Prisma } from '@prisma/client';
 import type { PrismaService } from '../../prisma/prisma.service';
 import type { FeedCursor } from './feed.cursor';
 import type { FeedRow } from './feed.interface';
@@ -77,6 +74,11 @@ export async function findFeedPage(
       AND NOT EXISTS (
         SELECT 1 FROM "ActivityParticipant" vp
         WHERE vp."activityId" = a.id AND vp."userId" = ${viewerUserId}
+      )
+      AND NOT EXISTS (
+        SELECT 1 FROM "UserBlock" b
+        WHERE (b."blockerId" = ${viewerUserId} AND b."blockedId" = host."userId")
+           OR (b."blockerId" = host."userId" AND b."blockedId" = ${viewerUserId})
       )
       AND a."participantCount" < a.capacity
       ${

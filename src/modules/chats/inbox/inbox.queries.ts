@@ -48,6 +48,11 @@ export async function findChatPreviews(
       FROM "ChatMessage" m
       JOIN "Profile" prof ON prof."userId" = m."senderUserId"
       WHERE m."activityId" = a.id
+        AND NOT EXISTS (
+          SELECT 1 FROM "UserBlock" b
+          WHERE (b."blockerId" = ${userId} AND b."blockedId" = m."senderUserId")
+             OR (b."blockerId" = m."senderUserId" AND b."blockedId" = ${userId})
+        )
       ORDER BY m."createdAt" DESC, m.id DESC
       LIMIT 1
     ) last ON true
@@ -57,7 +62,17 @@ export async function findChatPreviews(
       WHERE m."activityId" = a.id
         AND m."senderUserId" != ${userId}
         AND (me."lastReadAt" IS NULL OR m."createdAt" > me."lastReadAt")
+        AND NOT EXISTS (
+          SELECT 1 FROM "UserBlock" b
+          WHERE (b."blockerId" = ${userId} AND b."blockedId" = m."senderUserId")
+             OR (b."blockerId" = m."senderUserId" AND b."blockedId" = ${userId})
+        )
     ) unread ON true
+    WHERE NOT EXISTS (
+      SELECT 1 FROM "UserBlock" b
+      WHERE (b."blockerId" = ${userId} AND b."blockedId" = host."userId")
+         OR (b."blockerId" = host."userId" AND b."blockedId" = ${userId})
+    )
     ORDER BY COALESCE(last."createdAt", a."createdAt") DESC
   `;
 

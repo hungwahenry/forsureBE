@@ -16,13 +16,18 @@ export class EmailChangeController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary:
-      'Start an email change. Sends a one-time code to the new address; returns a challenge id.',
+      'Start an email change. Requires a step-up CHANGE_EMAIL OTP confirming control of the current email. Sends a one-time code to the new address; returns a challenge id.',
   })
   start(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: StartEmailChangeDto,
   ) {
-    return this.emailChange.start(user.id, dto.newEmail);
+    return this.emailChange.start(
+      user.id,
+      dto.newEmail,
+      dto.stepUpChallengeId,
+      dto.stepUpCode,
+    );
   }
 
   @Post('confirm')

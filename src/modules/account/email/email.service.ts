@@ -1,6 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ErrorCode } from '../../../common/constants/error-codes';
+import { STEP_UP_ACTION } from '../../../common/constants/step-up-actions';
 import { AppException } from '../../../common/exceptions/app.exception';
 import { createId } from '../../../common/utils/id';
 import {
@@ -11,16 +12,16 @@ import {
 import type { Env } from '../../../config/env.schema';
 import { EmailService } from '../../../email/email.service';
 import { PrismaService } from '../../../prisma/prisma.service';
-import { generateOtp, sha256 } from '../../auth/utils/crypto';
-import {
-  serializeMyProfile,
-  type MyProfileDto,
-} from '../../users/users.serializer';
 import {
   STORAGE_PROVIDER_TOKEN,
   type StorageProvider,
 } from '../../../storage/storage.interface';
-import { Inject } from '@nestjs/common';
+import { generateOtp, sha256 } from '../../auth/utils/crypto';
+import { StepUpService } from '../../step-up/step-up.service';
+import {
+  serializeMyProfile,
+  type MyProfileDto,
+} from '../../users/users.serializer';
 import type { EmailChangeStartedDto } from './email.serializer';
 
 @Injectable()
@@ -34,6 +35,7 @@ export class EmailChangeService {
     config: ConfigService<Env, true>,
     @Inject(STORAGE_PROVIDER_TOKEN)
     private readonly storage: StorageProvider,
+    private readonly stepUp: StepUpService,
   ) {
     this.isProd = config.get('NODE_ENV', { infer: true }) === 'production';
   }
@@ -41,7 +43,16 @@ export class EmailChangeService {
   async start(
     userId: string,
     newEmailRaw: string,
+    stepUpChallengeId: string,
+    stepUpCode: string,
   ): Promise<EmailChangeStartedDto> {
+    await this.stepUp.verifyAndConsume({
+      userId,
+      challengeId: stepUpChallengeId,
+      code: stepUpCode,
+      expectedAction: STEP_UP_ACTION.CHANGE_EMAIL,
+    });
+
     const newEmail = newEmailRaw.trim().toLowerCase();
 
     const me = await this.prisma.user.findUniqueOrThrow({
@@ -103,7 +114,7 @@ export class EmailChangeService {
         template: 'otp',
         data: { code, ttlMinutes: OTP_TTL_MIN },
       });
-    } catch (err) {
+    } catch (err: unknown) {
       if (this.isProd) throw err;
       this.logger.error(
         { err },
@@ -175,6 +186,10 @@ export class EmailChangeService {
       this.prisma.emailChangeChallenge.update({
         where: { id: challengeId },
         data: { consumedAt: new Date() },
+      }),
+      this.prisma.refreshToken.updateMany({
+        where: { userId, revokedAt: null },
+        data: { revokedAt: new Date() },
       }),
     ]);
 

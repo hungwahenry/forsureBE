@@ -21,10 +21,7 @@ import { ListMessagesDto } from './dto/list-messages.dto';
 import { SendMessageDto } from './dto/send-message.dto';
 import { processAndStoreChatImage } from './messages.images';
 import * as queries from './messages.queries';
-import {
-  serializeMessage,
-  type ChatMessageDto,
-} from './messages.serializer';
+import { serializeMessage, type ChatMessageDto } from './messages.serializer';
 
 @Injectable()
 export class MessagesService {
@@ -46,11 +43,13 @@ export class MessagesService {
     await this.membership.requireChatMembership(userId, activityId);
 
     const cursor = dto.cursor ? decodeTsIdCursor(dto.cursor) : null;
+    const blockedSenderIds = await this.blocks.listEitherBlockedUserIds(userId);
     const rows = await queries.findMessagesPage(
       this.prisma,
       activityId,
       cursor,
       dto.limit + 1,
+      blockedSenderIds,
     );
 
     const hasMore = rows.length > dto.limit;

@@ -12,6 +12,8 @@ import { ManageActivityController } from './manage/manage.controller';
 import { ManageActivityService } from './manage/manage.service';
 import { ActivityPostsController } from './posts/posts.controller';
 import { ActivityPostsService } from './posts/posts.service';
+import { ActivityPreviewController } from './preview/preview.controller';
+import { ActivityPreviewService } from './preview/preview.service';
 import { AutoDoneScheduler } from './scheduled/auto-done.scheduler';
 import { ActivityStartReminderScheduler } from './scheduled/start-reminder.scheduler';
 
@@ -22,6 +24,7 @@ import { ActivityStartReminderScheduler } from './scheduled/start-reminder.sched
     JoinActivityController,
     ManageActivityController,
     ActivityDetailsController,
+    ActivityPreviewController,
     ActivityPostsController,
   ],
   providers: [
@@ -29,6 +32,7 @@ import { ActivityStartReminderScheduler } from './scheduled/start-reminder.sched
     JoinActivityService,
     ManageActivityService,
     ActivityDetailsService,
+    ActivityPreviewService,
     AutoDoneScheduler,
     ActivityStartReminderScheduler,
     ActivityPostsService,

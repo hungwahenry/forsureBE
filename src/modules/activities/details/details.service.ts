@@ -9,7 +9,6 @@ import { messageInclude } from '../../chats/messages/messages.queries';
 import {
   serializeActivityDetails,
   type ActivityDetailsDto,
-  type ActivityWithRelations,
 } from './details.serializer';
 
 @Injectable()
@@ -27,7 +26,7 @@ export class ActivityDetailsService {
   ): Promise<ActivityDetailsDto> {
     await this.membership.requireChatMembership(userId, activityId);
 
-    const activity = (await this.prisma.activity.findUnique({
+    const activity = await this.prisma.activity.findUnique({
       where: { id: activityId },
       include: {
         participants: {
@@ -36,7 +35,7 @@ export class ActivityDetailsService {
         },
         pinnedMessage: { include: messageInclude },
       },
-    })) as ActivityWithRelations | null;
+    });
 
     if (!activity) {
       throw new AppException(ErrorCode.RESOURCE_NOT_FOUND);

@@ -1,9 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import type { CursorPage } from '../../common/dto/pagination.dto';
-import {
-  decodeTsIdCursor,
-  encodeTsIdCursor,
-} from '../../common/utils/cursor';
+import { decodeTsIdCursor, encodeTsIdCursor } from '../../common/utils/cursor';
 import { PrismaService } from '../../prisma/prisma.service';
 import {
   STORAGE_PROVIDER_TOKEN,
@@ -28,12 +25,14 @@ export class ExploreService {
   ) {}
 
   async listPublicPosts(
+    viewerUserId: string,
     query: ExploreQueryDto,
   ): Promise<CursorPage<ExplorePostDto>> {
     const cursor = query.cursor ? decodeTsIdCursor(query.cursor) : null;
     const limit = query.limit;
 
     const idRows = await findPublicPostIds(this.prisma, {
+      viewerUserId,
       lat: query.lat,
       lng: query.lng,
       radiusMeters: query.radiusKm * 1000,

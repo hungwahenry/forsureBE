@@ -9,6 +9,7 @@ export interface IdRow {
 }
 
 interface FindPublicPostIdsArgs {
+  viewerUserId: string;
   lat: number;
   lng: number;
   radiusMeters: number;
@@ -21,7 +22,8 @@ export async function findPublicPostIds(
   prisma: PrismaService,
   args: FindPublicPostIdsArgs,
 ): Promise<IdRow[]> {
-  const { lat, lng, radiusMeters, windowDays, cursor, limit } = args;
+  const { viewerUserId, lat, lng, radiusMeters, windowDays, cursor, limit } =
+    args;
   return prisma.$queryRaw<IdRow[]>`
     SELECT p.id, p."createdAt"
     FROM "ActivityPost" p
@@ -34,6 +36,11 @@ export async function findPublicPostIds(
         a."placePoint",
         ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326)::geography,
         ${radiusMeters}
+      )
+      AND NOT EXISTS (
+        SELECT 1 FROM "UserBlock" b
+        WHERE (b."blockerId" = ${viewerUserId} AND b."blockedId" = p."authorId")
+           OR (b."blockerId" = p."authorId" AND b."blockedId" = ${viewerUserId})
       )
       ${
         cursor
@@ -49,7 +56,7 @@ export async function findPostsByIds(
   prisma: PrismaService,
   ids: string[],
 ): Promise<ExplorePostRow[]> {
-  return (await prisma.activityPost.findMany({
+  return await prisma.activityPost.findMany({
     where: { id: { in: ids } },
     include: {
       photos: true,
@@ -80,5 +87,5 @@ export async function findPostsByIds(
         },
       },
     },
-  })) as ExplorePostRow[];
+  });
 }
