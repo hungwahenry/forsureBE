@@ -56,6 +56,10 @@ export const envSchema = z
     // --- Push notifications (Expo) ---
     // Optional: enables higher rate limits + receipt fetching from Expo's push service.
     EXPO_ACCESS_TOKEN: z.string().optional(),
+
+    // --- Error reporting (Sentry) ---
+    // Optional: when set, instrument.ts initializes Sentry; otherwise no-op.
+    SENTRY_DSN: z.url().optional(),
   })
   .superRefine((env, ctx) => {
     if (env.STORAGE_DRIVER === 's3') {

@@ -8,6 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { SentryModule } from '@sentry/nestjs/setup';
 import type { Request } from 'express';
 import { LoggerModule } from 'nestjs-pino';
 import { v7 as uuidv7 } from 'uuid';
@@ -38,6 +39,7 @@ import { StorageModule } from './storage/storage.module';
 
 @Module({
   imports: [
+    SentryModule.forRoot(),
     ConfigModule,
 
     LoggerModule.forRootAsync({
