@@ -39,6 +39,7 @@ export interface ActivityDetailsDto {
   host: ActivityParticipantDto;
   members: ActivityParticipantDto[];
   pinnedMessage: ChatMessageDto | null;
+  hmsRoomId: string | null;
 }
 
 type ParticipantWithUser = ActivityParticipant & {
@@ -86,6 +87,7 @@ export function serializeActivityDetails(
     pinnedMessage: activity.pinnedMessage
       ? serializeMessage(storage, activity.pinnedMessage)
       : null,
+    hmsRoomId: activity.hmsRoomId ?? null,
   };
 }
 

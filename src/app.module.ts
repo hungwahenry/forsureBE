@@ -21,6 +21,7 @@ import { AccountModule } from './modules/account/account.module';
 import { ActivitiesModule } from './modules/activities/activities.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { BlocksModule } from './modules/blocks/blocks.module';
+import { CallsModule } from './modules/calls/calls.module';
 import { ChatsModule } from './modules/chats/chats.module';
 import { EggsModule } from './modules/eggs/eggs.module';
 import { ExploreModule } from './modules/explore/explore.module';
@@ -86,6 +87,7 @@ import { StorageModule } from './storage/storage.module';
     RealtimeModule,
     OnboardingModule,
     ActivitiesModule,
+    CallsModule,
     FeedModule,
     PlacesModule,
     ChatsModule,

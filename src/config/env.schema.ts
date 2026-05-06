@@ -60,6 +60,11 @@ export const envSchema = z
     // --- Error reporting (Sentry) ---
     // Optional: when set, instrument.ts initializes Sentry; otherwise no-op.
     SENTRY_DSN: z.url().optional(),
+
+    // --- Video calls (100ms) ---
+    HMS_APP_ID: z.string().min(1),
+    HMS_APP_SECRET: z.string().min(1),
+    HMS_TEMPLATE_ID: z.string().min(1),
   })
   .superRefine((env, ctx) => {
     if (env.STORAGE_DRIVER === 's3') {

@@ -126,6 +126,7 @@ model Activity {
   status                    ActivityStatus                         @default(OPEN)
   memoriesShareablePublicly Boolean                                @default(false)
   pinnedMessageId           String?                                @unique
+  hmsRoomId                 String?                                // 100ms room ID, set at creation
   createdAt                 DateTime                               @default(now()) @db.Timestamptz(3)
   updatedAt                 DateTime                               @updatedAt @db.Timestamptz(3)
 
