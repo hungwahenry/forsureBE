@@ -4,6 +4,8 @@ import { PrismaService } from '../../../prisma/prisma.service';
 import { NotificationsQueue } from '../queue/notifications.queue';
 import { enqueueIfBuilt } from './enqueue';
 
+const ACTIVE_THRESHOLD_MS = 60_000;
+
 @Injectable()
 export class ChatNotifications {
   constructor(
@@ -42,7 +44,7 @@ export class ChatNotifications {
               activityId: msg.activityId,
               userId: { not: msg.senderUserId },
             },
-            select: { userId: true },
+            select: { userId: true, lastReadAt: true },
           }),
           msg.parentMessageId
             ? this.prisma.chatMessage.findUnique({
@@ -52,6 +54,15 @@ export class ChatNotifications {
             : Promise.resolve(null),
         ]);
         if (!activity || !sender || participants.length === 0) return null;
+
+        const now = Date.now();
+        const activeChatUserIds = participants
+          .filter(
+            (p) =>
+              p.lastReadAt &&
+              now - p.lastReadAt.getTime() < ACTIVE_THRESHOLD_MS,
+          )
+          .map((p) => p.userId);
 
         const parentAuthorUserId =
           parent && parent.senderUserId !== msg.senderUserId
@@ -69,6 +80,7 @@ export class ChatNotifications {
             body: msg.body,
             hasImage: msg.imageKey != null,
             parentAuthorUserId,
+            activeChatUserIds,
           },
         };
       },

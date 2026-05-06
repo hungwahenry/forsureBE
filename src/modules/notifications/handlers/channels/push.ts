@@ -10,8 +10,8 @@ export interface PushSpec {
   title: string;
   body: string;
   data?: Record<string, unknown>;
-  /** OS-level grouping key (iOS thread / Android tag). */
   threadId?: string;
+  collapseId?: string;
 }
 
 export async function sendPush(
@@ -33,6 +33,7 @@ export async function sendPush(
     data: spec.data,
     sound: 'default',
     ...(spec.threadId ? { threadId: spec.threadId } : {}),
+    ...(spec.collapseId ? { collapseId: spec.collapseId } : {}),
   }));
 
   const { invalidTokens } = await ctx.expo.send(messages);

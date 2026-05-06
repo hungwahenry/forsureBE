@@ -19,6 +19,10 @@ export interface InboxRow {
   data: Record<string, unknown>;
 }
 
+export interface GroupedInboxRow extends InboxRow {
+  groupKey: string;
+}
+
 @Injectable()
 export class InboxService {
   constructor(private readonly prisma: PrismaService) {}
@@ -38,6 +42,33 @@ export class InboxService {
     });
   }
 
+  async writeGrouped(rows: GroupedInboxRow[]): Promise<void> {
+    if (rows.length === 0) return;
+    const now = new Date();
+    await Promise.all(
+      rows.map((r) =>
+        this.prisma.notification.upsert({
+          where: { userId_groupKey: { userId: r.userId, groupKey: r.groupKey } },
+          create: {
+            id: createId('ntn'),
+            userId: r.userId,
+            eventCode: r.eventCode,
+            title: r.title,
+            body: r.body,
+            data: r.data as Prisma.InputJsonValue,
+            groupKey: r.groupKey,
+          },
+          update: {
+            title: r.title,
+            body: r.body,
+            data: r.data as Prisma.InputJsonValue,
+            readAt: null,
+            createdAt: now,
+          },
+        }),
+      ),
+    );
+  }
   async list(
     userId: string,
     query: ListNotificationsDto,

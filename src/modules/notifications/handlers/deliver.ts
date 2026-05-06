@@ -1,4 +1,5 @@
 import type { NotificationEventCode } from '../../../common/constants/notification-events';
+import type { GroupedInboxRow } from '../../inbox/inbox.service';
 import { sendEmail, type EmailSpec } from './channels/email';
 import { sendPush } from './channels/push';
 import type { HandlerContext } from './handler.types';
@@ -9,13 +10,10 @@ export interface DeliverSpec {
   data?: Record<string, unknown>;
   threadId?: string;
   email?: EmailSpec;
+  groupKey?: string;
+  suppressPushFor?: string[];
 }
 
-/**
- * Single entry point for handlers. Persists an inbox row per recipient
- * (always), then dispatches push and (optionally) email — each gated by
- * the recipient's per-channel preference.
- */
 export async function deliverNotification(
   ctx: HandlerContext,
   event: NotificationEventCode,
@@ -26,21 +24,40 @@ export async function deliverNotification(
 
   const data = spec.data ?? {};
 
-  await ctx.inbox.write(
-    recipientUserIds.map((userId) => ({
-      userId,
-      eventCode: event,
-      title: spec.title,
-      body: spec.body,
-      data,
-    })),
-  );
+  if (spec.groupKey) {
+    await ctx.inbox.writeGrouped(
+      recipientUserIds.map((userId): GroupedInboxRow => ({
+        userId,
+        eventCode: event,
+        title: spec.title,
+        body: spec.body,
+        data,
+        groupKey: spec.groupKey!,
+      })),
+    );
+  } else {
+    await ctx.inbox.write(
+      recipientUserIds.map((userId) => ({
+        userId,
+        eventCode: event,
+        title: spec.title,
+        body: spec.body,
+        data,
+      })),
+    );
+  }
 
-  await sendPush(ctx, event, recipientUserIds, {
+  const pushRecipients =
+    spec.suppressPushFor?.length
+      ? recipientUserIds.filter((id) => !spec.suppressPushFor!.includes(id))
+      : recipientUserIds;
+
+  await sendPush(ctx, event, pushRecipients, {
     title: spec.title,
     body: spec.body,
     data,
     threadId: spec.threadId,
+    collapseId: spec.groupKey ?? spec.threadId,
   });
 
   if (spec.email) {

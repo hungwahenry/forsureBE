@@ -15,8 +15,8 @@ export interface ChatMessagePayload {
   senderDisplayName: string;
   body: string | null;
   hasImage: boolean;
-  /** When set, this is a reply — handler picks the REPLY event for the parent author. */
   parentAuthorUserId?: string;
+  activeChatUserIds?: string[];
 }
 
 @Injectable()
@@ -36,6 +36,10 @@ export class ChatMessageHandler implements NotificationHandler<ChatMessagePayloa
     const title = `${payload.activityEmoji} ${payload.activityTitle}`;
     const body = `@${payload.senderUsername}: ${preview}`.trim();
 
+    const threadId = `chat:${payload.activityId}`;
+    const groupKey = `CHAT_MESSAGE:${payload.activityId}`;
+    const suppressPushFor = payload.activeChatUserIds ?? [];
+
     const others = payload.parentAuthorUserId
       ? recipientUserIds.filter((id) => id !== payload.parentAuthorUserId)
       : recipientUserIds;
@@ -48,7 +52,9 @@ export class ChatMessageHandler implements NotificationHandler<ChatMessagePayloa
         {
           title: `@${payload.senderUsername} replied`,
           body: preview,
-          threadId: `chat:${payload.activityId}`,
+          threadId,
+          groupKey: `REPLY:${payload.activityId}`,
+          suppressPushFor,
           data: { type: 'chat', activityId: payload.activityId },
         },
       );
@@ -57,7 +63,9 @@ export class ChatMessageHandler implements NotificationHandler<ChatMessagePayloa
     await deliverNotification(ctx, NOTIFICATION_EVENT.CHAT_MESSAGE, others, {
       title,
       body,
-      threadId: `chat:${payload.activityId}`,
+      threadId,
+      groupKey,
+      suppressPushFor,
       data: { type: 'chat', activityId: payload.activityId },
     });
   }

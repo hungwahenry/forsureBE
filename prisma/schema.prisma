@@ -393,9 +393,11 @@ model Notification {
   title     String
   body      String
   data      Json
+  groupKey  String?
   readAt    DateTime? @db.Timestamptz(3)
   createdAt DateTime  @default(now()) @db.Timestamptz(3)
 
+  @@unique([userId, groupKey])
   @@index([userId, createdAt])
   @@index([userId, readAt])
 }
