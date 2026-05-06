@@ -74,7 +74,7 @@ chown -R "${APP_USER}:${APP_USER}" "/home/${APP_USER}/.ssh"
 
 # Allow systemctl restart/status without password — required by GitHub Action.
 cat > /etc/sudoers.d/forsure-deploy <<EOF
-${APP_USER} ALL=(root) NOPASSWD: /usr/bin/systemctl restart ${APP_NAME}, /usr/bin/systemctl status ${APP_NAME}, /usr/bin/systemctl reload caddy
+${APP_USER} ALL=(root) NOPASSWD: /usr/bin/systemctl start ${APP_NAME}, /usr/bin/systemctl stop ${APP_NAME}, /usr/bin/systemctl restart ${APP_NAME}, /usr/bin/systemctl status ${APP_NAME}, /usr/bin/systemctl reload caddy, /usr/bin/systemctl restart caddy
 EOF
 chmod 440 /etc/sudoers.d/forsure-deploy
 
