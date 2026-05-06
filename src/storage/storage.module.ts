@@ -8,17 +8,13 @@ import { STORAGE_PROVIDER_TOKEN, StorageProvider } from './storage.interface';
 @Global()
 @Module({
   providers: [
-    LocalStorageProvider,
-    S3StorageProvider,
     {
       provide: STORAGE_PROVIDER_TOKEN,
-      inject: [ConfigService, LocalStorageProvider, S3StorageProvider],
-      useFactory: (
-        config: ConfigService<Env, true>,
-        local: LocalStorageProvider,
-        s3: S3StorageProvider,
-      ): StorageProvider =>
-        config.get('STORAGE_DRIVER', { infer: true }) === 's3' ? s3 : local,
+      inject: [ConfigService],
+      useFactory: (config: ConfigService<Env, true>): StorageProvider =>
+        config.get('STORAGE_DRIVER', { infer: true }) === 's3'
+          ? new S3StorageProvider(config)
+          : new LocalStorageProvider(config),
     },
   ],
   exports: [STORAGE_PROVIDER_TOKEN],
