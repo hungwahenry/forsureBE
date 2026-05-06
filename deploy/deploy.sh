@@ -10,7 +10,7 @@ git fetch --quiet origin main
 git reset --hard origin/main
 
 echo "▸ Installing deps (postinstall runs prisma generate)"
-npm ci
+npm ci --include=dev
 
 echo "▸ Building"
 npm run build

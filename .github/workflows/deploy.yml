@@ -22,7 +22,7 @@ jobs:
             cd /srv/forsure-be
             git fetch --quiet origin main
             git reset --hard origin/main
-            npm ci
+            npm ci --include=dev
             npm run build
             npx prisma migrate deploy
             sudo systemctl restart forsure-be
