@@ -95,7 +95,8 @@ export class GooglePlacesClient {
 
   private async toError(res: Response, op: string): Promise<AppException> {
     const text = await res.text().catch(() => '');
-    this.logger.warn(
+    const isOperational = res.status >= 500 || res.status === 403 || res.status === 429;
+    this.logger[isOperational ? 'warn' : 'error'](
       { status: res.status, body: text.slice(0, 500), op },
       'Google Places request failed',
     );
@@ -104,13 +105,8 @@ export class GooglePlacesClient {
         message: 'Place not found.',
       });
     }
-    if (res.status >= 500) {
-      return new AppException(ErrorCode.INTERNAL_ERROR, {
-        message: 'Place search is unavailable. Try again in a moment.',
-      });
-    }
-    return new AppException(ErrorCode.VALIDATION_FAILED, {
-      message: 'Place lookup failed.',
+    return new AppException(ErrorCode.INTERNAL_ERROR, {
+      message: 'Place search is unavailable. Try again in a moment.',
     });
   }
 }
