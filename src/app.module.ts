@@ -19,6 +19,7 @@ import { EmailModule } from './email/email.module';
 import { HealthModule } from './health/health.module';
 import { AccountModule } from './modules/account/account.module';
 import { ActivitiesModule } from './modules/activities/activities.module';
+import { AdminModule } from './modules/admin/admin.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { BlocksModule } from './modules/blocks/blocks.module';
 import { ChatsModule } from './modules/chats/chats.module';
@@ -99,6 +100,7 @@ import { StorageModule } from './storage/storage.module';
     StepUpModule,
     AccountModule,
     EggsModule,
+    AdminModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })

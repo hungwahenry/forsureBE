@@ -15,10 +15,18 @@ model User {
   email                 String     @unique
   emailVerifiedAt       DateTime?  @db.Timestamptz(3)
   status                UserStatus @default(ACTIVE)
+  role                  UserRole   @default(USER)
   onboardingCompletedAt DateTime?  @db.Timestamptz(3)
   lastLoginAt           DateTime?  @db.Timestamptz(3)
   createdAt             DateTime   @default(now()) @db.Timestamptz(3)
   updatedAt             DateTime   @updatedAt @db.Timestamptz(3)
+
+  /// Populated when status = SUSPENDED. Null suspendedUntil means indefinite.
+  suspendedAt     DateTime? @db.Timestamptz(3)
+  suspendedUntil  DateTime? @db.Timestamptz(3)
+  suspendedReason String?
+  suspendedById   String?
+  suspendedBy     User?     @relation("UserSuspensions", fields: [suspendedById], references: [id], onDelete: SetNull)
 
   profile                 Profile?
   emailVerifications      EmailVerification[]
@@ -36,12 +44,26 @@ model User {
   emailChangeChallenges   EmailChangeChallenge[]
   dataExportRequests      DataExportRequest[]
   easterEggDiscoveries    EasterEggDiscovery[]
+
+  // ----- Admin / moderation reverse relations -----
+  suspensionsIssued    User[]          @relation("UserSuspensions")
+  adminAuditLogs       AdminAuditLog[] @relation("AdminAuditLogs")
+  chatMessagesDeleted  ChatMessage[]   @relation("ChatMessageDeletedBy")
+  activityPostsDeleted ActivityPost[]  @relation("ActivityPostDeletedBy")
+  activitiesDeleted    Activity[]      @relation("ActivityDeletedBy")
+  featureFlagsUpdated  FeatureFlag[]   @relation("FeatureFlagUpdatedBy")
 }
 
 enum UserStatus {
   ACTIVE
   SUSPENDED
   DELETED
+}
+
+enum UserRole {
+  USER
+  ADMIN
+  SUPER_ADMIN
 }
 
 model EmailVerification {
@@ -129,6 +151,12 @@ model Activity {
   createdAt                 DateTime                               @default(now()) @db.Timestamptz(3)
   updatedAt                 DateTime                               @updatedAt @db.Timestamptz(3)
 
+  /// Admin soft-delete (takedown). Distinct from user-initiated CANCELLED status.
+  deletedAt     DateTime? @db.Timestamptz(3)
+  deletedById   String?
+  deletedBy     User?     @relation("ActivityDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull)
+  deletedReason String?
+
   participants  ActivityParticipant[]
   chatMessages  ChatMessage[]
   pinnedMessage ChatMessage?          @relation("ActivityPinnedMessage", fields: [pinnedMessageId], references: [id], onDelete: SetNull)
@@ -189,6 +217,12 @@ model ChatMessage {
   imageKey        String?
   parentMessageId String?
   createdAt       DateTime        @default(now()) @db.Timestamptz(3)
+
+  /// Admin soft-delete (takedown). User-initiated deletes still hard-delete.
+  deletedAt     DateTime? @db.Timestamptz(3)
+  deletedById   String?
+  deletedBy     User?     @relation("ChatMessageDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull)
+  deletedReason String?
 
   activity         Activity      @relation(fields: [activityId], references: [id], onDelete: Cascade)
   sender           User          @relation(fields: [senderUserId], references: [id], onDelete: Cascade)
@@ -265,6 +299,12 @@ model ActivityPost {
   visibility PostVisibility
   createdAt  DateTime       @default(now()) @db.Timestamptz(3)
   updatedAt  DateTime       @updatedAt @db.Timestamptz(3)
+
+  /// Admin soft-delete (takedown). User-initiated deletes still hard-delete.
+  deletedAt     DateTime? @db.Timestamptz(3)
+  deletedById   String?
+  deletedBy     User?     @relation("ActivityPostDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull)
+  deletedReason String?
 
   activity Activity            @relation(fields: [activityId], references: [id], onDelete: Cascade)
   author   User                @relation(fields: [authorId], references: [id], onDelete: Cascade)
@@ -413,4 +453,37 @@ model NotificationPreference {
 
   @@id([userId, eventCode, channel])
   @@index([userId])
+}
+
+// ----- Admin -----
+
+model AdminAuditLog {
+  id         String   @id // aal_...
+  adminId    String
+  admin      User     @relation("AdminAuditLogs", fields: [adminId], references: [id], onDelete: Restrict)
+  /// Action code, e.g. USER_SUSPENDED. String so adding actions is migration-free.
+  action     String
+  /// Target entity type, e.g. USER. Nullable for non-targeted actions (e.g. broadcast push).
+  targetType String?
+  targetId   String?
+  before     Json?
+  after      Json?
+  reason     String?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now()) @db.Timestamptz(3)
+
+  @@index([adminId, createdAt])
+  @@index([targetType, targetId])
+  @@index([createdAt])
+}
+
+model FeatureFlag {
+  key         String   @id
+  enabled     Boolean  @default(false)
+  description String?
+  updatedById String?
+  updatedBy   User?    @relation("FeatureFlagUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime @updatedAt @db.Timestamptz(3)
 }
