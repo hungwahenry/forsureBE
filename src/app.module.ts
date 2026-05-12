@@ -35,6 +35,7 @@ import { ReportsModule } from './modules/reports/reports.module';
 import { StepUpModule } from './modules/step-up/step-up.module';
 import { UsersModule } from './modules/users/users.module';
 import { CronModule } from './common/cron/cron.module';
+import { FeatureFlagsModule } from './common/feature-flags/feature-flags.module';
 import { SentryContextInterceptor } from './common/interceptors/sentry-context.interceptor';
 import { PrismaModule } from './prisma/prisma.module';
 import { RealtimeModule } from './realtime/realtime.module';
@@ -83,6 +84,7 @@ import { StorageModule } from './storage/storage.module';
 
     PrismaModule,
     CronModule,
+    FeatureFlagsModule,
     EmailModule,
     StorageModule,
     HealthModule,

@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AdminActivitiesModule } from './activities/activities.module';
 import { AdminBlocksModule } from './blocks/blocks.module';
+import { AdminFeatureFlagsModule } from './feature-flags/feature-flags.module';
 import { AdminMeModule } from './me/me.module';
 import { AdminMessagesModule } from './messages/messages.module';
 import { AdminPostsModule } from './posts/posts.module';
@@ -24,6 +25,7 @@ import { AdminUsersModule } from './users/users.module';
     AdminSessionsModule,
     AdminQueuesModule,
     AdminCronModule,
+    AdminFeatureFlagsModule,
   ],
 })
 export class AdminModule {}
