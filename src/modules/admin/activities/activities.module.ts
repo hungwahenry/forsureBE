@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AdminSharedModule } from '../shared/admin-shared.module';
-import { AdminActivitiesController } from './activities.controller';
-import { AdminActivitiesService } from './activities.service';
+import { AdminActivitiesActionsController } from './actions/actions.controller';
+import { AdminActivitiesActionsService } from './actions/actions.service';
 import { AdminActivitiesDetailController } from './detail/detail.controller';
 import { AdminActivitiesDetailService } from './detail/detail.service';
 import { AdminActivitiesListController } from './list/list.controller';
@@ -18,22 +18,22 @@ import { AdminActivityReportsService } from './reports/reports.service';
 @Module({
   imports: [AdminSharedModule],
   controllers: [
-    AdminActivitiesController,
     AdminActivitiesListController,
     AdminActivitiesDetailController,
     AdminActivityParticipantsController,
     AdminActivityMessagesController,
     AdminActivityPostsController,
     AdminActivityReportsController,
+    AdminActivitiesActionsController,
   ],
   providers: [
-    AdminActivitiesService,
     AdminActivitiesListService,
     AdminActivitiesDetailService,
     AdminActivityParticipantsService,
     AdminActivityMessagesService,
     AdminActivityPostsService,
     AdminActivityReportsService,
+    AdminActivitiesActionsService,
   ],
 })
 export class AdminActivitiesModule {}
