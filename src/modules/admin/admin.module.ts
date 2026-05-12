@@ -3,6 +3,7 @@ import { AdminActivitiesModule } from './activities/activities.module';
 import { AdminMeModule } from './me/me.module';
 import { AdminMessagesModule } from './messages/messages.module';
 import { AdminPostsModule } from './posts/posts.module';
+import { AdminReportReasonsModule } from './report-reasons/report-reasons.module';
 import { AdminReportsModule } from './reports/reports.module';
 import { AdminUsersModule } from './users/users.module';
 
@@ -11,6 +12,7 @@ import { AdminUsersModule } from './users/users.module';
     AdminMeModule,
     AdminUsersModule,
     AdminReportsModule,
+    AdminReportReasonsModule,
     AdminMessagesModule,
     AdminPostsModule,
     AdminActivitiesModule,
