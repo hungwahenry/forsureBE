@@ -38,7 +38,7 @@ export class ActivityPreviewService {
       this.blocks.listEitherBlockedUserIds(viewerId),
     ]);
 
-    if (!activity) {
+    if (!activity || activity.deletedAt) {
       throw new AppException(ErrorCode.RESOURCE_NOT_FOUND);
     }
 

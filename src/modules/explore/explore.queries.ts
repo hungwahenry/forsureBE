@@ -31,6 +31,8 @@ export async function findPublicPostIds(
     WHERE p.visibility = 'PUBLIC'
       AND a.status = 'DONE'
       AND a."memoriesShareablePublicly" = true
+      AND p."deletedAt" IS NULL
+      AND a."deletedAt" IS NULL
       AND p."createdAt" >= NOW() - (${windowDays} || ' days')::interval
       AND ST_DWithin(
         a."placePoint",
@@ -57,7 +59,7 @@ export async function findPostsByIds(
   ids: string[],
 ): Promise<ExplorePostRow[]> {
   return await prisma.activityPost.findMany({
-    where: { id: { in: ids } },
+    where: { id: { in: ids }, deletedAt: null },
     include: {
       photos: true,
       author: { include: { profile: true } },

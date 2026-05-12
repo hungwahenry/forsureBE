@@ -29,6 +29,7 @@ export class AutoDoneScheduler {
         where: {
           status: { in: [ActivityStatus.OPEN, ActivityStatus.FULL] },
           startsAt: { lt: cutoff },
+          deletedAt: null,
         },
         select: {
           id: true,

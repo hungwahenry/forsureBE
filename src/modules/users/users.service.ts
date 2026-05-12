@@ -97,6 +97,7 @@ export class UsersService {
     const rows = (await this.prisma.activityPost.findMany({
       where: {
         authorId: target.userId,
+        deletedAt: null,
         ...(isSelf
           ? {}
           : {
@@ -104,6 +105,7 @@ export class UsersService {
               activity: {
                 status: 'DONE',
                 memoriesShareablePublicly: true,
+                deletedAt: null,
               },
             }),
         ...(cursor
@@ -183,6 +185,7 @@ export class UsersService {
         ...(isSelf ? {} : { role: ActivityRole.HOST }),
         activity: {
           status: ActivityStatus.DONE,
+          deletedAt: null,
           ...(cursor ? { startsAt: { lt: new Date(cursor.ts) } } : {}),
         },
       },

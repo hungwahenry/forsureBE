@@ -37,7 +37,7 @@ export class ActivityDetailsService {
       },
     });
 
-    if (!activity) {
+    if (!activity || activity.deletedAt) {
       throw new AppException(ErrorCode.RESOURCE_NOT_FOUND);
     }
 

@@ -30,6 +30,7 @@ export class ActivityStartReminderScheduler {
         where: {
           status: { in: [ActivityStatus.OPEN, ActivityStatus.FULL] },
           startsAt: { gte: lower, lt: upper },
+          deletedAt: null,
         },
         select: { id: true },
       });

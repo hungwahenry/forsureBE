@@ -79,12 +79,14 @@ export class MessagesService {
 
     const activity = await this.prisma.activity.findUnique({
       where: { id: activityId },
-      select: { status: true },
+      select: { status: true, deletedAt: true },
     });
+    if (!activity || activity.deletedAt) {
+      throw new AppException(ErrorCode.RESOURCE_NOT_FOUND);
+    }
     if (
-      activity &&
-      (activity.status === ActivityStatus.CANCELLED ||
-        activity.status === ActivityStatus.DONE)
+      activity.status === ActivityStatus.CANCELLED ||
+      activity.status === ActivityStatus.DONE
     ) {
       throw new AppException(ErrorCode.RESOURCE_CONFLICT, {
         message: 'This chat is read-only.',

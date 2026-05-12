@@ -26,7 +26,7 @@ export class JoinActivityService {
       const activity = await tx.activity.findUnique({
         where: { id: activityId },
       });
-      if (!activity) {
+      if (!activity || activity.deletedAt) {
         throw new AppException(ErrorCode.RESOURCE_NOT_FOUND);
       }
       if (activity.status !== ActivityStatus.OPEN) {

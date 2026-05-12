@@ -31,6 +31,7 @@ export async function findMessagesPage(
   return prisma.chatMessage.findMany({
     where: {
       activityId,
+      deletedAt: null,
       ...(blockedSenderIds.length > 0
         ? { senderUserId: { notIn: blockedSenderIds } }
         : {}),

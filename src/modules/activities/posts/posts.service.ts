@@ -45,7 +45,7 @@ export class ActivityPostsService {
 
     let where: Prisma.ActivityPostWhereInput;
     if (isParticipant) {
-      where = { activityId };
+      where = { activityId, deletedAt: null };
     } else {
       const publiclyVisible =
         activity.status === ActivityStatus.DONE &&
@@ -53,7 +53,11 @@ export class ActivityPostsService {
       if (!publiclyVisible) {
         throw new AppException(ErrorCode.AUTH_FORBIDDEN);
       }
-      where = { activityId, visibility: PostVisibility.PUBLIC };
+      where = {
+        activityId,
+        visibility: PostVisibility.PUBLIC,
+        deletedAt: null,
+      };
     }
 
     const posts = await this.prisma.activityPost.findMany({
@@ -246,9 +250,10 @@ export class ActivityPostsService {
         status: true,
         startsAt: true,
         memoriesShareablePublicly: true,
+        deletedAt: true,
       },
     });
-    if (!activity) {
+    if (!activity || activity.deletedAt) {
       throw new AppException(ErrorCode.RESOURCE_NOT_FOUND);
     }
     return activity;

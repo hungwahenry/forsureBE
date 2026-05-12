@@ -35,7 +35,7 @@ export class ManageActivityService {
     const activity = await this.prisma.activity.findUnique({
       where: { id: activityId },
     });
-    if (!activity) {
+    if (!activity || activity.deletedAt) {
       throw new AppException(ErrorCode.RESOURCE_NOT_FOUND);
     }
     const membership = await this.membership.requireChatMembership(
