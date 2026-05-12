@@ -5,6 +5,7 @@ import { AdminMessagesModule } from './messages/messages.module';
 import { AdminPostsModule } from './posts/posts.module';
 import { AdminReportReasonsModule } from './report-reasons/report-reasons.module';
 import { AdminReportsModule } from './reports/reports.module';
+import { AdminQueuesModule } from './system/queues/queues.module';
 import { AdminUsersModule } from './users/users.module';
 
 @Module({
@@ -16,6 +17,7 @@ import { AdminUsersModule } from './users/users.module';
     AdminMessagesModule,
     AdminPostsModule,
     AdminActivitiesModule,
+    AdminQueuesModule,
   ],
 })
 export class AdminModule {}
