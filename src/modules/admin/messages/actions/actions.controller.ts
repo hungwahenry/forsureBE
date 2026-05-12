@@ -13,19 +13,19 @@ import type { Request } from 'express';
 import {
   CurrentUser,
   type AuthenticatedUser,
-} from '../../../common/decorators/current-user.decorator';
-import { SkipOnboarding } from '../../../common/decorators/skip-onboarding.decorator';
-import { AdminGuard } from '../shared/admin.guard';
+} from '../../../../common/decorators/current-user.decorator';
+import { SkipOnboarding } from '../../../../common/decorators/skip-onboarding.decorator';
+import { AdminGuard } from '../../shared/admin.guard';
+import { AdminMessagesActionsService } from './actions.service';
 import { TakedownDto } from './dto/takedown.dto';
-import { AdminMessagesService } from './messages.service';
 
 @ApiTags('Admin / Messages')
 @ApiBearerAuth()
 @Controller('admin/messages')
 @UseGuards(AdminGuard)
 @SkipOnboarding()
-export class AdminMessagesController {
-  constructor(private readonly service: AdminMessagesService) {}
+export class AdminMessagesActionsController {
+  constructor(private readonly service: AdminMessagesActionsService) {}
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)

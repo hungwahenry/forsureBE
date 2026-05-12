@@ -1,10 +1,12 @@
 import { Module } from '@nestjs/common';
 import { AdminActivitiesModule } from './activities/activities.module';
+import { AdminBlocksModule } from './blocks/blocks.module';
 import { AdminMeModule } from './me/me.module';
 import { AdminMessagesModule } from './messages/messages.module';
 import { AdminPostsModule } from './posts/posts.module';
 import { AdminReportReasonsModule } from './report-reasons/report-reasons.module';
 import { AdminReportsModule } from './reports/reports.module';
+import { AdminSessionsModule } from './sessions/sessions.module';
 import { AdminQueuesModule } from './system/queues/queues.module';
 import { AdminUsersModule } from './users/users.module';
 
@@ -17,6 +19,8 @@ import { AdminUsersModule } from './users/users.module';
     AdminMessagesModule,
     AdminPostsModule,
     AdminActivitiesModule,
+    AdminBlocksModule,
+    AdminSessionsModule,
     AdminQueuesModule,
   ],
 })

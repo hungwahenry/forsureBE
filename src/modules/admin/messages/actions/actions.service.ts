@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import type { Request } from 'express';
-import { ErrorCode } from '../../../common/constants/error-codes';
-import { AppException } from '../../../common/exceptions/app.exception';
-import { PrismaService } from '../../../prisma/prisma.service';
+import { ErrorCode } from '../../../../common/constants/error-codes';
+import { AppException } from '../../../../common/exceptions/app.exception';
+import { PrismaService } from '../../../../prisma/prisma.service';
 import {
   AdminAuditAction,
   AdminAuditTargetType,
-} from '../shared/admin-audit.constants';
-import { AdminAuditService } from '../shared/admin-audit.service';
+} from '../../shared/admin-audit.constants';
+import { AdminAuditService } from '../../shared/admin-audit.service';
 import type { TakedownDto } from './dto/takedown.dto';
 
 interface ActorContext {
@@ -16,7 +16,7 @@ interface ActorContext {
 }
 
 @Injectable()
-export class AdminMessagesService {
+export class AdminMessagesActionsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AdminAuditService,
