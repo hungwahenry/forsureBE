@@ -1,5 +1,8 @@
 import { Module } from '@nestjs/common';
+import { DataExportModule } from '../../account/export/export.module';
 import { AdminSharedModule } from '../shared/admin-shared.module';
+import { AdminUserActionsController } from './actions/actions.controller';
+import { AdminUserActionsService } from './actions/actions.service';
 import { AdminUserActivitiesController } from './activities/activities.controller';
 import { AdminUserActivitiesService } from './activities/activities.service';
 import { AdminUserBlocksController } from './blocks/blocks.controller';
@@ -18,7 +21,7 @@ import { AdminUserSessionsController } from './sessions/sessions.controller';
 import { AdminUserSessionsService } from './sessions/sessions.service';
 
 @Module({
-  imports: [AdminSharedModule],
+  imports: [AdminSharedModule, DataExportModule],
   controllers: [
     AdminUsersListController,
     AdminUsersDetailController,
@@ -28,6 +31,7 @@ import { AdminUserSessionsService } from './sessions/sessions.service';
     AdminUserReportsController,
     AdminUserBlocksController,
     AdminUserSessionsController,
+    AdminUserActionsController,
   ],
   providers: [
     AdminUsersListService,
@@ -38,6 +42,7 @@ import { AdminUserSessionsService } from './sessions/sessions.service';
     AdminUserReportsService,
     AdminUserBlocksService,
     AdminUserSessionsService,
+    AdminUserActionsService,
   ],
 })
 export class AdminUsersModule {}

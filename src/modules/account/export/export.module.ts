@@ -15,5 +15,6 @@ import { DataExportProcessor } from './queue/export.processor';
     DataExportProcessor,
     ExportBuilder,
   ],
+  exports: [DataExportService],
 })
 export class DataExportModule {}
