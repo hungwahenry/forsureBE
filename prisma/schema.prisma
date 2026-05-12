@@ -487,3 +487,21 @@ model FeatureFlag {
   createdAt   DateTime @default(now()) @db.Timestamptz(3)
   updatedAt   DateTime @updatedAt @db.Timestamptz(3)
 }
+
+model CronRunLog {
+  id           String    @id // crl_...
+  jobName      String
+  startedAt    DateTime  @default(now()) @db.Timestamptz(3)
+  finishedAt   DateTime? @db.Timestamptz(3)
+  /// RUNNING | SUCCESS | FAILED — string so adding states is migration-free.
+  status       String    @default("RUNNING")
+  durationMs   Int?
+  errorMessage String?
+  errorStack   String?
+  /// Optional job-specific result data (e.g. { dispatched: 42 }).
+  result       Json?
+
+  @@index([jobName, startedAt])
+  @@index([startedAt])
+  @@index([status, startedAt])
+}

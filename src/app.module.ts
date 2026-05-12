@@ -5,7 +5,7 @@ import {
   RequestMethod,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { SentryModule } from '@sentry/nestjs/setup';
@@ -34,6 +34,8 @@ import { PreferencesModule } from './modules/preferences/preferences.module';
 import { ReportsModule } from './modules/reports/reports.module';
 import { StepUpModule } from './modules/step-up/step-up.module';
 import { UsersModule } from './modules/users/users.module';
+import { CronModule } from './common/cron/cron.module';
+import { SentryContextInterceptor } from './common/interceptors/sentry-context.interceptor';
 import { PrismaModule } from './prisma/prisma.module';
 import { RealtimeModule } from './realtime/realtime.module';
 import { StorageModule } from './storage/storage.module';
@@ -80,6 +82,7 @@ import { StorageModule } from './storage/storage.module';
     ScheduleModule.forRoot(),
 
     PrismaModule,
+    CronModule,
     EmailModule,
     StorageModule,
     HealthModule,
@@ -102,7 +105,10 @@ import { StorageModule } from './storage/storage.module';
     EggsModule,
     AdminModule,
   ],
-  providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
+  providers: [
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
+    { provide: APP_INTERCEPTOR, useClass: SentryContextInterceptor },
+  ],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {
