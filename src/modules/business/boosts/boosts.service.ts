@@ -1,61 +1,31 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { ActivityStatus } from '@prisma/client';
+import { ActivityRole, ActivityStatus } from '@prisma/client';
 import { ErrorCode } from '../../../common/constants/error-codes';
 import { AppException } from '../../../common/exceptions/app.exception';
 import { createId } from '../../../common/utils/id';
-import type { Env } from '../../../config/env.schema';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { StripeService } from '../stripe.service';
-import type { PreviewBoostDto } from './dto/preview-boost.dto';
-import type { StartBoostDto } from './dto/start-boost.dto';
+import { BoostsPricingService } from './boosts-pricing.service';
 import {
   serializeActivityBoost,
   type ActivityBoostDto,
 } from './boosts.serializer';
-
-export interface BoostPreviewDto {
-  willCharge: boolean;
-  chargeCents: number;
-  freeBoostsUsed: number;
-  freeBoostsCap: number;
-  durationHours: number;
-}
-
-const CYCLE_WINDOW_MS = 30 * 86_400_000;
+import type { PreviewBoostDto } from './dto/preview-boost.dto';
+import type { StartBoostDto } from './dto/start-boost.dto';
 
 @Injectable()
 export class BoostsService {
   private readonly logger = new Logger(BoostsService.name);
-  private readonly freePerCycle: number;
-  private readonly overageCents: number;
-  private readonly durationHours: number;
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly stripe: StripeService,
-    config: ConfigService<Env, true>,
-  ) {
-    this.freePerCycle = config.get('BOOST_FREE_PER_CYCLE', { infer: true });
-    this.overageCents = config.get('BOOST_OVERAGE_CENTS', { infer: true });
-    this.durationHours = config.get('BOOST_DURATION_HOURS', { infer: true });
-  }
+    private readonly pricing: BoostsPricingService,
+  ) {}
 
-  async preview(
-    businessId: string,
-    userId: string,
-    dto: PreviewBoostDto,
-  ): Promise<BoostPreviewDto> {
+  async preview(businessId: string, userId: string, dto: PreviewBoostDto) {
     await this.requireBoostableActivity(userId, dto.activityId);
-    const used = await this.countCycleBoosts(businessId);
-    const willCharge = used >= this.freePerCycle;
-    return {
-      willCharge,
-      chargeCents: willCharge ? this.overageCents : 0,
-      freeBoostsUsed: used,
-      freeBoostsCap: this.freePerCycle,
-      durationHours: this.durationHours,
-    };
+    return this.pricing.preview(businessId);
   }
 
   async start(
@@ -63,27 +33,26 @@ export class BoostsService {
     userId: string,
     dto: StartBoostDto,
   ): Promise<ActivityBoostDto> {
-    const activity = await this.requireBoostableActivity(
-      userId,
-      dto.activityId,
-    );
+    const activity = await this.requireBoostableActivity(userId, dto.activityId);
 
     const now = new Date();
-    const naturalEnd = new Date(now.getTime() + this.durationHours * 3_600_000);
+    const naturalEnd = new Date(
+      now.getTime() + this.pricing.durationHours * 3_600_000,
+    );
     const endsAt =
       activity.startsAt.getTime() < naturalEnd.getTime()
         ? activity.startsAt
         : naturalEnd;
 
-    const used = await this.countCycleBoosts(businessId);
-    const isOverage = used >= this.freePerCycle;
+    const used = await this.pricing.countCycleBoosts(businessId);
+    const isOverage = used >= this.pricing.freePerCycle;
 
     let stripeInvoiceItemId: string | null = null;
     if (isOverage) {
-      stripeInvoiceItemId = await this.createInvoiceItem({
+      stripeInvoiceItemId = await this.attachOverageInvoiceItem(
         businessId,
-        activityTitle: activity.title,
-      });
+        activity.title,
+      );
     }
 
     try {
@@ -95,22 +64,22 @@ export class BoostsService {
           radiusM: dto.radiusM,
           startsAt: now,
           endsAt,
-          chargedCents: isOverage ? this.overageCents : 0,
+          chargedCents: isOverage ? this.pricing.overageCents : 0,
           isOverage,
           stripeInvoiceItemId,
         },
       });
       return serializeActivityBoost(row);
     } catch (err) {
-      // DB write failed after we created the Stripe invoice item — best-effort
-      // delete the item so the business isn't billed for a phantom boost.
       if (stripeInvoiceItemId) {
-        await this.cancelInvoiceItem(stripeInvoiceItemId).catch((cleanupErr) => {
-          this.logger.error(
-            { stripeInvoiceItemId, err: cleanupErr },
-            'Failed to clean up Stripe invoice item after DB write failure',
-          );
-        });
+        await this.stripe
+          .deleteInvoiceItem(stripeInvoiceItemId)
+          .catch((cleanupErr) => {
+            this.logger.error(
+              { stripeInvoiceItemId, err: cleanupErr },
+              'Failed to clean up Stripe invoice item after DB write failure',
+            );
+          });
       }
       throw err;
     }
@@ -123,6 +92,10 @@ export class BoostsService {
       take: 50,
     });
     return rows.map(serializeActivityBoost);
+  }
+
+  cycleSummary(businessId: string) {
+    return this.pricing.summarizeCycle(businessId);
   }
 
   async cancel(
@@ -149,12 +122,35 @@ export class BoostsService {
     return serializeActivityBoost(updated);
   }
 
+  private async attachOverageInvoiceItem(
+    businessId: string,
+    activityTitle: string,
+  ): Promise<string> {
+    const business = await this.prisma.business.findUniqueOrThrow({
+      where: { id: businessId },
+      select: { stripeCustomerId: true, stripeSubscriptionId: true },
+    });
+    if (!business.stripeCustomerId || !business.stripeSubscriptionId) {
+      throw new AppException(ErrorCode.RESOURCE_CONFLICT, {
+        message:
+          'Your subscription is not active yet — finish billing setup before boosting beyond your included boosts.',
+      });
+    }
+    return this.stripe.createSubscriptionInvoiceItem({
+      customerId: business.stripeCustomerId,
+      subscriptionId: business.stripeSubscriptionId,
+      amountCents: this.pricing.overageCents,
+      description: `Activity boost: ${activityTitle}`,
+      metadata: { businessId, kind: 'boost_overage' },
+    });
+  }
+
   private async requireBoostableActivity(userId: string, activityId: string) {
     const activity = await this.prisma.activity.findUnique({
       where: { id: activityId },
       include: {
         participants: {
-          where: { role: 'HOST' },
+          where: { role: ActivityRole.HOST },
           select: { userId: true },
         },
       },
@@ -164,8 +160,7 @@ export class BoostsService {
         message: 'Activity not found.',
       });
     }
-    const hostId = activity.participants[0]?.userId;
-    if (hostId !== userId) {
+    if (activity.participants[0]?.userId !== userId) {
       throw new AppException(ErrorCode.AUTH_FORBIDDEN, {
         message: 'Only the host can boost this activity.',
       });
@@ -194,46 +189,5 @@ export class BoostsService {
       });
     }
     return activity;
-  }
-
-  private async countCycleBoosts(businessId: string): Promise<number> {
-    const cutoff = new Date(Date.now() - CYCLE_WINDOW_MS);
-    return this.prisma.activityBoost.count({
-      where: { businessId, createdAt: { gte: cutoff } },
-    });
-  }
-
-  private async createInvoiceItem({
-    businessId,
-    activityTitle,
-  }: {
-    businessId: string;
-    activityTitle: string;
-  }): Promise<string> {
-    const { client } = this.stripe.requireConfigured();
-    const business = await this.prisma.business.findUniqueOrThrow({
-      where: { id: businessId },
-      select: { stripeCustomerId: true, stripeSubscriptionId: true },
-    });
-    if (!business.stripeCustomerId || !business.stripeSubscriptionId) {
-      throw new AppException(ErrorCode.RESOURCE_CONFLICT, {
-        message:
-          'Your subscription is not active yet — finish billing setup before boosting beyond your included boosts.',
-      });
-    }
-    const item = await client.invoiceItems.create({
-      customer: business.stripeCustomerId,
-      amount: this.overageCents,
-      currency: 'usd',
-      description: `Activity boost: ${activityTitle}`,
-      subscription: business.stripeSubscriptionId,
-      metadata: { businessId, kind: 'boost_overage' },
-    });
-    return item.id;
-  }
-
-  private async cancelInvoiceItem(invoiceItemId: string): Promise<void> {
-    const { client } = this.stripe.requireConfigured();
-    await client.invoiceItems.del(invoiceItemId);
   }
 }

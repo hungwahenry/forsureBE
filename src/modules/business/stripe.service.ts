@@ -65,4 +65,28 @@ export class StripeService {
       this.webhookSecret,
     );
   }
+
+  async createSubscriptionInvoiceItem(opts: {
+    customerId: string;
+    subscriptionId: string;
+    amountCents: number;
+    description: string;
+    metadata?: Record<string, string>;
+  }): Promise<string> {
+    const { client } = this.requireConfigured();
+    const item = await client.invoiceItems.create({
+      customer: opts.customerId,
+      subscription: opts.subscriptionId,
+      amount: opts.amountCents,
+      currency: 'usd',
+      description: opts.description,
+      metadata: opts.metadata,
+    });
+    return item.id;
+  }
+
+  async deleteInvoiceItem(invoiceItemId: string): Promise<void> {
+    const { client } = this.requireConfigured();
+    await client.invoiceItems.del(invoiceItemId);
+  }
 }

@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
   CurrentUser,
@@ -23,5 +23,14 @@ export class BusinessActivitiesController {
   })
   list(@CurrentUser() user: AuthenticatedUser) {
     return this.service.list(user.id);
+  }
+
+  @Get(':id')
+  @ApiOperation({
+    summary:
+      "Detail view of a hosted activity: full boost history + campaign analytics.",
+  })
+  get(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
+    return this.service.get(user.id, id);
   }
 }
