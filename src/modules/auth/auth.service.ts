@@ -14,6 +14,7 @@ import {
 import type { Env } from '../../config/env.schema';
 import { EmailService } from '../../email/email.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { BusinessService } from '../business/business.service';
 import {
   STORAGE_PROVIDER_TOKEN,
   type StorageProvider,
@@ -48,6 +49,7 @@ export class AuthService {
     @Inject(STORAGE_PROVIDER_TOKEN)
     private readonly storage: StorageProvider,
     private readonly featureFlags: FeatureFlagService,
+    private readonly business: BusinessService,
     config: ConfigService<Env, true>,
   ) {
     this.accessTtlMs = parseDurationToMs(
@@ -226,11 +228,14 @@ export class AuthService {
   }
 
   async getMe(userId: string): Promise<AuthMeDto> {
-    const user = await this.prisma.user.findUniqueOrThrow({
-      where: { id: userId },
-      include: { profile: { select: { avatarKey: true } } },
-    });
-    return serializeAuthMe(this.storage, user);
+    const [user, businessMemberships] = await Promise.all([
+      this.prisma.user.findUniqueOrThrow({
+        where: { id: userId },
+        include: { profile: { select: { avatarKey: true } } },
+      }),
+      this.business.listMembershipsForUser(userId),
+    ]);
+    return serializeAuthMe(this.storage, user, businessMemberships);
   }
 
   async issueAccessToken(

@@ -52,6 +52,11 @@ model User {
   activityPostsDeleted ActivityPost[]  @relation("ActivityPostDeletedBy")
   activitiesDeleted    Activity[]      @relation("ActivityDeletedBy")
   featureFlagsUpdated  FeatureFlag[]   @relation("FeatureFlagUpdatedBy")
+
+  // ----- Business reverse relations -----
+  businessMemberships   BusinessMember[]
+  businessSuspensions   Business[]             @relation("BusinessSuspendedBy")
+  venueSuggestionEvents VenueSuggestionEvent[]
 }
 
 enum UserStatus {
@@ -157,10 +162,11 @@ model Activity {
   deletedBy     User?     @relation("ActivityDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull)
   deletedReason String?
 
-  participants  ActivityParticipant[]
-  chatMessages  ChatMessage[]
-  pinnedMessage ChatMessage?          @relation("ActivityPinnedMessage", fields: [pinnedMessageId], references: [id], onDelete: SetNull)
-  posts         ActivityPost[]
+  participants          ActivityParticipant[]
+  chatMessages          ChatMessage[]
+  pinnedMessage         ChatMessage?           @relation("ActivityPinnedMessage", fields: [pinnedMessageId], references: [id], onDelete: SetNull)
+  posts                 ActivityPost[]
+  venueSuggestionEvents VenueSuggestionEvent[]
 
   @@index([startsAt])
   @@index([status, startsAt])
@@ -479,16 +485,16 @@ model AdminAuditLog {
 }
 
 model FeatureFlag {
-  key         String   @id
-  enabled     Boolean  @default(false)
-  description String?
+  key           String   @id
+  enabled       Boolean  @default(false)
+  description   String?
   /// When true, the flag is returned by the public GET /feature-flags endpoint
   /// so mobile clients can mirror gating in their UI. Default true.
-  clientExposed Boolean @default(true)
-  updatedById String?
-  updatedBy   User?    @relation("FeatureFlagUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
-  createdAt   DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt   DateTime @updatedAt @db.Timestamptz(3)
+  clientExposed Boolean  @default(true)
+  updatedById   String?
+  updatedBy     User?    @relation("FeatureFlagUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+  createdAt     DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime @updatedAt @db.Timestamptz(3)
 }
 
 model CronRunLog {
@@ -507,4 +513,87 @@ model CronRunLog {
   @@index([jobName, startedAt])
   @@index([startedAt])
   @@index([status, startedAt])
+}
+
+// ----- Business -----
+
+model Business {
+  id                   String    @id // bus_...
+  slug                 String    @unique
+  name                 String
+  logoKey              String?
+  verifiedAt           DateTime? @db.Timestamptz(3)
+  suspendedAt          DateTime? @db.Timestamptz(3)
+  suspendedById        String?
+  suspendedBy          User?     @relation("BusinessSuspendedBy", fields: [suspendedById], references: [id], onDelete: SetNull)
+  suspendedReason      String?
+  /// Stripe customer id for billing. Set after first successful checkout.
+  stripeCustomerId     String?   @unique
+  /// Stripe subscription id for the verified-business tier. Null when not subscribed.
+  stripeSubscriptionId String?   @unique
+  createdAt            DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt            DateTime  @updatedAt @db.Timestamptz(3)
+
+  members BusinessMember[]
+  venues  BusinessVenue[]
+}
+
+enum BusinessMemberRole {
+  OWNER
+  MANAGER
+}
+
+model BusinessMember {
+  id         String             @id // bmm_...
+  businessId String
+  business   Business           @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role       BusinessMemberRole
+  createdAt  DateTime           @default(now()) @db.Timestamptz(3)
+
+  @@unique([businessId, userId])
+  @@index([userId])
+}
+
+model BusinessVenue {
+  id                   String                                 @id // bvn_...
+  businessId           String
+  business             Business                               @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  placeName            String
+  placeLat             Float
+  placeLng             Float
+  placePoint           Unsupported("geography(Point, 4326)")?
+  googlePlaceId        String?
+  /// Lowercase terms matched against the user's place-picker query to surface this venue.
+  matchingKeywords     String[]
+  /// Geographic eligibility radius in metres for being suggested to a nearby user.
+  maxRadiusM           Int                                    @default(5000)
+  isPaused             Boolean                                @default(false)
+  /// Refilled at the start of each UTC day from dailyBudgetCents.
+  dailyBudgetCents     Int                                    @default(0)
+  dailyBudgetRemaining Int                                    @default(0)
+  createdAt            DateTime                               @default(now()) @db.Timestamptz(3)
+  updatedAt            DateTime                               @updatedAt @db.Timestamptz(3)
+
+  suggestionEvents VenueSuggestionEvent[]
+
+  @@index([businessId])
+}
+
+model VenueSuggestionEvent {
+  id           String        @id // vse_...
+  venueId      String
+  venue        BusinessVenue @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// IMPRESSION | PICK | CONFIRMED — string so adding kinds is migration-free.
+  kind         String
+  activityId   String?
+  activity     Activity?     @relation(fields: [activityId], references: [id], onDelete: SetNull)
+  chargedCents Int?
+  createdAt    DateTime      @default(now()) @db.Timestamptz(3)
+
+  @@index([venueId, createdAt])
+  @@index([userId, venueId, createdAt])
 }
