@@ -14,7 +14,7 @@ import { ListNotificationsDto } from './dto/list-notifications.dto';
 import { MarkReadDto } from './dto/mark-read.dto';
 import { InboxService } from './inbox.service';
 
-@ApiTags('inbox')
+@ApiTags('Inbox')
 @ApiBearerAuth()
 @Controller('inbox')
 export class InboxController {

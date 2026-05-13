@@ -14,7 +14,7 @@ import type { AuthenticatedUser } from '../../common/decorators/current-user.dec
 import { BlocksService } from './blocks.service';
 import { BlockUserDto } from './dto/block-user.dto';
 
-@ApiTags('blocks')
+@ApiTags('Blocks')
 @ApiBearerAuth()
 @Controller('blocks')
 export class BlocksController {

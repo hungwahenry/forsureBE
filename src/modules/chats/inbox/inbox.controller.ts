@@ -4,7 +4,7 @@ import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../../../common/decorators/current-user.decorator';
 import { InboxService } from './inbox.service';
 
-@ApiTags('chats')
+@ApiTags('Chats')
 @ApiBearerAuth()
 @Controller('chats')
 export class InboxController {

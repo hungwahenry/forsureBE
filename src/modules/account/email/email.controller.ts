@@ -6,7 +6,7 @@ import { ConfirmEmailChangeDto } from './dto/confirm-email-change.dto';
 import { StartEmailChangeDto } from './dto/start-email-change.dto';
 import { EmailChangeService } from './email.service';
 
-@ApiTags('account')
+@ApiTags('Account')
 @ApiBearerAuth()
 @Controller('account/email')
 export class EmailChangeController {

@@ -7,7 +7,7 @@ import {
 import { ExploreQueryDto } from './dto/explore.dto';
 import { ExploreService } from './explore.service';
 
-@ApiTags('explore')
+@ApiTags('Explore')
 @ApiBearerAuth()
 @Controller('explore')
 export class ExploreController {

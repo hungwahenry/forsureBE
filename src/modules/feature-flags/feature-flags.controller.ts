@@ -3,7 +3,7 @@ import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { SkipOnboarding } from '../../common/decorators/skip-onboarding.decorator';
 import { FeatureFlagService } from '../../common/feature-flags/feature-flag.service';
 
-@ApiTags('feature-flags')
+@ApiTags('Feature flags')
 @ApiBearerAuth()
 @Controller('feature-flags')
 @SkipOnboarding()

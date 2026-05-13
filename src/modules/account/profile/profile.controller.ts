@@ -23,7 +23,7 @@ import { MAX_AVATAR_BYTES } from '../../../common/utils/avatar';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ProfileEditService } from './profile.service';
 
-@ApiTags('account')
+@ApiTags('Account')
 @ApiBearerAuth()
 @Controller('account')
 export class ProfileEditController {

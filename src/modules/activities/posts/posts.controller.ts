@@ -29,7 +29,7 @@ const fileInterceptor = FilesInterceptor('images', POST_MAX_PHOTOS, {
   limits: { fileSize: POST_MAX_IMAGE_BYTES },
 });
 
-@ApiTags('activities')
+@ApiTags('Activities')
 @ApiBearerAuth()
 @Controller('activities/:activityId/posts')
 export class ActivityPostsController {

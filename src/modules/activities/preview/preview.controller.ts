@@ -6,7 +6,7 @@ import {
 } from '../../../common/decorators/current-user.decorator';
 import { ActivityPreviewService } from './preview.service';
 
-@ApiTags('activities')
+@ApiTags('Activities')
 @ApiBearerAuth()
 @Controller('activities/:id/preview')
 export class ActivityPreviewController {

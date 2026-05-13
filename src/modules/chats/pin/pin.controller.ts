@@ -11,7 +11,7 @@ import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../../../common/decorators/current-user.decorator';
 import { PinService } from './pin.service';
 
-@ApiTags('chats')
+@ApiTags('Chats')
 @ApiBearerAuth()
 @Controller('chats/:activityId/pin')
 export class PinController {

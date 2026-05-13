@@ -14,7 +14,7 @@ import { CreateReportDto } from './dto/create-report.dto';
 import { ListReasonsDto } from './dto/list-reasons.dto';
 import { ReportsService } from './reports.service';
 
-@ApiTags('reports')
+@ApiTags('Reports')
 @ApiBearerAuth()
 @Controller('reports')
 export class ReportsController {

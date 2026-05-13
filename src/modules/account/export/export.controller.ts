@@ -15,7 +15,7 @@ import type { AuthenticatedUser } from '../../../common/decorators/current-user.
 import { Public } from '../../../common/decorators/public.decorator';
 import { DataExportService } from './export.service';
 
-@ApiTags('account')
+@ApiTags('Account')
 @Controller('account/export')
 export class DataExportController {
   constructor(private readonly exports: DataExportService) {}

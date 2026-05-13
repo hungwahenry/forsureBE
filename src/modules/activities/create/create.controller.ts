@@ -5,7 +5,7 @@ import type { AuthenticatedUser } from '../../../common/decorators/current-user.
 import { CreateActivityService } from './create.service';
 import { CreateActivityDto } from './dto/create-activity.dto';
 
-@ApiTags('activities')
+@ApiTags('Activities')
 @ApiBearerAuth()
 @Controller('activities')
 export class CreateActivityController {

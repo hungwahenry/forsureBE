@@ -28,7 +28,7 @@ import { OnboardingService } from './onboarding.service';
 
 const MAX_AVATAR_BYTES = 10 * 1024 * 1024;
 
-@ApiTags('onboarding')
+@ApiTags('Onboarding')
 @ApiBearerAuth()
 @SkipOnboarding()
 @Controller('onboarding')

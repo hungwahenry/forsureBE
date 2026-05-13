@@ -13,7 +13,7 @@ import { ListUserActivitiesDto } from './dto/list-user-activities.dto';
 import { ListUserPostsDto } from './dto/list-user-posts.dto';
 import { UsersService } from './users.service';
 
-@ApiTags('users')
+@ApiTags('Users')
 @ApiBearerAuth()
 @Controller('users')
 export class UsersController {

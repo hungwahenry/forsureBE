@@ -13,7 +13,7 @@ import type { AuthenticatedUser } from '../../common/decorators/current-user.dec
 import { DevicesService } from './devices.service';
 import { RegisterDeviceDto } from './dto/register-device.dto';
 
-@ApiTags('notifications')
+@ApiTags('Notifications')
 @ApiBearerAuth()
 @Controller('notifications')
 export class NotificationsController {

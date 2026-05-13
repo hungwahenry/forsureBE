@@ -4,7 +4,7 @@ import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../../../common/decorators/current-user.decorator';
 import { JoinActivityService } from './join.service';
 
-@ApiTags('activities')
+@ApiTags('Activities')
 @ApiBearerAuth()
 @Controller('activities/:id')
 export class JoinActivityController {

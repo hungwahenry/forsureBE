@@ -5,7 +5,7 @@ import type { AuthenticatedUser } from '../../../common/decorators/current-user.
 import { DeleteAccountService } from './delete.service';
 import { DeleteMeDto } from './dto/delete-me.dto';
 
-@ApiTags('account')
+@ApiTags('Account')
 @ApiBearerAuth()
 @Controller('account')
 export class DeleteAccountController {

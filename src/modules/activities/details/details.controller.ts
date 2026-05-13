@@ -4,7 +4,7 @@ import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../../../common/decorators/current-user.decorator';
 import { ActivityDetailsService } from './details.service';
 
-@ApiTags('activities')
+@ApiTags('Activities')
 @ApiBearerAuth()
 @Controller('activities/:id')
 export class ActivityDetailsController {

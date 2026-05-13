@@ -4,7 +4,7 @@ import { RetrievePlaceDto } from './dto/retrieve.dto';
 import { SuggestPlacesDto } from './dto/suggest.dto';
 import { PlacesService } from './places.service';
 
-@ApiTags('places')
+@ApiTags('Places')
 @ApiBearerAuth()
 @Controller('places')
 export class PlacesController {

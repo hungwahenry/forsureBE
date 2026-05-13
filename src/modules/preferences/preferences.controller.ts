@@ -12,7 +12,7 @@ import type { AuthenticatedUser } from '../../common/decorators/current-user.dec
 import { UpdatePreferencesDto } from './dto/update-preferences.dto';
 import { PreferencesService } from './preferences.service';
 
-@ApiTags('preferences')
+@ApiTags('Preferences')
 @ApiBearerAuth()
 @Controller('preferences')
 export class PreferencesController {

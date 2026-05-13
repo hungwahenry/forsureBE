@@ -5,7 +5,7 @@ import type { AuthenticatedUser } from '../../common/decorators/current-user.dec
 import { StartStepUpDto } from './dto/start-step-up.dto';
 import { StepUpService } from './step-up.service';
 
-@ApiTags('step-up')
+@ApiTags('Step-up')
 @ApiBearerAuth()
 @Controller('step-up')
 export class StepUpController {

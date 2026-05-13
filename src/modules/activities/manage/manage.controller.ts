@@ -14,7 +14,7 @@ import type { AuthenticatedUser } from '../../../common/decorators/current-user.
 import { EditActivityDto } from './dto/edit-activity.dto';
 import { ManageActivityService } from './manage.service';
 
-@ApiTags('activities')
+@ApiTags('Activities')
 @ApiBearerAuth()
 @Controller('activities/:id')
 export class ManageActivityController {

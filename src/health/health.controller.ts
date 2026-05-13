@@ -4,7 +4,7 @@ import { SkipResponseEnvelope } from '../common/decorators/skip-response-envelop
 import { Public } from '../common/decorators/public.decorator';
 import { PrismaService } from '../prisma/prisma.service';
 
-@ApiTags('health')
+@ApiTags('Health')
 @Controller({ path: 'health', version: VERSION_NEUTRAL })
 @Public()
 @SkipResponseEnvelope()

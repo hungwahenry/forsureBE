@@ -5,7 +5,7 @@ import type { AuthenticatedUser } from '../../common/decorators/current-user.dec
 import { FeedQueryDto } from './dto/feed.dto';
 import { FeedService } from './feed.service';
 
-@ApiTags('feed')
+@ApiTags('Feed')
 @ApiBearerAuth()
 @Controller('feed')
 export class FeedController {

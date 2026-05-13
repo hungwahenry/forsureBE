@@ -6,7 +6,7 @@ import {
 } from '../../../common/decorators/current-user.decorator';
 import { CreditsService } from './credits.service';
 
-@ApiTags('eggs')
+@ApiTags('Eggs')
 @ApiBearerAuth()
 @Controller('eggs/credits')
 export class CreditsController {

@@ -27,7 +27,7 @@ import { SendMessageDto } from './dto/send-message.dto';
 import { MAX_IMAGE_BYTES } from './messages.images';
 import { MessagesService } from './messages.service';
 
-@ApiTags('chats')
+@ApiTags('Chats')
 @ApiBearerAuth()
 @Controller('chats/:activityId')
 export class MessagesController {
