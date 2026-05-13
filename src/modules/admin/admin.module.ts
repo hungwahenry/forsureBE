@@ -6,6 +6,7 @@ import { AdminBroadcastModule } from './broadcast/broadcast.module';
 import { AdminFeatureFlagsModule } from './feature-flags/feature-flags.module';
 import { AdminMeModule } from './me/me.module';
 import { AdminMessagesModule } from './messages/messages.module';
+import { AdminOverviewModule } from './overview/overview.module';
 import { AdminPostsModule } from './posts/posts.module';
 import { AdminReportReasonsModule } from './report-reasons/report-reasons.module';
 import { AdminReportsModule } from './reports/reports.module';
@@ -17,6 +18,7 @@ import { AdminUsersModule } from './users/users.module';
 @Module({
   imports: [
     AdminMeModule,
+    AdminOverviewModule,
     AdminUsersModule,
     AdminReportsModule,
     AdminReportReasonsModule,
