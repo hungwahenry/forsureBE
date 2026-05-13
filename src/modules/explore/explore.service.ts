@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import type { CursorPage } from '../../common/dto/pagination.dto';
+import { FeatureFlagService } from '../../common/feature-flags/feature-flag.service';
 import { decodeTsIdCursor, encodeTsIdCursor } from '../../common/utils/cursor';
 import { PrismaService } from '../../prisma/prisma.service';
 import {
@@ -22,12 +23,21 @@ export class ExploreService {
     private readonly prisma: PrismaService,
     @Inject(STORAGE_PROVIDER_TOKEN)
     private readonly storage: StorageProvider,
+    private readonly featureFlags: FeatureFlagService,
   ) {}
 
   async listPublicPosts(
     viewerUserId: string,
     query: ExploreQueryDto,
   ): Promise<CursorPage<ExplorePostDto>> {
+    const sharingEnabled = await this.featureFlags.isEnabled(
+      'public_memories_sharing_enabled',
+      true,
+    );
+    if (!sharingEnabled) {
+      return { items: [], pageInfo: { nextCursor: null, hasMore: false } };
+    }
+
     const cursor = query.cursor ? decodeTsIdCursor(query.cursor) : null;
     const limit = query.limit;
 

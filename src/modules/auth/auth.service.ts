@@ -4,6 +4,7 @@ import { JwtService } from '@nestjs/jwt';
 import { User } from '@prisma/client';
 import { ErrorCode } from '../../common/constants/error-codes';
 import { AppException } from '../../common/exceptions/app.exception';
+import { FeatureFlagService } from '../../common/feature-flags/feature-flag.service';
 import { createId } from '../../common/utils/id';
 import {
   OTP_RESEND_COOLDOWN_MS,
@@ -46,6 +47,7 @@ export class AuthService {
     private readonly jwt: JwtService,
     @Inject(STORAGE_PROVIDER_TOKEN)
     private readonly storage: StorageProvider,
+    private readonly featureFlags: FeatureFlagService,
     config: ConfigService<Env, true>,
   ) {
     this.accessTtlMs = parseDurationToMs(
@@ -150,6 +152,21 @@ export class AuthService {
     });
 
     const now = new Date();
+    const existing = await this.prisma.user.findUnique({
+      where: { email },
+      select: { id: true },
+    });
+    if (!existing) {
+      const signupEnabled = await this.featureFlags.isEnabled(
+        'signup_enabled',
+        true,
+      );
+      if (!signupEnabled) {
+        throw new AppException(ErrorCode.RESOURCE_CONFLICT, {
+          message: 'New sign-ups are temporarily disabled.',
+        });
+      }
+    }
     const user = await this.prisma.user.upsert({
       where: { email },
       update: { lastLoginAt: now, emailVerifiedAt: now },

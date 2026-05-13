@@ -3,6 +3,7 @@ import { ActivityRole, ActivityStatus, ChatMessageKind } from '@prisma/client';
 import { ErrorCode } from '../../../common/constants/error-codes';
 import type { CursorPage } from '../../../common/dto/pagination.dto';
 import { AppException } from '../../../common/exceptions/app.exception';
+import { FeatureFlagService } from '../../../common/feature-flags/feature-flag.service';
 import { createId } from '../../../common/utils/id';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { RealtimeService } from '../../../realtime/realtime.service';
@@ -33,6 +34,7 @@ export class MessagesService {
     private readonly membership: MembershipService,
     private readonly notifications: ChatNotifications,
     private readonly blocks: BlocksService,
+    private readonly featureFlags: FeatureFlagService,
   ) {}
 
   async listMessages(
@@ -90,6 +92,15 @@ export class MessagesService {
     ) {
       throw new AppException(ErrorCode.RESOURCE_CONFLICT, {
         message: 'This chat is read-only.',
+      });
+    }
+    const chatEnabled = await this.featureFlags.isEnabled(
+      'activity_chat_enabled',
+      true,
+    );
+    if (!chatEnabled) {
+      throw new AppException(ErrorCode.RESOURCE_CONFLICT, {
+        message: 'Chat is temporarily disabled.',
       });
     }
 

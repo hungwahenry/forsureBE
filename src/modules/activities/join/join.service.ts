@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ActivityRole, ActivityStatus } from '@prisma/client';
 import { ErrorCode } from '../../../common/constants/error-codes';
 import { AppException } from '../../../common/exceptions/app.exception';
+import { FeatureFlagService } from '../../../common/feature-flags/feature-flag.service';
 import { createId } from '../../../common/utils/id';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { BlocksService } from '../../blocks/blocks.service';
@@ -19,9 +20,19 @@ export class JoinActivityService {
     private readonly membership: MembershipService,
     private readonly notifications: ActivityLifecycleNotifications,
     private readonly blocks: BlocksService,
+    private readonly featureFlags: FeatureFlagService,
   ) {}
 
   async join(viewerUserId: string, activityId: string): Promise<void> {
+    const joiningEnabled = await this.featureFlags.isEnabled(
+      'activity_joining_enabled',
+      true,
+    );
+    if (!joiningEnabled) {
+      throw new AppException(ErrorCode.RESOURCE_CONFLICT, {
+        message: 'Joining new activities is temporarily disabled.',
+      });
+    }
     await this.prisma.$transaction(async (tx) => {
       const activity = await tx.activity.findUnique({
         where: { id: activityId },

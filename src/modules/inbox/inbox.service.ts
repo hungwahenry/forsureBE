@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import type { CursorPage } from '../../common/dto/pagination.dto';
+import { FeatureFlagService } from '../../common/feature-flags/feature-flag.service';
 import { decodeTsIdCursor, encodeTsIdCursor } from '../../common/utils/cursor';
 import { createId } from '../../common/utils/id';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -25,11 +26,19 @@ export interface GroupedInboxRow extends InboxRow {
 
 @Injectable()
 export class InboxService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly featureFlags: FeatureFlagService,
+  ) {}
 
   /** Persist one row per recipient. Inbox is the canonical "got notified" record. */
   async write(rows: InboxRow[]): Promise<void> {
     if (rows.length === 0) return;
+    const enabled = await this.featureFlags.isEnabled(
+      'inbox_notifications_enabled',
+      true,
+    );
+    if (!enabled) return;
     await this.prisma.notification.createMany({
       data: rows.map((r) => ({
         id: createId('ntn'),
@@ -44,6 +53,11 @@ export class InboxService {
 
   async writeGrouped(rows: GroupedInboxRow[]): Promise<void> {
     if (rows.length === 0) return;
+    const enabled = await this.featureFlags.isEnabled(
+      'inbox_notifications_enabled',
+      true,
+    );
+    if (!enabled) return;
     const now = new Date();
     await Promise.all(
       rows.map((r) =>

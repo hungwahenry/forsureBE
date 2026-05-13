@@ -139,6 +139,56 @@ const REASONS: ReasonSeed[] = [
   },
 ];
 
+interface FlagSeed {
+  key: string;
+  description: string;
+  /** Initial enabled state when the flag is first created. Re-running the
+   *  seeder will NOT overwrite a flag whose enabled state was changed via
+   *  the admin UI — only the description is refreshed. */
+  enabledOnCreate: boolean;
+}
+
+const FLAGS: FlagSeed[] = [
+  {
+    key: 'signup_enabled',
+    description: 'Allow new user account creation via email verification.',
+    enabledOnCreate: true,
+  },
+  {
+    key: 'activity_joining_enabled',
+    description:
+      'Allow users to join new activities. Existing activities keep running when off.',
+    enabledOnCreate: true,
+  },
+  {
+    key: 'activity_chat_enabled',
+    description: 'Allow sending chat messages in activities.',
+    enabledOnCreate: true,
+  },
+  {
+    key: 'public_memories_sharing_enabled',
+    description:
+      'Allow memory posts to be marked PUBLIC and surfaced in the explore feed.',
+    enabledOnCreate: true,
+  },
+  {
+    key: 'push_notifications_enabled',
+    description: 'Master kill switch for all push notifications via Expo.',
+    enabledOnCreate: true,
+  },
+  {
+    key: 'inbox_notifications_enabled',
+    description:
+      'Persist in-app inbox notifications (independent of push delivery).',
+    enabledOnCreate: true,
+  },
+  {
+    key: 'easter_eggs_enabled',
+    description: 'Record easter-egg discoveries (e.g. credits egg).',
+    enabledOnCreate: true,
+  },
+];
+
 async function main() {
   for (const r of REASONS) {
     await prisma.reportReason.upsert({
@@ -163,6 +213,20 @@ async function main() {
     });
   }
   console.log(`Seeded ${REASONS.length} report reasons.`);
+
+  for (const f of FLAGS) {
+    await prisma.featureFlag.upsert({
+      where: { key: f.key },
+      create: {
+        key: f.key,
+        description: f.description,
+        enabled: f.enabledOnCreate,
+      },
+      // Preserve operator-toggled `enabled` state on re-seed.
+      update: { description: f.description },
+    });
+  }
+  console.log(`Seeded ${FLAGS.length} feature flags.`);
 }
 
 main()

@@ -7,6 +7,7 @@ import {
 } from '@prisma/client';
 import { ErrorCode } from '../../../common/constants/error-codes';
 import { AppException } from '../../../common/exceptions/app.exception';
+import { FeatureFlagService } from '../../../common/feature-flags/feature-flag.service';
 import { createId } from '../../../common/utils/id';
 import { PrismaService } from '../../../prisma/prisma.service';
 import {
@@ -34,6 +35,7 @@ export class ActivityPostsService {
     private readonly storage: StorageProvider,
     private readonly membership: MembershipService,
     private readonly notifications: MemoryNotifications,
+    private readonly featureFlags: FeatureFlagService,
   ) {}
 
   async listPosts(
@@ -90,7 +92,10 @@ export class ActivityPostsService {
     const activity = await this.requireActivity(activityId);
     this.requireWithinPostingWindow(activity);
 
-    const desiredVisibility = this.resolveVisibility(activity, dto.visibility);
+    const desiredVisibility = await this.resolveVisibility(
+      activity,
+      dto.visibility,
+    );
 
     const existing = await this.prisma.activityPost.findUnique({
       where: { activityId_authorId: { activityId, authorId: userId } },
@@ -276,11 +281,18 @@ export class ActivityPostsService {
     }
   }
 
-  private resolveVisibility(
+  private async resolveVisibility(
     activity: { memoriesShareablePublicly: boolean },
     requested: PostVisibility | undefined,
-  ): PostVisibility {
+  ): Promise<PostVisibility> {
     if (!activity.memoriesShareablePublicly) {
+      return PostVisibility.PARTICIPANTS;
+    }
+    const sharingEnabled = await this.featureFlags.isEnabled(
+      'public_memories_sharing_enabled',
+      true,
+    );
+    if (!sharingEnabled) {
       return PostVisibility.PARTICIPANTS;
     }
     return requested ?? PostVisibility.PARTICIPANTS;

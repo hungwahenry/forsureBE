@@ -5,6 +5,7 @@ import {
   type ExpoPushMessage,
   type ExpoPushTicket,
 } from 'expo-server-sdk';
+import { FeatureFlagService } from '../../common/feature-flags/feature-flag.service';
 import type { Env } from '../../config/env.schema';
 
 export interface SendResult {
@@ -16,7 +17,10 @@ export class ExpoPushService {
   private readonly logger = new Logger(ExpoPushService.name);
   private readonly expo: Expo;
 
-  constructor(config: ConfigService<Env, true>) {
+  constructor(
+    config: ConfigService<Env, true>,
+    private readonly featureFlags: FeatureFlagService,
+  ) {
     const accessToken = config.get('EXPO_ACCESS_TOKEN', { infer: true });
     this.expo = new Expo({ accessToken });
   }
@@ -27,6 +31,12 @@ export class ExpoPushService {
   }
 
   async send(messages: ExpoPushMessage[]): Promise<SendResult> {
+    const enabled = await this.featureFlags.isEnabled(
+      'push_notifications_enabled',
+      true,
+    );
+    if (!enabled) return { invalidTokens: [] };
+
     const valid = messages.filter((m) => {
       const to = Array.isArray(m.to) ? m.to : [m.to];
       return to.every((t) => Expo.isExpoPushToken(t));
