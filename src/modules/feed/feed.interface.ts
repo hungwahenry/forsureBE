@@ -16,4 +16,10 @@ export interface FeedRow {
   hostAvatarKey: string;
   participantAvatarKeys: string[] | null;
   genderPreference: 'ALL' | 'MALE' | 'FEMALE';
+  boost?: {
+    boostId: string;
+    businessId: string;
+    businessName: string;
+    businessLogoKey: string | null;
+  };
 }

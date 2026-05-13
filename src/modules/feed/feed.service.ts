@@ -8,8 +8,12 @@ import type { StorageProvider } from '../../storage/storage.interface';
 import { activityVisibleGenderPreferences } from '../activities/gender-policy';
 import { FeedQueryDto } from './dto/feed.dto';
 import { decodeFeedCursor, encodeFeedCursor } from './feed.cursor';
-import { findFeedPage } from './feed.queries';
+import type { FeedRow } from './feed.interface';
+import { findActiveBoosts, findFeedPage } from './feed.queries';
 import { serializeFeedItem, type FeedItem } from './feed.serializer';
+
+const ORGANIC_PER_SPONSORED = 5;
+const BOOSTS_PER_PAGE = 3;
 
 @Injectable()
 export class FeedService {
@@ -34,21 +38,34 @@ export class FeedService {
     const cursor = query.cursor ? decodeFeedCursor(query.cursor) : null;
     const limit = query.limit;
     const visibleGenderPrefs = activityVisibleGenderPreferences(profile.gender);
+    const radiusMeters = query.radiusKm * 1000;
+    const isFirstPage = !cursor;
 
-    // Fetch limit + 1 to detect hasMore.
-    const rows = await findFeedPage(this.prisma, {
-      viewerUserId,
-      lat: query.lat,
-      lng: query.lng,
-      radiusMeters: query.radiusKm * 1000,
-      visibleGenderPrefs,
-      cursor,
-      limit: limit + 1,
-    });
+    const [rows, boostRows] = await Promise.all([
+      findFeedPage(this.prisma, {
+        viewerUserId,
+        lat: query.lat,
+        lng: query.lng,
+        radiusMeters,
+        visibleGenderPrefs,
+        cursor,
+        limit: limit + 1,
+      }),
+      isFirstPage
+        ? findActiveBoosts(this.prisma, {
+            viewerUserId,
+            lat: query.lat,
+            lng: query.lng,
+            viewerRadiusMeters: radiusMeters,
+            visibleGenderPrefs,
+            limit: BOOSTS_PER_PAGE,
+          })
+        : Promise.resolve<FeedRow[]>([]),
+    ]);
 
     const hasMore = rows.length > limit;
-    const page = hasMore ? rows.slice(0, limit) : rows;
-    const last = page[page.length - 1];
+    const organicPage = hasMore ? rows.slice(0, limit) : rows;
+    const last = organicPage[organicPage.length - 1];
     const nextCursor =
       hasMore && last
         ? encodeFeedCursor({
@@ -58,9 +75,36 @@ export class FeedService {
           })
         : null;
 
+    const organicIds = new Set(organicPage.map((r) => r.id));
+    const boosts = boostRows.filter((b) => !organicIds.has(b.id));
+    const merged = interleaveWithBoosts(organicPage, boosts);
+
     return {
-      items: page.map((r) => serializeFeedItem(this.storage, r)),
+      items: merged.map((r) => serializeFeedItem(this.storage, r)),
       pageInfo: { nextCursor, hasMore },
     };
   }
+}
+
+function interleaveWithBoosts(
+  organic: FeedRow[],
+  boosts: FeedRow[],
+): FeedRow[] {
+  if (boosts.length === 0) return organic;
+  const result: FeedRow[] = [];
+  let oIdx = 0;
+  let bIdx = 0;
+  while (oIdx < organic.length || bIdx < boosts.length) {
+    const isSponsoredSlot =
+      result.length > 0 &&
+      result.length % (ORGANIC_PER_SPONSORED + 1) === ORGANIC_PER_SPONSORED;
+    if (isSponsoredSlot && bIdx < boosts.length) {
+      result.push(boosts[bIdx++]);
+    } else if (oIdx < organic.length) {
+      result.push(organic[oIdx++]);
+    } else {
+      result.push(boosts[bIdx++]);
+    }
+  }
+  return result;
 }

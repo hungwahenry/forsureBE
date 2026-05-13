@@ -2,6 +2,12 @@ import type { ActivityGenderPreference } from '@prisma/client';
 import type { StorageProvider } from '../../storage/storage.interface';
 import type { FeedRow } from './feed.interface';
 
+export interface FeedItemBoost {
+  businessId: string;
+  businessName: string;
+  businessLogoUrl: string | null;
+}
+
 export interface FeedItem {
   id: string;
   emoji: string;
@@ -20,6 +26,8 @@ export interface FeedItem {
   };
   participantAvatarUrls: string[];
   goingCount: number;
+  /** Set when this slot was filled by an active ActivityBoost. */
+  boost: FeedItemBoost | null;
 }
 
 export function serializeFeedItem(
@@ -47,5 +55,14 @@ export function serializeFeedItem(
       storage.publicUrl(key),
     ),
     goingCount: participantCount,
+    boost: r.boost
+      ? {
+          businessId: r.boost.businessId,
+          businessName: r.boost.businessName,
+          businessLogoUrl: r.boost.businessLogoKey
+            ? storage.publicUrl(r.boost.businessLogoKey)
+            : null,
+        }
+      : null,
   };
 }
