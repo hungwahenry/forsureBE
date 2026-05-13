@@ -6,6 +6,8 @@ import { BusinessMemberGuard } from './shared/business-member.guard';
 import { StripeService } from './stripe.service';
 import { SubscribeController } from './subscribe/subscribe.controller';
 import { SubscribeService } from './subscribe/subscribe.service';
+import { VenueAnalyticsController } from './venues/analytics/analytics.controller';
+import { VenueAnalyticsService } from './venues/analytics/analytics.service';
 import { VenueBillingService } from './venues/billing.service';
 import { VenueBudgetResetScheduler } from './venues/scheduled/budget-reset.scheduler';
 import { VenuesController } from './venues/venues.controller';
@@ -18,6 +20,7 @@ import { WebhooksService } from './webhooks/webhooks.service';
     OnboardingController,
     SubscribeController,
     VenuesController,
+    VenueAnalyticsController,
     WebhooksController,
   ],
   providers: [
@@ -26,6 +29,7 @@ import { WebhooksService } from './webhooks/webhooks.service';
     StripeService,
     OnboardingService,
     SubscribeService,
+    VenueAnalyticsService,
     VenueBillingService,
     VenueBudgetResetScheduler,
     VenuesService,
