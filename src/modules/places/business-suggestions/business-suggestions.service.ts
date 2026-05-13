@@ -1,4 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { ErrorCode } from '../../../common/constants/error-codes';
+import { AppException } from '../../../common/exceptions/app.exception';
+import { createId } from '../../../common/utils/id';
 import { PrismaService } from '../../../prisma/prisma.service';
 import {
   STORAGE_PROVIDER_TOKEN,
@@ -31,5 +34,25 @@ export class BusinessSuggestionsService {
       limit: MAX_SUGGESTIONS,
     });
     return rows.map((row) => serializeBusinessVenueSuggestion(this.storage, row));
+  }
+
+  async recordPick(userId: string, venueId: string): Promise<void> {
+    const venue = await this.prisma.businessVenue.findUnique({
+      where: { id: venueId },
+      select: { id: true },
+    });
+    if (!venue) {
+      throw new AppException(ErrorCode.RESOURCE_NOT_FOUND, {
+        message: 'Venue not found.',
+      });
+    }
+    await this.prisma.venueSuggestionEvent.create({
+      data: {
+        id: createId('vse'),
+        venueId,
+        userId,
+        kind: 'PICK',
+      },
+    });
   }
 }

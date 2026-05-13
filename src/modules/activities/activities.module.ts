@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { BlocksModule } from '../blocks/blocks.module';
+import { BusinessModule } from '../business/business.module';
 import { ChatsModule } from '../chats/chats.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { CreateActivityController } from './create/create.controller';
@@ -18,7 +19,7 @@ import { AutoDoneScheduler } from './scheduled/auto-done.scheduler';
 import { ActivityStartReminderScheduler } from './scheduled/start-reminder.scheduler';
 
 @Module({
-  imports: [ChatsModule, NotificationsModule, BlocksModule],
+  imports: [ChatsModule, NotificationsModule, BlocksModule, BusinessModule],
   controllers: [
     CreateActivityController,
     JoinActivityController,

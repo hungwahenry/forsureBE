@@ -90,4 +90,13 @@ export class CreateActivityDto {
   @IsOptional()
   @IsBoolean()
   memoriesShareablePublicly?: boolean;
+
+  @ApiPropertyOptional({
+    description:
+      'Set when the host picked a sponsored BusinessVenue suggestion in the place picker. Triggers per-pick venue billing on create.',
+  })
+  @IsOptional()
+  @IsString()
+  @Length(1, 40)
+  businessVenueId?: string;
 }

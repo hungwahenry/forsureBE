@@ -162,6 +162,11 @@ model Activity {
   deletedBy     User?     @relation("ActivityDeletedBy", fields: [deletedById], references: [id], onDelete: SetNull)
   deletedReason String?
 
+  /// Set when the host picked a sponsored BusinessVenue in the place picker.
+  /// Drives D3 billing (CONFIRMED event on creation) and downstream venue analytics.
+  businessVenueId String?
+  businessVenue   BusinessVenue? @relation(fields: [businessVenueId], references: [id], onDelete: SetNull)
+
   participants          ActivityParticipant[]
   chatMessages          ChatMessage[]
   pinnedMessage         ChatMessage?           @relation("ActivityPinnedMessage", fields: [pinnedMessageId], references: [id], onDelete: SetNull)
@@ -170,6 +175,7 @@ model Activity {
 
   @@index([startsAt])
   @@index([status, startsAt])
+  @@index([businessVenueId])
 }
 
 enum ActivityStatus {
@@ -577,6 +583,7 @@ model BusinessVenue {
   updatedAt            DateTime                               @updatedAt @db.Timestamptz(3)
 
   suggestionEvents VenueSuggestionEvent[]
+  activities       Activity[]
 
   @@index([businessId])
 }

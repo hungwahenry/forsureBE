@@ -4,6 +4,7 @@ import { ErrorCode } from '../../../common/constants/error-codes';
 import { AppException } from '../../../common/exceptions/app.exception';
 import { createId } from '../../../common/utils/id';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { VenueBillingService } from '../../business/venues/billing.service';
 import { MembershipService } from '../../chats/membership/membership.service';
 import { CreateActivityDto } from './dto/create-activity.dto';
 
@@ -14,6 +15,7 @@ export class CreateActivityService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly membership: MembershipService,
+    private readonly venueBilling: VenueBillingService,
   ) {}
 
   async create(
@@ -41,6 +43,7 @@ export class CreateActivityService {
           genderPreference: dto.genderPreference,
           memoriesShareablePublicly: dto.memoriesShareablePublicly ?? false,
           participantCount: 1,
+          businessVenueId: dto.businessVenueId ?? null,
         },
       });
       await tx.activityParticipant.create({
@@ -58,6 +61,13 @@ export class CreateActivityService {
           activitiesJoinedCount: { increment: 1 },
         },
       });
+      if (dto.businessVenueId) {
+        await this.venueBilling.chargeForActivityPick(tx, {
+          userId: authorUserId,
+          venueId: dto.businessVenueId,
+          activityId,
+        });
+      }
       return created;
     });
 
