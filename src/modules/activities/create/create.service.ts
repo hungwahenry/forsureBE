@@ -30,6 +30,15 @@ export class CreateActivityService {
 
     const activityId = createId('act');
     const activity = await this.prisma.$transaction(async (tx) => {
+      let resolvedVenueId: string | null = null;
+      if (dto.businessVenueId) {
+        const venue = await tx.businessVenue.findUnique({
+          where: { id: dto.businessVenueId },
+          select: { id: true },
+        });
+        resolvedVenueId = venue?.id ?? null;
+      }
+
       const created = await tx.activity.create({
         data: {
           id: activityId,
@@ -43,7 +52,7 @@ export class CreateActivityService {
           genderPreference: dto.genderPreference,
           memoriesShareablePublicly: dto.memoriesShareablePublicly ?? false,
           participantCount: 1,
-          businessVenueId: dto.businessVenueId ?? null,
+          businessVenueId: resolvedVenueId,
         },
       });
       await tx.activityParticipant.create({
@@ -61,10 +70,10 @@ export class CreateActivityService {
           activitiesJoinedCount: { increment: 1 },
         },
       });
-      if (dto.businessVenueId) {
+      if (resolvedVenueId) {
         await this.venueBilling.chargeForActivityPick(tx, {
           userId: authorUserId,
-          venueId: dto.businessVenueId,
+          venueId: resolvedVenueId,
           activityId,
         });
       }

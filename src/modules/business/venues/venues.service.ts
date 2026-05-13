@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { ErrorCode } from '../../../common/constants/error-codes';
 import { AppException } from '../../../common/exceptions/app.exception';
 import { createId } from '../../../common/utils/id';
@@ -38,32 +39,34 @@ export class VenuesService {
     businessId: string,
     dto: CreateVenueDto,
   ): Promise<BusinessVenueDto> {
-    const duplicate = await this.prisma.businessVenue.findFirst({
-      where: { businessId, googlePlaceId: dto.googlePlaceId },
-      select: { id: true },
-    });
-    if (duplicate) {
-      throw new AppException(ErrorCode.RESOURCE_CONFLICT, {
-        message: 'This venue is already registered.',
-      });
-    }
-
     const maxRadiusM = dto.maxRadiusM ?? 5000;
-    const row = await this.prisma.businessVenue.create({
-      data: {
-        id: createId('bvn'),
-        businessId,
-        placeName: dto.placeName,
-        placeLat: dto.placeLat,
-        placeLng: dto.placeLng,
-        googlePlaceId: dto.googlePlaceId,
-        matchingKeywords: dto.matchingKeywords,
-        maxRadiusM,
-        dailyBudgetCents: dto.dailyBudgetCents,
-        dailyBudgetRemaining: dto.dailyBudgetCents,
-      },
-    });
-    return serializeBusinessVenue(row);
+    try {
+      const row = await this.prisma.businessVenue.create({
+        data: {
+          id: createId('bvn'),
+          businessId,
+          placeName: dto.placeName,
+          placeLat: dto.placeLat,
+          placeLng: dto.placeLng,
+          googlePlaceId: dto.googlePlaceId,
+          matchingKeywords: dto.matchingKeywords,
+          maxRadiusM,
+          dailyBudgetCents: dto.dailyBudgetCents,
+          dailyBudgetRemaining: dto.dailyBudgetCents,
+        },
+      });
+      return serializeBusinessVenue(row);
+    } catch (err) {
+      if (
+        err instanceof Prisma.PrismaClientKnownRequestError &&
+        err.code === 'P2002'
+      ) {
+        throw new AppException(ErrorCode.RESOURCE_CONFLICT, {
+          message: 'This venue is already registered.',
+        });
+      }
+      throw err;
+    }
   }
 
   async update(

@@ -21,24 +21,30 @@ export class VenueBillingService {
     tx: Prisma.TransactionClient,
     { userId, venueId, activityId }: ChargeArgs,
   ): Promise<void> {
-    const venue = await tx.businessVenue.findUnique({
-      where: { id: venueId },
-      select: {
-        id: true,
-        isPaused: true,
-        business: { select: { verifiedAt: true, suspendedAt: true } },
-      },
-    });
-    if (!venue) {
+    const locked = await tx.$queryRaw<
+      Array<{
+        isPaused: boolean;
+        verifiedAt: Date | null;
+        suspendedAt: Date | null;
+      }>
+    >`
+      SELECT v."isPaused", b."verifiedAt", b."suspendedAt"
+      FROM "BusinessVenue" v
+      JOIN "Business" b ON b.id = v."businessId"
+      WHERE v.id = ${venueId}
+      FOR UPDATE OF v
+    `;
+    if (locked.length === 0) {
       throw new AppException(ErrorCode.RESOURCE_NOT_FOUND, {
         message: 'Suggested venue not found.',
       });
     }
+    const venue = locked[0];
 
     const isBusinessActive =
       !venue.isPaused &&
-      venue.business.verifiedAt !== null &&
-      venue.business.suspendedAt === null;
+      venue.verifiedAt !== null &&
+      venue.suspendedAt === null;
 
     let chargedCents = 0;
     if (isBusinessActive) {

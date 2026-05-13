@@ -585,6 +585,7 @@ model BusinessVenue {
   suggestionEvents VenueSuggestionEvent[]
   activities       Activity[]
 
+  @@unique([businessId, googlePlaceId])
   @@index([businessId])
 }
 

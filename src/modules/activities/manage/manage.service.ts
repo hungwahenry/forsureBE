@@ -9,6 +9,7 @@ import {
 import { ErrorCode } from '../../../common/constants/error-codes';
 import { AppException } from '../../../common/exceptions/app.exception';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { VenueBillingService } from '../../business/venues/billing.service';
 import { ChatEvents, chatRoom } from '../../chats/chats.events';
 import { MembershipService } from '../../chats/membership/membership.service';
 import { MessagesService } from '../../chats/messages/messages.service';
@@ -26,6 +27,7 @@ export class ManageActivityService {
     private readonly membership: MembershipService,
     private readonly messages: MessagesService,
     private readonly notifications: ActivityLifecycleNotifications,
+    private readonly venueBilling: VenueBillingService,
   ) {}
 
   private async requireHost(
@@ -65,7 +67,8 @@ export class ManageActivityService {
       dto.placeLat !== undefined ||
       dto.placeLng !== undefined ||
       dto.capacity !== undefined ||
-      dto.genderPreference !== undefined;
+      dto.genderPreference !== undefined ||
+      dto.businessVenueId !== undefined;
 
     if (planningFieldsChanged && activity.status !== ActivityStatus.OPEN) {
       throw new AppException(ErrorCode.RESOURCE_CONFLICT, {
@@ -130,6 +133,29 @@ export class ManageActivityService {
     }
 
     const updated = await this.prisma.$transaction(async (tx) => {
+      if (dto.businessVenueId !== undefined) {
+        let resolvedVenueId: string | null = null;
+        if (dto.businessVenueId !== null) {
+          const venue = await tx.businessVenue.findUnique({
+            where: { id: dto.businessVenueId },
+            select: { id: true },
+          });
+          resolvedVenueId = venue?.id ?? null;
+        }
+        data.businessVenue = resolvedVenueId
+          ? { connect: { id: resolvedVenueId } }
+          : { disconnect: true };
+      }
+
+      const venueLinkChangedTo =
+        dto.businessVenueId !== undefined &&
+        dto.businessVenueId !== null &&
+        dto.businessVenueId !== activity.businessVenueId &&
+        data.businessVenue !== undefined &&
+        'connect' in (data.businessVenue as object)
+          ? dto.businessVenueId
+          : null;
+
       const next = await tx.activity.update({
         where: { id: activityId },
         data,
@@ -138,6 +164,13 @@ export class ManageActivityService {
         await tx.activityPost.updateMany({
           where: { activityId, visibility: PostVisibility.PUBLIC },
           data: { visibility: PostVisibility.PARTICIPANTS },
+        });
+      }
+      if (venueLinkChangedTo) {
+        await this.venueBilling.chargeForActivityPick(tx, {
+          userId,
+          venueId: venueLinkChangedTo,
+          activityId,
         });
       }
       return next;

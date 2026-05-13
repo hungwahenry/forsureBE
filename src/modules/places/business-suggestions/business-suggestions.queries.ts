@@ -9,13 +9,22 @@ interface FindVenueSuggestionsArgs {
   limit: number;
 }
 
+function normalizeQuery(q: string): string {
+  return q
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, ' ')
+    .split(/[\s-]+/)
+    .filter((t) => t.length > 0)
+    .join(' ');
+}
+
 export async function findVenueSuggestions(
   prisma: PrismaService,
   args: FindVenueSuggestionsArgs,
 ): Promise<BusinessVenueSuggestionRow[]> {
   const { lat, lng, q, limit } = args;
-  const hasQuery = q.trim().length > 0;
-  const normalizedQ = q.trim().toLowerCase();
+  const normalizedQ = normalizeQuery(q);
+  const hasQuery = normalizedQ.length > 0;
 
   return prisma.$queryRaw<BusinessVenueSuggestionRow[]>`
     SELECT
@@ -44,9 +53,14 @@ export async function findVenueSuggestions(
       ${
         hasQuery
           ? Prisma.sql`AND EXISTS (
-              SELECT 1 FROM unnest(v."matchingKeywords") AS kw
-              WHERE kw ILIKE '%' || ${normalizedQ} || '%'
-                 OR ${normalizedQ} ILIKE '%' || kw || '%'
+              SELECT 1
+              FROM unnest(v."matchingKeywords") AS kw
+              CROSS JOIN regexp_split_to_table(${normalizedQ}, '\s+') AS qt
+              WHERE EXISTS (
+                SELECT 1
+                FROM regexp_split_to_table(kw, '[\s-]+') AS kwt
+                WHERE kwt LIKE qt || '%' OR qt LIKE kwt || '%'
+              )
             )`
           : Prisma.empty
       }

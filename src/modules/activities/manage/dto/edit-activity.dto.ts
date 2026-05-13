@@ -91,4 +91,14 @@ export class EditActivityDto {
   @IsOptional()
   @IsBoolean()
   memoriesShareablePublicly?: boolean;
+
+  @ApiPropertyOptional({
+    description:
+      'Sponsored-venue link. string → set/change (may fire CONFIRMED billing for the new venue, deduped per 30 days). null → clear the link. Absent → leave unchanged.',
+    nullable: true,
+  })
+  @IsOptional()
+  @IsString()
+  @Length(1, 40)
+  businessVenueId?: string | null;
 }
