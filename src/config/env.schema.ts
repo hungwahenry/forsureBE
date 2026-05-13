@@ -60,6 +60,12 @@ export const envSchema = z
     // --- Error reporting (Sentry) ---
     // Optional: when set, instrument.ts initializes Sentry; otherwise no-op.
     SENTRY_DSN: z.url().optional(),
+
+    // --- Billing (Stripe) ---
+    STRIPE_SECRET_KEY: z.string().optional(),
+    STRIPE_WEBHOOK_SECRET: z.string().optional(),
+    STRIPE_PRICE_ID_VERIFIED_BUSINESS: z.string().optional(),
+    STRIPE_RETURN_URL_BASE: z.url().optional(),
   })
   .superRefine((env, ctx) => {
     if (env.STORAGE_DRIVER === 's3') {

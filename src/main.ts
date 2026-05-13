@@ -18,6 +18,8 @@ import type { Env } from './config/env.schema';
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     bufferLogs: true,
+    // Stripe webhook handler verifies signatures against the unparsed body.
+    rawBody: true,
   });
 
   app.useLogger(app.get(Logger));
