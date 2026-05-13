@@ -75,9 +75,19 @@ export class FeedService {
           })
         : null;
 
-    const organicIds = new Set(organicPage.map((r) => r.id));
-    const boosts = boostRows.filter((b) => !organicIds.has(b.id));
-    const merged = interleaveWithBoosts(organicPage, boosts);
+    const boostByActivityId = new Map(
+      boostRows.flatMap((r) => (r.boost ? [[r.id, r.boost] as const] : [])),
+    );
+    const annotatedOrganic = organicPage.map((r) => {
+      const boost = boostByActivityId.get(r.id);
+      if (!boost) return r;
+      boostByActivityId.delete(r.id);
+      return { ...r, boost };
+    });
+    const remainingBoosts = boostRows.filter((b) =>
+      boostByActivityId.has(b.id),
+    );
+    const merged = interleaveWithBoosts(annotatedOrganic, remainingBoosts);
 
     return {
       items: merged.map((r) => serializeFeedItem(this.storage, r)),
