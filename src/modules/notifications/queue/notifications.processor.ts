@@ -8,6 +8,7 @@ import { PreferencesService } from '../../preferences/preferences.service';
 import { DevicesService } from '../devices.service';
 import { ExpoPushService } from '../expo-push.service';
 import { ActivityStart1hHandler } from '../handlers/activity-start-1h.handler';
+import { BroadcastHandler } from '../handlers/broadcast.handler';
 import { CancellationHandler } from '../handlers/cancellation.handler';
 import { ChatMessageHandler } from '../handlers/chat-message.handler';
 import { JoinHandler } from '../handlers/join.handler';
@@ -47,6 +48,7 @@ export class NotificationsProcessor extends WorkerHost {
     pinned: PinnedHandler,
     newMemory: NewMemoryHandler,
     activityStart1h: ActivityStart1hHandler,
+    broadcast: BroadcastHandler,
   ) {
     super();
     this.ctx = { prisma, expo, email, preferences, devices, inbox };
@@ -59,6 +61,7 @@ export class NotificationsProcessor extends WorkerHost {
       PINNED: pinned,
       NEW_MEMORY: newMemory,
       ACTIVITY_START_1H: activityStart1h,
+      BROADCAST: broadcast,
     };
   }
 

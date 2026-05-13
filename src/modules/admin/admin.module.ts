@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { AdminActivitiesModule } from './activities/activities.module';
 import { AdminAuditLogModule } from './audit-log/audit-log.module';
 import { AdminBlocksModule } from './blocks/blocks.module';
+import { AdminBroadcastModule } from './broadcast/broadcast.module';
 import { AdminFeatureFlagsModule } from './feature-flags/feature-flags.module';
 import { AdminMeModule } from './me/me.module';
 import { AdminMessagesModule } from './messages/messages.module';
@@ -28,6 +29,7 @@ import { AdminUsersModule } from './users/users.module';
     AdminCronModule,
     AdminFeatureFlagsModule,
     AdminAuditLogModule,
+    AdminBroadcastModule,
   ],
 })
 export class AdminModule {}

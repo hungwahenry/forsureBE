@@ -9,6 +9,7 @@ export const NOTIFICATION_EVENT = {
   PINNED: 'PINNED',
   NEW_MEMORY: 'NEW_MEMORY',
   ACTIVITY_START_1H: 'ACTIVITY_START_1H',
+  BROADCAST: 'BROADCAST',
 } as const;
 
 export type NotificationEventCode =
@@ -35,6 +36,7 @@ export const NOTIFICATION_EVENT_DEFAULTS: Record<
   PINNED: { push: true, email: false },
   NEW_MEMORY: { push: true, email: false },
   ACTIVITY_START_1H: { push: true, email: true },
+  BROADCAST: { push: true, email: false },
 };
 
 export function getEventDefault(

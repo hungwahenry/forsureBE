@@ -7,6 +7,7 @@ import { PreferencesModule } from '../preferences/preferences.module';
 import { DevicesService } from './devices.service';
 import { ExpoPushService } from './expo-push.service';
 import { ActivityStart1hHandler } from './handlers/activity-start-1h.handler';
+import { BroadcastHandler } from './handlers/broadcast.handler';
 import { CancellationHandler } from './handlers/cancellation.handler';
 import { ChatMessageHandler } from './handlers/chat-message.handler';
 import { JoinHandler } from './handlers/join.handler';
@@ -40,6 +41,13 @@ import { NotificationsProcessor } from './queue/notifications.processor';
     BullModule.registerQueue({ name: NOTIFICATIONS_QUEUE }),
   ],
   controllers: [NotificationsController],
+  exports: [
+    NotificationsQueue,
+    ChatNotifications,
+    ActivityLifecycleNotifications,
+    ActivityReminderNotifications,
+    MemoryNotifications,
+  ],
   providers: [
     DevicesService,
     ExpoPushService,
@@ -52,12 +60,7 @@ import { NotificationsProcessor } from './queue/notifications.processor';
     PinnedHandler,
     NewMemoryHandler,
     ActivityStart1hHandler,
-    ChatNotifications,
-    ActivityLifecycleNotifications,
-    ActivityReminderNotifications,
-    MemoryNotifications,
-  ],
-  exports: [
+    BroadcastHandler,
     ChatNotifications,
     ActivityLifecycleNotifications,
     ActivityReminderNotifications,
