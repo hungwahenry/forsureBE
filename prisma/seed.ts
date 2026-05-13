@@ -144,8 +144,11 @@ interface FlagSeed {
   description: string;
   /** Initial enabled state when the flag is first created. Re-running the
    *  seeder will NOT overwrite a flag whose enabled state was changed via
-   *  the admin UI — only the description is refreshed. */
+   *  the admin UI — only the description / clientExposed are refreshed. */
   enabledOnCreate: boolean;
+  /** When true, the flag is surfaced via the public GET /feature-flags
+   *  endpoint so the mobile app can mirror gating in its UI. */
+  clientExposed: boolean;
 }
 
 const FLAGS: FlagSeed[] = [
@@ -153,39 +156,46 @@ const FLAGS: FlagSeed[] = [
     key: 'signup_enabled',
     description: 'Allow new user account creation via email verification.',
     enabledOnCreate: true,
+    clientExposed: true,
   },
   {
     key: 'activity_joining_enabled',
     description:
       'Allow users to join new activities. Existing activities keep running when off.',
     enabledOnCreate: true,
+    clientExposed: true,
   },
   {
     key: 'activity_chat_enabled',
     description: 'Allow sending chat messages in activities.',
     enabledOnCreate: true,
+    clientExposed: true,
   },
   {
     key: 'public_memories_sharing_enabled',
     description:
       'Allow memory posts to be marked PUBLIC and surfaced in the explore feed.',
     enabledOnCreate: true,
+    clientExposed: true,
   },
   {
     key: 'push_notifications_enabled',
     description: 'Master kill switch for all push notifications via Expo.',
     enabledOnCreate: true,
+    clientExposed: false,
   },
   {
     key: 'inbox_notifications_enabled',
     description:
       'Persist in-app inbox notifications (independent of push delivery).',
     enabledOnCreate: true,
+    clientExposed: false,
   },
   {
     key: 'easter_eggs_enabled',
     description: 'Record easter-egg discoveries (e.g. credits egg).',
     enabledOnCreate: true,
+    clientExposed: true,
   },
 ];
 
@@ -221,9 +231,13 @@ async function main() {
         key: f.key,
         description: f.description,
         enabled: f.enabledOnCreate,
+        clientExposed: f.clientExposed,
       },
       // Preserve operator-toggled `enabled` state on re-seed.
-      update: { description: f.description },
+      update: {
+        description: f.description,
+        clientExposed: f.clientExposed,
+      },
     });
   }
   console.log(`Seeded ${FLAGS.length} feature flags.`);

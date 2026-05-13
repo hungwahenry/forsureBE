@@ -3,6 +3,7 @@ import type { FeatureFlag, User } from '@prisma/client';
 export interface AdminFeatureFlagItem {
   key: string;
   enabled: boolean;
+  clientExposed: boolean;
   description: string | null;
   createdAt: string;
   updatedAt: string;
@@ -17,6 +18,7 @@ export function serializeAdminFeatureFlag(row: Row): AdminFeatureFlagItem {
   return {
     key: row.key,
     enabled: row.enabled,
+    clientExposed: row.clientExposed,
     description: row.description,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),

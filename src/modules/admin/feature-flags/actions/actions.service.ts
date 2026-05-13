@@ -49,11 +49,13 @@ export class AdminFeatureFlagsActionsService {
     }
 
     const enabled = dto.enabled ?? false;
+    const clientExposed = dto.clientExposed ?? true;
     const row = await this.prisma.$transaction(async (tx) => {
       const created = await tx.featureFlag.create({
         data: {
           key: dto.key,
           enabled,
+          clientExposed,
           description: dto.description ?? null,
           updatedById: actor.adminId,
         },
@@ -64,7 +66,11 @@ export class AdminFeatureFlagsActionsService {
         action: AdminAuditAction.FEATURE_FLAG_CREATED,
         targetType: AdminAuditTargetType.FEATURE_FLAG,
         targetId: dto.key,
-        after: { enabled, description: dto.description ?? null },
+        after: {
+          enabled,
+          clientExposed,
+          description: dto.description ?? null,
+        },
         request: actor.request,
         tx,
       });
@@ -93,17 +99,23 @@ export class AdminFeatureFlagsActionsService {
       updatedBy: { connect: { id: actor.adminId } },
     };
     if (dto.enabled !== undefined) updates.enabled = dto.enabled;
+    if (dto.clientExposed !== undefined) {
+      updates.clientExposed = dto.clientExposed;
+    }
     if (dto.description !== undefined) {
       updates.description = dto.description || null;
     }
 
     const toggled =
       dto.enabled !== undefined && dto.enabled !== existing.enabled;
+    const exposureChanged =
+      dto.clientExposed !== undefined &&
+      dto.clientExposed !== existing.clientExposed;
     const descriptionChanged =
       dto.description !== undefined &&
       (dto.description || null) !== existing.description;
 
-    if (!toggled && !descriptionChanged) {
+    if (!toggled && !exposureChanged && !descriptionChanged) {
       return serializeAdminFeatureFlag({ ...existing, updatedBy: null });
     }
 
@@ -120,9 +132,14 @@ export class AdminFeatureFlagsActionsService {
           : AdminAuditAction.FEATURE_FLAG_EDITED,
         targetType: AdminAuditTargetType.FEATURE_FLAG,
         targetId: key,
-        before: { enabled: existing.enabled, description: existing.description },
+        before: {
+          enabled: existing.enabled,
+          clientExposed: existing.clientExposed,
+          description: existing.description,
+        },
         after: {
           enabled: updated.enabled,
+          clientExposed: updated.clientExposed,
           description: updated.description,
         },
         request: actor.request,
@@ -154,6 +171,7 @@ export class AdminFeatureFlagsActionsService {
         targetId: key,
         before: {
           enabled: existing.enabled,
+          clientExposed: existing.clientExposed,
           description: existing.description,
         },
         request: actor.request,

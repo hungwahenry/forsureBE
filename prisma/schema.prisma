@@ -482,6 +482,9 @@ model FeatureFlag {
   key         String   @id
   enabled     Boolean  @default(false)
   description String?
+  /// When true, the flag is returned by the public GET /feature-flags endpoint
+  /// so mobile clients can mirror gating in their UI. Default true.
+  clientExposed Boolean @default(true)
   updatedById String?
   updatedBy   User?    @relation("FeatureFlagUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
   createdAt   DateTime @default(now()) @db.Timestamptz(3)

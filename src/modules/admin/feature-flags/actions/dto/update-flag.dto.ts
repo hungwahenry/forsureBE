@@ -9,6 +9,11 @@ export class UpdateFlagDto {
 
   @ApiPropertyOptional()
   @IsOptional()
+  @IsBoolean()
+  clientExposed?: boolean;
+
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsString()
   @Length(0, 1000)
   description?: string;

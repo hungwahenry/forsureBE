@@ -33,4 +33,12 @@ export class CreateFlagDto {
   @IsOptional()
   @IsBoolean()
   enabled?: boolean;
+
+  @ApiPropertyOptional({
+    default: true,
+    description: 'Whether the public GET /feature-flags endpoint exposes this flag to mobile clients.',
+  })
+  @IsOptional()
+  @IsBoolean()
+  clientExposed?: boolean;
 }

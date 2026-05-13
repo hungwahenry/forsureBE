@@ -38,4 +38,14 @@ export class FeatureFlagService {
     if (key) this.cache.delete(key);
     else this.cache.clear();
   }
+
+ async listClientExposed(): Promise<Record<string, boolean>> {
+    const rows = await this.prisma.featureFlag.findMany({
+      where: { clientExposed: true },
+      select: { key: true, enabled: true },
+    });
+    const result: Record<string, boolean> = {};
+    for (const r of rows) result[r.key] = r.enabled;
+    return result;
+  }
 }
