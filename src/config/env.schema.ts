@@ -66,6 +66,11 @@ export const envSchema = z
     STRIPE_WEBHOOK_SECRET: z.string().optional(),
     STRIPE_PRICE_ID_VERIFIED_BUSINESS: z.string().optional(),
     STRIPE_RETURN_URL_BASE: z.url().optional(),
+
+    // --- Activity boost pricing ---
+    BOOST_FREE_PER_CYCLE: z.coerce.number().int().nonnegative().default(4),
+    BOOST_OVERAGE_CENTS: z.coerce.number().int().nonnegative().default(1900),
+    BOOST_DURATION_HOURS: z.coerce.number().int().positive().default(72),
   })
   .superRefine((env, ctx) => {
     if (env.STORAGE_DRIVER === 's3') {

@@ -172,6 +172,7 @@ model Activity {
   pinnedMessage         ChatMessage?           @relation("ActivityPinnedMessage", fields: [pinnedMessageId], references: [id], onDelete: SetNull)
   posts                 ActivityPost[]
   venueSuggestionEvents VenueSuggestionEvent[]
+  boosts                ActivityBoost[]
 
   @@index([startsAt])
   @@index([status, startsAt])
@@ -542,6 +543,7 @@ model Business {
 
   members BusinessMember[]
   venues  BusinessVenue[]
+  boosts  ActivityBoost[]
 }
 
 enum BusinessMemberRole {
@@ -604,4 +606,30 @@ model VenueSuggestionEvent {
 
   @@index([venueId, createdAt])
   @@index([userId, venueId, createdAt])
+}
+
+model ActivityBoost {
+  id                  String    @id // abt_...
+  activityId          String
+  activity            Activity  @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  businessId          String
+  business            Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  /// Geographic eligibility radius in metres — users within this distance see the activity in their feed.
+  radiusM             Int
+  startsAt            DateTime  @db.Timestamptz(3)
+  /// MIN(startsAt + 72h, activity.startsAt) — locked at creation time.
+  endsAt              DateTime  @db.Timestamptz(3)
+  /// 0 for a bundled-with-subscription boost, >0 for an overage that hit the Stripe invoice.
+  chargedCents        Int       @default(0)
+  isOverage           Boolean   @default(false)
+  /// Set when chargedCents > 0 — references the Stripe invoice item attached to the customer's next invoice.
+  stripeInvoiceItemId String?   @unique
+  /// Host cancelled the activity, or the business explicitly stopped the boost early.
+  cancelledAt         DateTime? @db.Timestamptz(3)
+  createdAt           DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt           DateTime  @updatedAt @db.Timestamptz(3)
+
+  @@index([activityId, endsAt])
+  @@index([businessId, createdAt])
+  @@index([endsAt])
 }
