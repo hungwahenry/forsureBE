@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { BusinessActivitiesController } from './activities/activities.controller';
 import { BusinessActivitiesService } from './activities/activities.service';
+import { BillingController } from './billing/billing.controller';
+import { BillingService } from './billing/billing.service';
 import { BoostsController } from './boosts/boosts.controller';
 import { BoostsPricingService } from './boosts/boosts-pricing.service';
 import { BoostsService } from './boosts/boosts.service';
@@ -29,6 +31,7 @@ import { WebhooksService } from './webhooks/webhooks.service';
     VenueAnalyticsController,
     BusinessActivitiesController,
     BoostsController,
+    BillingController,
     WebhooksController,
   ],
   providers: [
@@ -45,6 +48,7 @@ import { WebhooksService } from './webhooks/webhooks.service';
     BusinessActivitiesService,
     BoostsService,
     BoostsPricingService,
+    BillingService,
     WebhooksService,
   ],
   exports: [BusinessService, VenueBillingService],
