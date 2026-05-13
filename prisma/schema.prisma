@@ -538,6 +538,11 @@ model Business {
   stripeCustomerId     String?   @unique
   /// Stripe subscription id for the verified-business tier. Null when not subscribed.
   stripeSubscriptionId String?   @unique
+  /// Latest Stripe subscription status (active, past_due, unpaid, canceled, etc.).
+  /// Mirrored from `customer.subscription.updated` and `.deleted` webhooks.
+  stripeSubscriptionStatus       String?
+  /// When stripeSubscriptionStatus was last *changed* — i.e. transition time, not webhook receipt.
+  stripeSubscriptionStatusAt     DateTime? @db.Timestamptz(3)
   createdAt            DateTime  @default(now()) @db.Timestamptz(3)
   updatedAt            DateTime  @updatedAt @db.Timestamptz(3)
 

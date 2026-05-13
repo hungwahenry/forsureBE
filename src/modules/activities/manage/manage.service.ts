@@ -171,6 +171,8 @@ export class ManageActivityService {
           userId,
           venueId: venueLinkChangedTo,
           activityId,
+          activityLat: next.placeLat,
+          activityLng: next.placeLng,
         });
       }
       return next;

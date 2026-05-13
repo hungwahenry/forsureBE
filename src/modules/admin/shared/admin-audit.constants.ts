@@ -31,6 +31,10 @@ export const AdminAuditAction = {
   FEATURE_FLAG_DELETED: 'FEATURE_FLAG_DELETED',
   PUSH_BROADCAST_SENT: 'PUSH_BROADCAST_SENT',
   QUEUE_JOB_RETRIED: 'QUEUE_JOB_RETRIED',
+
+  BUSINESS_SUSPENDED: 'BUSINESS_SUSPENDED',
+  BUSINESS_UNSUSPENDED: 'BUSINESS_UNSUSPENDED',
+  BUSINESS_BOOST_FORCE_CANCELLED: 'BUSINESS_BOOST_FORCE_CANCELLED',
 } as const;
 export type AdminAuditAction =
   (typeof AdminAuditAction)[keyof typeof AdminAuditAction];
@@ -46,6 +50,8 @@ export const AdminAuditTargetType = {
   REFRESH_TOKEN: 'REFRESH_TOKEN',
   FEATURE_FLAG: 'FEATURE_FLAG',
   QUEUE_JOB: 'QUEUE_JOB',
+  BUSINESS: 'BUSINESS',
+  BUSINESS_BOOST: 'BUSINESS_BOOST',
 } as const;
 export type AdminAuditTargetType =
   (typeof AdminAuditTargetType)[keyof typeof AdminAuditTargetType];

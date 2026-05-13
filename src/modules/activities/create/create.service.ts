@@ -75,6 +75,8 @@ export class CreateActivityService {
           userId: authorUserId,
           venueId: resolvedVenueId,
           activityId,
+          activityLat: dto.placeLat,
+          activityLng: dto.placeLng,
         });
       }
       return created;

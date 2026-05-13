@@ -11,6 +11,8 @@ interface ChargeArgs {
   userId: string;
   venueId: string;
   activityId: string;
+  activityLat: number;
+  activityLng: number;
 }
 
 @Injectable()
@@ -19,16 +21,25 @@ export class VenueBillingService {
 
   async chargeForActivityPick(
     tx: Prisma.TransactionClient,
-    { userId, venueId, activityId }: ChargeArgs,
+    { userId, venueId, activityId, activityLat, activityLng }: ChargeArgs,
   ): Promise<void> {
     const locked = await tx.$queryRaw<
       Array<{
         isPaused: boolean;
         verifiedAt: Date | null;
         suspendedAt: Date | null;
+        inRange: boolean;
       }>
     >`
-      SELECT v."isPaused", b."verifiedAt", b."suspendedAt"
+      SELECT
+        v."isPaused",
+        b."verifiedAt",
+        b."suspendedAt",
+        ST_DWithin(
+          v."placePoint",
+          ST_SetSRID(ST_MakePoint(${activityLng}, ${activityLat}), 4326)::geography,
+          v."maxRadiusM"
+        ) AS "inRange"
       FROM "BusinessVenue" v
       JOIN "Business" b ON b.id = v."businessId"
       WHERE v.id = ${venueId}
@@ -44,7 +55,8 @@ export class VenueBillingService {
     const isBusinessActive =
       !venue.isPaused &&
       venue.verifiedAt !== null &&
-      venue.suspendedAt === null;
+      venue.suspendedAt === null &&
+      venue.inRange;
 
     let chargedCents = 0;
     if (isBusinessActive) {
@@ -84,8 +96,13 @@ export class VenueBillingService {
     });
 
     if (chargedCents === 0) {
+      const reason = !venue.inRange
+        ? 'out_of_range'
+        : isBusinessActive
+          ? 'deduped_or_budget'
+          : 'inactive';
       this.logger.debug(
-        { venueId, userId, activityId, reason: isBusinessActive ? 'deduped_or_budget' : 'inactive' },
+        { venueId, userId, activityId, reason },
         'Venue pick recorded without charge',
       );
     }

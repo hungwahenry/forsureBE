@@ -8,6 +8,11 @@ interface CheckoutSessionData {
   metadata?: { businessId?: string } | null;
 }
 
+interface SubscriptionData {
+  id: string;
+  status: string;
+}
+
 @Injectable()
 export class WebhooksService {
   private readonly logger = new Logger(WebhooksService.name);
@@ -27,6 +32,14 @@ export class WebhooksService {
       case 'checkout.session.completed':
         return this.onCheckoutCompleted(
           event.data.object as CheckoutSessionData,
+        );
+      case 'customer.subscription.updated':
+        return this.onSubscriptionUpdated(
+          event.data.object as SubscriptionData,
+        );
+      case 'customer.subscription.deleted':
+        return this.onSubscriptionDeleted(
+          event.data.object as SubscriptionData,
         );
       default:
         this.logger.debug(`Ignoring Stripe event ${event.type}`);
@@ -51,13 +64,62 @@ export class WebhooksService {
       return;
     }
 
+    const now = new Date();
     await this.prisma.business.update({
       where: { id: businessId },
       data: {
-        verifiedAt: { set: new Date() },
+        verifiedAt: { set: now },
         stripeCustomerId: customerId,
         stripeSubscriptionId: subscriptionId,
+        stripeSubscriptionStatus: 'active',
+        stripeSubscriptionStatusAt: now,
       },
     });
+  }
+
+  private async onSubscriptionUpdated(
+    subscription: SubscriptionData,
+  ): Promise<void> {
+    const business = await this.prisma.business.findFirst({
+      where: { stripeSubscriptionId: subscription.id },
+      select: { id: true, stripeSubscriptionStatus: true },
+    });
+    if (!business) {
+      this.logger.warn(
+        { subscriptionId: subscription.id },
+        'customer.subscription.updated matched no business — unknown subscription',
+      );
+      return;
+    }
+    if (business.stripeSubscriptionStatus === subscription.status) {
+      return;
+    }
+    await this.prisma.business.update({
+      where: { id: business.id },
+      data: {
+        stripeSubscriptionStatus: subscription.status,
+        stripeSubscriptionStatusAt: new Date(),
+      },
+    });
+  }
+
+  private async onSubscriptionDeleted(
+    subscription: SubscriptionData,
+  ): Promise<void> {
+    const updated = await this.prisma.business.updateMany({
+      where: { stripeSubscriptionId: subscription.id },
+      data: {
+        verifiedAt: null,
+        stripeSubscriptionId: null,
+        stripeSubscriptionStatus: 'canceled',
+        stripeSubscriptionStatusAt: new Date(),
+      },
+    });
+    if (updated.count === 0) {
+      this.logger.warn(
+        { subscriptionId: subscription.id },
+        'customer.subscription.deleted matched no business — already cleared or unknown',
+      );
+    }
   }
 }

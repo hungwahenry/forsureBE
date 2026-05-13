@@ -8,6 +8,7 @@ export interface BusinessMembershipDto {
   businessLogoUrl: string | null;
   verifiedAt: string | null;
   suspendedAt: string | null;
+  stripeSubscriptionStatus: string | null;
   role: BusinessMemberRole;
 }
 
@@ -30,6 +31,7 @@ export function serializeBusinessMembership(
     suspendedAt: row.business.suspendedAt
       ? row.business.suspendedAt.toISOString()
       : null,
+    stripeSubscriptionStatus: row.business.stripeSubscriptionStatus,
     role: row.role,
   };
 }

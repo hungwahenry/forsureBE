@@ -4,6 +4,7 @@ import { AdminAnalyticsModule } from './analytics/analytics.module';
 import { AdminAuditLogModule } from './audit-log/audit-log.module';
 import { AdminBlocksModule } from './blocks/blocks.module';
 import { AdminBroadcastModule } from './broadcast/broadcast.module';
+import { AdminBusinessesModule } from './businesses/businesses.module';
 import { AdminFeatureFlagsModule } from './feature-flags/feature-flags.module';
 import { AdminMeModule } from './me/me.module';
 import { AdminMessagesModule } from './messages/messages.module';
@@ -34,6 +35,7 @@ import { AdminUsersModule } from './users/users.module';
     AdminAuditLogModule,
     AdminBroadcastModule,
     AdminAnalyticsModule,
+    AdminBusinessesModule,
   ],
 })
 export class AdminModule {}
