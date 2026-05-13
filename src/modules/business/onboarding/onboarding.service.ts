@@ -1,48 +1,96 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
+import { ErrorCode } from '../../../common/constants/error-codes';
+import { AppException } from '../../../common/exceptions/app.exception';
+import { createId } from '../../../common/utils/id';
 import { PrismaService } from '../../../prisma/prisma.service';
-import { StripeService } from '../stripe.service';
-import type { StartCheckoutDto } from './dto/start-checkout.dto';
-
-export interface StartCheckoutResult {
-  checkoutUrl: string;
-}
+import {
+  STORAGE_PROVIDER_TOKEN,
+  type StorageProvider,
+} from '../../../storage/storage.interface';
+import {
+  serializeBusinessMembership,
+  type BusinessMembershipDto,
+} from '../business.serializer';
+import type { CreateBusinessDto } from './dto/create-business.dto';
 
 @Injectable()
 export class OnboardingService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly stripe: StripeService,
+    @Inject(STORAGE_PROVIDER_TOKEN)
+    private readonly storage: StorageProvider,
   ) {}
 
-  async startCheckout(
+  async createBusiness(
     userId: string,
-    dto: StartCheckoutDto,
-  ): Promise<StartCheckoutResult> {
-    const { client, verifiedBusinessPriceId, returnUrlBase } =
-      this.stripe.requireConfigured();
-
-    const user = await this.prisma.user.findUniqueOrThrow({
-      where: { id: userId },
-      select: { email: true },
+    dto: CreateBusinessDto,
+  ): Promise<BusinessMembershipDto> {
+    const existing = await this.prisma.businessMember.findFirst({
+      where: { userId },
+      select: { businessId: true },
     });
-
-    const session = await client.checkout.sessions.create({
-      mode: 'subscription',
-      payment_method_types: ['card'],
-      line_items: [{ price: verifiedBusinessPriceId, quantity: 1 }],
-      customer_email: user.email,
-      success_url: `${returnUrlBase}/business/onboarding/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${returnUrlBase}/business/onboarding`,
-      subscription_data: {
-        metadata: { userId, businessName: dto.name },
-      },
-      metadata: { userId, businessName: dto.name },
-    });
-
-    if (!session.url) {
-      throw new Error('Stripe did not return a Checkout URL.');
+    if (existing) {
+      throw new AppException(ErrorCode.RESOURCE_CONFLICT, {
+        message: 'You already manage a business.',
+      });
     }
 
-    return { checkoutUrl: session.url };
+    const slug = await this.uniqueSlugFor(dto.name);
+
+    const row = await this.prisma.$transaction(async (tx) => {
+      const business = await tx.business.create({
+        data: {
+          id: createId('bus'),
+          slug,
+          name: dto.name,
+        },
+      });
+      const member = await tx.businessMember.create({
+        data: {
+          id: createId('bmm'),
+          businessId: business.id,
+          userId,
+          role: 'OWNER',
+        },
+      });
+      return { ...member, business };
+    });
+
+    return serializeBusinessMembership(this.storage, row);
+  }
+
+  private async uniqueSlugFor(name: string): Promise<string> {
+    const base =
+      name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .slice(0, 40) || 'business';
+    let candidate = base;
+    let attempt = 0;
+    while (true) {
+      try {
+        const taken = await this.prisma.business.findUnique({
+          where: { slug: candidate },
+          select: { id: true },
+        });
+        if (!taken) return candidate;
+      } catch (err) {
+        if (
+          err instanceof Prisma.PrismaClientKnownRequestError &&
+          err.code === 'P2002'
+        ) {
+          // Race — fall through to a new candidate
+        } else {
+          throw err;
+        }
+      }
+      attempt += 1;
+      candidate = `${base}-${attempt}`;
+      if (attempt > 50) {
+        return `${base}-${createId('').replace(/^_/, '').slice(0, 6)}`;
+      }
+    }
   }
 }

@@ -5,7 +5,7 @@ import {
   type AuthenticatedUser,
 } from '../../../common/decorators/current-user.decorator';
 import { SkipOnboarding } from '../../../common/decorators/skip-onboarding.decorator';
-import { StartCheckoutDto } from './dto/start-checkout.dto';
+import { CreateBusinessDto } from './dto/create-business.dto';
 import { OnboardingService } from './onboarding.service';
 
 @ApiTags('Business / Onboarding')
@@ -15,16 +15,16 @@ import { OnboardingService } from './onboarding.service';
 export class OnboardingController {
   constructor(private readonly service: OnboardingService) {}
 
-  @Post('checkout-session')
-  @HttpCode(HttpStatus.OK)
+  @Post()
+  @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
     summary:
-      'Start a Stripe Checkout subscription session for the verified-business tier.',
+      'Create the business profile + OWNER membership for the authenticated user.',
   })
-  startCheckout(
+  createBusiness(
     @CurrentUser() user: AuthenticatedUser,
-    @Body() dto: StartCheckoutDto,
+    @Body() dto: CreateBusinessDto,
   ) {
-    return this.service.startCheckout(user.id, dto);
+    return this.service.createBusiness(user.id, dto);
   }
 }

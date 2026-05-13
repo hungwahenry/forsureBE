@@ -6,6 +6,7 @@ export interface BusinessMembershipDto {
   businessSlug: string;
   businessName: string;
   businessLogoUrl: string | null;
+  verifiedAt: string | null;
   suspendedAt: string | null;
   role: BusinessMemberRole;
 }
@@ -22,6 +23,9 @@ export function serializeBusinessMembership(
     businessName: row.business.name,
     businessLogoUrl: row.business.logoKey
       ? storage.publicUrl(row.business.logoKey)
+      : null,
+    verifiedAt: row.business.verifiedAt
+      ? row.business.verifiedAt.toISOString()
       : null,
     suspendedAt: row.business.suspendedAt
       ? row.business.suspendedAt.toISOString()
