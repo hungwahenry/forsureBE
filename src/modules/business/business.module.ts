@@ -15,6 +15,7 @@ import { VenueAnalyticsController } from './venues/analytics/analytics.controlle
 import { VenueAnalyticsService } from './venues/analytics/analytics.service';
 import { VenueBillingService } from './venues/billing.service';
 import { VenueBudgetResetScheduler } from './venues/scheduled/budget-reset.scheduler';
+import { VenuePicksRolloverScheduler } from './venues/scheduled/picks-rollover.scheduler';
 import { VenuesController } from './venues/venues.controller';
 import { VenuesService } from './venues/venues.service';
 import { WebhooksController } from './webhooks/webhooks.controller';
@@ -39,6 +40,7 @@ import { WebhooksService } from './webhooks/webhooks.service';
     VenueAnalyticsService,
     VenueBillingService,
     VenueBudgetResetScheduler,
+    VenuePicksRolloverScheduler,
     VenuesService,
     BusinessActivitiesService,
     BoostsService,

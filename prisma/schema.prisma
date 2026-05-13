@@ -592,20 +592,25 @@ model BusinessVenue {
 }
 
 model VenueSuggestionEvent {
-  id           String        @id // vse_...
-  venueId      String
-  venue        BusinessVenue @relation(fields: [venueId], references: [id], onDelete: Cascade)
-  userId       String
-  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                  String        @id // vse_...
+  venueId             String
+  venue               BusinessVenue @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  userId              String
+  user                User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   /// IMPRESSION | PICK | CONFIRMED — string so adding kinds is migration-free.
-  kind         String
-  activityId   String?
-  activity     Activity?     @relation(fields: [activityId], references: [id], onDelete: SetNull)
-  chargedCents Int?
-  createdAt    DateTime      @default(now()) @db.Timestamptz(3)
+  kind                String
+  activityId          String?
+  activity            Activity?     @relation(fields: [activityId], references: [id], onDelete: SetNull)
+  chargedCents        Int?
+  /// Set by the rollover cron when this event's chargedCents was rolled into
+  /// a Stripe invoice item against the business's active subscription.
+  stripeInvoiceItemId String?
+  settledAt           DateTime?     @db.Timestamptz(3)
+  createdAt           DateTime      @default(now()) @db.Timestamptz(3)
 
   @@index([venueId, createdAt])
   @@index([userId, venueId, createdAt])
+  @@index([settledAt])
 }
 
 model ActivityBoost {

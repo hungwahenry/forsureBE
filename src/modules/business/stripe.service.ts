@@ -72,16 +72,22 @@ export class StripeService {
     amountCents: number;
     description: string;
     metadata?: Record<string, string>;
+    idempotencyKey?: string;
   }): Promise<string> {
     const { client } = this.requireConfigured();
-    const item = await client.invoiceItems.create({
-      customer: opts.customerId,
-      subscription: opts.subscriptionId,
-      amount: opts.amountCents,
-      currency: 'usd',
-      description: opts.description,
-      metadata: opts.metadata,
-    });
+    const item = await client.invoiceItems.create(
+      {
+        customer: opts.customerId,
+        subscription: opts.subscriptionId,
+        amount: opts.amountCents,
+        currency: 'usd',
+        description: opts.description,
+        metadata: opts.metadata,
+      },
+      opts.idempotencyKey
+        ? { idempotencyKey: opts.idempotencyKey }
+        : undefined,
+    );
     return item.id;
   }
 
