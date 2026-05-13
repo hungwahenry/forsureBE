@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AdminActivitiesModule } from './activities/activities.module';
+import { AdminAnalyticsModule } from './analytics/analytics.module';
 import { AdminAuditLogModule } from './audit-log/audit-log.module';
 import { AdminBlocksModule } from './blocks/blocks.module';
 import { AdminBroadcastModule } from './broadcast/broadcast.module';
@@ -32,6 +33,7 @@ import { AdminUsersModule } from './users/users.module';
     AdminFeatureFlagsModule,
     AdminAuditLogModule,
     AdminBroadcastModule,
+    AdminAnalyticsModule,
   ],
 })
 export class AdminModule {}
