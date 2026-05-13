@@ -95,7 +95,14 @@ export class AdminReportsDetailService {
                     },
                   }),
                 }
-              : {};
+              : report.targetType === 'BUSINESS_VENUE'
+                ? {
+                    businessVenue: await this.prisma.businessVenue.findUnique({
+                      where: { id: report.targetId },
+                      include: { business: true },
+                    }),
+                  }
+                : {};
 
     const activityRow = 'activity' in targets ? targets.activity : null;
     const hostRow = activityRow?.participants?.[0]?.user ?? null;
@@ -105,6 +112,8 @@ export class AdminReportsDetailService {
       activity: activityRow ? { ...activityRow, host: hostRow } : null,
       message: 'message' in targets ? targets.message : null,
       post: 'post' in targets ? targets.post : null,
+      businessVenue:
+        'businessVenue' in targets ? targets.businessVenue : null,
     });
   }
 }

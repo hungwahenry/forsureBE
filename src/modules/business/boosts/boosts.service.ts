@@ -33,6 +33,16 @@ export class BoostsService {
     userId: string,
     dto: StartBoostDto,
   ): Promise<ActivityBoostDto> {
+    const business = await this.prisma.business.findUniqueOrThrow({
+      where: { id: businessId },
+      select: { autoPausedAt: true },
+    });
+    if (business.autoPausedAt) {
+      throw new AppException(ErrorCode.RESOURCE_CONFLICT, {
+        message:
+          'Your business is paused pending review. New boosts cannot start until support clears the pause.',
+      });
+    }
     const activity = await this.requireBoostableActivity(userId, dto.activityId);
 
     const now = new Date();

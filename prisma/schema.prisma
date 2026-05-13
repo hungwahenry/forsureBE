@@ -253,6 +253,7 @@ enum ReportTargetType {
   ACTIVITY
   MESSAGE
   POST
+  BUSINESS_VENUE
 }
 
 enum ReportStatus {
@@ -534,6 +535,10 @@ model Business {
   suspendedById        String?
   suspendedBy          User?     @relation("BusinessSuspendedBy", fields: [suspendedById], references: [id], onDelete: SetNull)
   suspendedReason      String?
+  /// Set by the auto-pause cron when 3+ distinct users flag this business's venues in the last 30 days.
+  /// Same gating semantics as `suspendedAt` — venues hidden from suggestions, boosts pulled from feed.
+  /// Lifted manually by admin after review.
+  autoPausedAt         DateTime? @db.Timestamptz(3)
   /// Stripe customer id for billing. Set after first successful checkout.
   stripeCustomerId     String?   @unique
   /// Stripe subscription id for the verified-business tier. Null when not subscribed.

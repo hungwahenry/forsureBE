@@ -8,6 +8,7 @@ export interface AdminBusinessListItem {
   logoUrl: string | null;
   verifiedAt: string | null;
   suspendedAt: string | null;
+  autoPausedAt: string | null;
   stripeSubscriptionId: string | null;
   stripeSubscriptionStatus: string | null;
   createdAt: string;
@@ -24,6 +25,7 @@ export function serializeAdminBusinessListItem(
     logoUrl: row.logoKey ? storage.publicUrl(row.logoKey) : null,
     verifiedAt: row.verifiedAt ? row.verifiedAt.toISOString() : null,
     suspendedAt: row.suspendedAt ? row.suspendedAt.toISOString() : null,
+    autoPausedAt: row.autoPausedAt ? row.autoPausedAt.toISOString() : null,
     stripeSubscriptionId: row.stripeSubscriptionId,
     stripeSubscriptionStatus: row.stripeSubscriptionStatus,
     createdAt: row.createdAt.toISOString(),

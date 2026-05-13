@@ -8,6 +8,7 @@ export const AdminBusinessState = {
   VERIFIED: 'VERIFIED',
   UNVERIFIED: 'UNVERIFIED',
   SUSPENDED: 'SUSPENDED',
+  AUTO_PAUSED: 'AUTO_PAUSED',
 } as const;
 export type AdminBusinessState =
   (typeof AdminBusinessState)[keyof typeof AdminBusinessState];

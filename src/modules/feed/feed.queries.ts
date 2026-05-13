@@ -164,6 +164,7 @@ export async function findActiveBoosts(
       AND abt."startsAt" <= NOW()
       AND abt."endsAt" > NOW()
       AND biz."suspendedAt" IS NULL
+      AND biz."autoPausedAt" IS NULL
       AND a.status = 'OPEN'
       AND a."deletedAt" IS NULL
       AND a."startsAt" >= NOW() + INTERVAL '30 minutes'

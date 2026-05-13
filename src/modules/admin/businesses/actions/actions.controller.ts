@@ -60,4 +60,22 @@ export class AdminBusinessesActionsController {
       request: req,
     });
   }
+
+  @Post('lift-auto-pause')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({
+    summary:
+      'Lift an auto-pause that was triggered by 3+ distinct venue flags in 30d.',
+  })
+  async liftAutoPause(
+    @Param('id') id: string,
+    @CurrentUser() admin: AuthenticatedUser,
+    @Body() dto: ReasonDto,
+    @Req() req: Request,
+  ): Promise<void> {
+    await this.service.liftAutoPause(id, dto, {
+      adminId: admin.id,
+      request: req,
+    });
+  }
 }

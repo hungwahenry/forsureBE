@@ -105,4 +105,43 @@ export class AdminBusinessesActionsService {
       });
     });
   }
+
+  async liftAutoPause(
+    businessId: string,
+    dto: ReasonDto,
+    actor: ActorContext,
+  ): Promise<void> {
+    const business = await this.prisma.business.findUnique({
+      where: { id: businessId },
+      select: { id: true, autoPausedAt: true },
+    });
+    if (!business) {
+      throw new AppException(ErrorCode.RESOURCE_NOT_FOUND, {
+        message: 'Business not found.',
+      });
+    }
+    if (!business.autoPausedAt) {
+      throw new AppException(ErrorCode.RESOURCE_CONFLICT, {
+        message: 'Business is not auto-paused.',
+      });
+    }
+    const pausedAt = business.autoPausedAt.toISOString();
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.business.update({
+        where: { id: businessId },
+        data: { autoPausedAt: null },
+      });
+      await this.audit.record({
+        adminId: actor.adminId,
+        action: AdminAuditAction.BUSINESS_AUTO_PAUSE_LIFTED,
+        targetType: AdminAuditTargetType.BUSINESS,
+        targetId: businessId,
+        before: { autoPausedAt: pausedAt },
+        reason: dto.reason,
+        request: actor.request,
+        tx,
+      });
+    });
+  }
 }

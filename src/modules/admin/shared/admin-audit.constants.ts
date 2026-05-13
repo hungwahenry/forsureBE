@@ -35,6 +35,7 @@ export const AdminAuditAction = {
   BUSINESS_SUSPENDED: 'BUSINESS_SUSPENDED',
   BUSINESS_UNSUSPENDED: 'BUSINESS_UNSUSPENDED',
   BUSINESS_BOOST_FORCE_CANCELLED: 'BUSINESS_BOOST_FORCE_CANCELLED',
+  BUSINESS_AUTO_PAUSE_LIFTED: 'BUSINESS_AUTO_PAUSE_LIFTED',
 } as const;
 export type AdminAuditAction =
   (typeof AdminAuditAction)[keyof typeof AdminAuditAction];

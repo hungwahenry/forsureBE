@@ -2,6 +2,8 @@ import type {
   Activity,
   ActivityPost,
   ActivityPostPhoto,
+  Business,
+  BusinessVenue,
   ChatMessage,
   Gender,
   Profile,
@@ -42,6 +44,7 @@ export type AdminReportTarget =
   | { kind: 'ACTIVITY'; activity: ReportTargetActivity }
   | { kind: 'MESSAGE'; message: ReportTargetMessage }
   | { kind: 'POST'; post: ReportTargetPost }
+  | { kind: 'BUSINESS_VENUE'; businessVenue: ReportTargetBusinessVenue }
   | { kind: 'MISSING' };
 
 export interface ReportTargetUser extends UserBriefWithStatusAndProfile {
@@ -87,6 +90,25 @@ export interface ReportTargetPost {
   photoUrls: string[];
   author: UserBrief | null;
   activity: ActivityBrief;
+}
+
+export interface ReportTargetBusinessVenue {
+  id: string;
+  placeName: string;
+  placeLat: number;
+  placeLng: number;
+  matchingKeywords: string[];
+  isPaused: boolean;
+  createdAt: string;
+  business: {
+    id: string;
+    name: string;
+    slug: string;
+    logoUrl: string | null;
+    verifiedAt: string | null;
+    suspendedAt: string | null;
+    autoPausedAt: string | null;
+  };
 }
 
 export interface AdminReportDetail {
@@ -157,6 +179,7 @@ interface ResolvedTargets {
         activity: Pick<Activity, 'id' | 'emoji' | 'title'>;
       })
     | null;
+  businessVenue?: (BusinessVenue & { business: Business }) | null;
 }
 
 export function serializeAdminReportDetail(
@@ -268,6 +291,39 @@ function serializeTarget(
         photoUrls: p.photos.map((ph) => storage.publicUrl(ph.imageKey)),
         author: p.author ? userBrief(storage, p.author) : null,
         activity: p.activity,
+      },
+    };
+  }
+  if (targetType === 'BUSINESS_VENUE') {
+    const v = targets.businessVenue;
+    if (!v) return { kind: 'MISSING' };
+    return {
+      kind: 'BUSINESS_VENUE',
+      businessVenue: {
+        id: v.id,
+        placeName: v.placeName,
+        placeLat: v.placeLat,
+        placeLng: v.placeLng,
+        matchingKeywords: v.matchingKeywords,
+        isPaused: v.isPaused,
+        createdAt: v.createdAt.toISOString(),
+        business: {
+          id: v.business.id,
+          name: v.business.name,
+          slug: v.business.slug,
+          logoUrl: v.business.logoKey
+            ? storage.publicUrl(v.business.logoKey)
+            : null,
+          verifiedAt: v.business.verifiedAt
+            ? v.business.verifiedAt.toISOString()
+            : null,
+          suspendedAt: v.business.suspendedAt
+            ? v.business.suspendedAt.toISOString()
+            : null,
+          autoPausedAt: v.business.autoPausedAt
+            ? v.business.autoPausedAt.toISOString()
+            : null,
+        },
       },
     };
   }

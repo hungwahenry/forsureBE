@@ -28,6 +28,7 @@ export class VenueBillingService {
         isPaused: boolean;
         verifiedAt: Date | null;
         suspendedAt: Date | null;
+        autoPausedAt: Date | null;
         inRange: boolean;
       }>
     >`
@@ -35,6 +36,7 @@ export class VenueBillingService {
         v."isPaused",
         b."verifiedAt",
         b."suspendedAt",
+        b."autoPausedAt",
         ST_DWithin(
           v."placePoint",
           ST_SetSRID(ST_MakePoint(${activityLng}, ${activityLat}), 4326)::geography,
@@ -56,6 +58,7 @@ export class VenueBillingService {
       !venue.isPaused &&
       venue.verifiedAt !== null &&
       venue.suspendedAt === null &&
+      venue.autoPausedAt === null &&
       venue.inRange;
 
     let chargedCents = 0;

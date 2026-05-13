@@ -43,6 +43,7 @@ export async function findVenueSuggestions(
     JOIN "Business" b ON b.id = v."businessId"
     WHERE b."verifiedAt" IS NOT NULL
       AND b."suspendedAt" IS NULL
+      AND b."autoPausedAt" IS NULL
       AND v."isPaused" = false
       AND v."dailyBudgetRemaining" > 0
       AND ST_DWithin(

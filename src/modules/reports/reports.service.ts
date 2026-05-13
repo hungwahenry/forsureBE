@@ -128,6 +128,13 @@ export class ReportsService {
         });
         return row !== null;
       }
+      case ReportTargetType.BUSINESS_VENUE: {
+        const row = await this.prisma.businessVenue.findUnique({
+          where: { id: targetId },
+          select: { id: true },
+        });
+        return row !== null;
+      }
     }
   }
 }

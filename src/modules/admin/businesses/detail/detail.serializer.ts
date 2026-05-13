@@ -14,6 +14,7 @@ export interface AdminBusinessDetail {
   stripeSubscriptionId: string | null;
   stripeSubscriptionStatus: string | null;
   stripeSubscriptionStatusAt: string | null;
+  autoPausedAt: string | null;
   createdAt: string;
   updatedAt: string;
   counts: {
@@ -51,6 +52,9 @@ export function serializeAdminBusinessDetail(
     stripeSubscriptionStatus: business.stripeSubscriptionStatus,
     stripeSubscriptionStatusAt: business.stripeSubscriptionStatusAt
       ? business.stripeSubscriptionStatusAt.toISOString()
+      : null,
+    autoPausedAt: business.autoPausedAt
+      ? business.autoPausedAt.toISOString()
       : null,
     createdAt: business.createdAt.toISOString(),
     updatedAt: business.updatedAt.toISOString(),
