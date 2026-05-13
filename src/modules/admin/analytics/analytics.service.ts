@@ -48,6 +48,48 @@ export interface AdminAnalytics {
   };
 }
 
+export interface CohortRetentionCell {
+  weeksAfter: number;
+  count: number;
+  rate: number;
+}
+
+export interface CohortRow {
+  cohortWeek: string;
+  size: number;
+  retention: CohortRetentionCell[];
+}
+
+export interface AdminAnalyticsCohorts {
+  weeks: number;
+  cohorts: CohortRow[];
+}
+
+export interface FunnelStage {
+  key: string;
+  label: string;
+  count: number;
+  percentOfStart: number;
+  dropoffFromPrev: number;
+}
+
+export interface AdminAnalyticsFunnel {
+  days: number;
+  cohortSize: number;
+  stages: FunnelStage[];
+}
+
+export interface PlaceCount {
+  placeName: string;
+  count: number;
+}
+
+export interface AdminAnalyticsGeography {
+  days: number;
+  topPlacesByUsers: PlaceCount[];
+  topPlacesByActivities: PlaceCount[];
+}
+
 interface RawDayRow {
   day: Date;
   count: bigint;
@@ -217,5 +259,191 @@ export class AdminAnalyticsService {
       points.push({ date: key, count: byDay.get(key) ?? 0 });
     }
     return points;
+  }
+
+  async getCohorts(weeks: number): Promise<AdminAnalyticsCohorts> {
+    const weekMs = 7 * 24 * 60 * 60 * 1000;
+    const from = new Date(Date.now() - weeks * weekMs);
+
+    // Cohort size by signup week
+    const cohortRows = await this.prisma.$queryRaw<
+      Array<{ cohort_week: Date; size: bigint }>
+    >`
+      SELECT date_trunc('week', "createdAt") AS cohort_week, COUNT(*) AS size
+      FROM "User"
+      WHERE "createdAt" >= ${from}
+      GROUP BY cohort_week
+      ORDER BY cohort_week ASC
+    `;
+
+    // Per-(cohort, weeks_after) distinct active users
+    // Active = sent a chat message or joined an activity in that week
+    const retentionRows = await this.prisma.$queryRaw<
+      Array<{
+        cohort_week: Date;
+        weeks_after: number;
+        active: bigint;
+      }>
+    >`
+      WITH events AS (
+        SELECT u.id AS user_id,
+               date_trunc('week', u."createdAt") AS cohort_week,
+               FLOOR(
+                 EXTRACT(EPOCH FROM (cm."createdAt" - u."createdAt")) / 604800
+               )::int AS weeks_after
+          FROM "User" u
+          JOIN "ChatMessage" cm
+            ON cm."senderUserId" = u.id
+           AND cm."deletedAt" IS NULL
+           AND cm."createdAt" >= u."createdAt"
+         WHERE u."createdAt" >= ${from}
+        UNION
+        SELECT u.id AS user_id,
+               date_trunc('week', u."createdAt") AS cohort_week,
+               FLOOR(
+                 EXTRACT(EPOCH FROM (ap."joinedAt" - u."createdAt")) / 604800
+               )::int AS weeks_after
+          FROM "User" u
+          JOIN "ActivityParticipant" ap
+            ON ap."userId" = u.id
+           AND ap."joinedAt" >= u."createdAt"
+         WHERE u."createdAt" >= ${from}
+      )
+      SELECT cohort_week, weeks_after, COUNT(DISTINCT user_id) AS active
+        FROM events
+       WHERE weeks_after >= 0
+         AND weeks_after < ${weeks}
+       GROUP BY cohort_week, weeks_after
+       ORDER BY cohort_week ASC, weeks_after ASC
+    `;
+
+    const cohorts: CohortRow[] = cohortRows.map((c) => {
+      const size = Number(c.size);
+      const key = c.cohort_week.toISOString().slice(0, 10);
+      const ageWeeks = Math.floor(
+        (Date.now() - c.cohort_week.getTime()) / weekMs,
+      );
+      const maxOffset = Math.min(weeks - 1, ageWeeks);
+      const retention: CohortRetentionCell[] = [];
+      for (let w = 0; w <= maxOffset; w++) {
+        const found = retentionRows.find(
+          (r) =>
+            r.cohort_week.getTime() === c.cohort_week.getTime() &&
+            r.weeks_after === w,
+        );
+        const count = found ? Number(found.active) : 0;
+        retention.push({
+          weeksAfter: w,
+          count,
+          rate: size > 0 ? count / size : 0,
+        });
+      }
+      return { cohortWeek: key, size, retention };
+    });
+
+    return { weeks, cohorts };
+  }
+
+  async getFunnel(days: number): Promise<AdminAnalyticsFunnel> {
+    const from = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+    const [
+      signedUp,
+      emailVerified,
+      onboardingCompleted,
+      joinedAny,
+      sentAnyMessage,
+    ] = await Promise.all([
+      this.prisma.user.count({ where: { createdAt: { gte: from } } }),
+      this.prisma.user.count({
+        where: {
+          createdAt: { gte: from },
+          emailVerifiedAt: { not: null },
+        },
+      }),
+      this.prisma.user.count({
+        where: {
+          createdAt: { gte: from },
+          onboardingCompletedAt: { not: null },
+        },
+      }),
+      this.prisma.user.count({
+        where: {
+          createdAt: { gte: from },
+          activityParticipations: { some: {} },
+        },
+      }),
+      this.prisma.user.count({
+        where: {
+          createdAt: { gte: from },
+          chatMessages: { some: { deletedAt: null } },
+        },
+      }),
+    ]);
+
+    const raw = [
+      { key: 'signed_up', label: 'Signed up', count: signedUp },
+      { key: 'email_verified', label: 'Email verified', count: emailVerified },
+      {
+        key: 'onboarding_completed',
+        label: 'Onboarding completed',
+        count: onboardingCompleted,
+      },
+      { key: 'joined_activity', label: 'Joined an activity', count: joinedAny },
+      { key: 'sent_message', label: 'Sent a message', count: sentAnyMessage },
+    ];
+
+    const stages: FunnelStage[] = raw.map((s, i) => {
+      const percentOfStart = signedUp > 0 ? s.count / signedUp : 0;
+      const prev = i > 0 ? raw[i - 1].count : signedUp;
+      const dropoff = prev > 0 ? 1 - s.count / prev : 0;
+      return {
+        key: s.key,
+        label: s.label,
+        count: s.count,
+        percentOfStart,
+        dropoffFromPrev: i === 0 ? 0 : dropoff,
+      };
+    });
+
+    return { days, cohortSize: signedUp, stages };
+  }
+
+  async getGeography(
+    days: number,
+    limit: number,
+  ): Promise<AdminAnalyticsGeography> {
+    const from = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+    const [userRows, activityRows] = await Promise.all([
+      this.prisma.profile.groupBy({
+        by: ['placeName'],
+        _count: { _all: true },
+        orderBy: { _count: { placeName: 'desc' } },
+        take: limit,
+      }),
+      this.prisma.activity.groupBy({
+        by: ['placeName'],
+        where: {
+          deletedAt: null,
+          createdAt: { gte: from },
+        },
+        _count: { _all: true },
+        orderBy: { _count: { placeName: 'desc' } },
+        take: limit,
+      }),
+    ]);
+
+    return {
+      days,
+      topPlacesByUsers: userRows.map((r) => ({
+        placeName: r.placeName,
+        count: r._count._all,
+      })),
+      topPlacesByActivities: activityRows.map((r) => ({
+        placeName: r.placeName,
+        count: r._count._all,
+      })),
+    };
   }
 }
