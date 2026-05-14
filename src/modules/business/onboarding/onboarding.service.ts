@@ -4,6 +4,10 @@ import { ErrorCode } from '../../../common/constants/error-codes';
 import { FeatureFlagService } from '../../../common/feature-flags/feature-flag.service';
 import { AppException } from '../../../common/exceptions/app.exception';
 import { createId } from '../../../common/utils/id';
+import {
+  processBusinessLogoForUser,
+  type UploadedBusinessImage,
+} from '../../../common/utils/business-images';
 import { PrismaService } from '../../../prisma/prisma.service';
 import {
   STORAGE_PROVIDER_TOKEN,
@@ -14,6 +18,11 @@ import {
   type BusinessMembershipDto,
 } from '../business.serializer';
 import type { CreateBusinessDto } from './dto/create-business.dto';
+
+export interface UploadResult {
+  key: string;
+  url: string;
+}
 
 @Injectable()
 export class OnboardingService {
@@ -48,6 +57,16 @@ export class OnboardingService {
       });
     }
 
+    const category = await this.prisma.businessCategory.findUnique({
+      where: { id: dto.categoryId },
+      select: { id: true, active: true },
+    });
+    if (!category || !category.active) {
+      throw new AppException(ErrorCode.VALIDATION_FAILED, {
+        message: 'Pick an active category.',
+      });
+    }
+
     const slug = await this.uniqueSlugFor(dto.name);
 
     const row = await this.prisma.$transaction(async (tx) => {
@@ -56,6 +75,9 @@ export class OnboardingService {
           id: createId('bus'),
           slug,
           name: dto.name,
+          categoryId: category.id,
+          logoKey: dto.logoKey,
+          shortDescription: dto.shortDescription,
         },
       });
       const member = await tx.businessMember.create({
@@ -70,6 +92,19 @@ export class OnboardingService {
     });
 
     return serializeBusinessMembership(this.storage, row);
+  }
+
+  async uploadLogoForUser(
+    userId: string,
+    file: UploadedBusinessImage | undefined,
+  ): Promise<UploadResult> {
+    if (!file) {
+      throw new AppException(ErrorCode.VALIDATION_FAILED, {
+        message: 'No file provided.',
+      });
+    }
+    const key = await processBusinessLogoForUser(this.storage, userId, file);
+    return { key, url: this.storage.publicUrl(key) };
   }
 
   private async uniqueSlugFor(name: string): Promise<string> {

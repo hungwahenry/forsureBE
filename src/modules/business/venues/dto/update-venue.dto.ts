@@ -70,4 +70,24 @@ export class UpdateVenueDto {
   @IsOptional()
   @IsBoolean()
   isPaused?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Public-facing phone for the venue. Loose format — owner-typed.',
+  })
+  @IsOptional()
+  @IsString()
+  @Length(0, 32)
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
+  phoneNumber?: string;
+
+  @ApiPropertyOptional({ description: 'Public-facing website URL.' })
+  @IsOptional()
+  @IsString()
+  @Length(0, 512)
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
+  websiteUrl?: string;
 }

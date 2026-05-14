@@ -1,5 +1,6 @@
 import { Controller, Get, Param, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { SkipOnboarding } from '../../common/decorators/skip-onboarding.decorator';
 import { RetrievePlaceDto } from './dto/retrieve.dto';
 import { SuggestPlacesDto } from './dto/suggest.dto';
 import { PlacesService } from './places.service';
@@ -7,6 +8,7 @@ import { PlacesService } from './places.service';
 @ApiTags('Places')
 @ApiBearerAuth()
 @Controller('places')
+@SkipOnboarding()
 export class PlacesController {
   constructor(private readonly places: PlacesService) {}
 

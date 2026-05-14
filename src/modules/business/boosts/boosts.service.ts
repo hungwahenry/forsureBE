@@ -46,8 +46,19 @@ export class BoostsService {
     }
     const business = await this.prisma.business.findUniqueOrThrow({
       where: { id: businessId },
-      select: { autoPausedAt: true },
+      select: { verifiedAt: true, suspendedAt: true, autoPausedAt: true },
     });
+    if (!business.verifiedAt) {
+      throw new AppException(ErrorCode.RESOURCE_CONFLICT, {
+        message:
+          'Subscribe to the verified plan before starting boosts.',
+      });
+    }
+    if (business.suspendedAt) {
+      throw new AppException(ErrorCode.RESOURCE_CONFLICT, {
+        message: 'Your business is suspended.',
+      });
+    }
     if (business.autoPausedAt) {
       throw new AppException(ErrorCode.RESOURCE_CONFLICT, {
         message:

@@ -7,6 +7,8 @@ import { BoostsController } from './boosts/boosts.controller';
 import { BoostsPricingService } from './boosts/boosts-pricing.service';
 import { BoostsService } from './boosts/boosts.service';
 import { BusinessService } from './business.service';
+import { BusinessMeController } from './me/me.controller';
+import { BusinessMeService } from './me/me.service';
 import { BusinessAutoPauseScheduler } from './scheduled/auto-pause.scheduler';
 import { OnboardingController } from './onboarding/onboarding.controller';
 import { OnboardingService } from './onboarding/onboarding.service';
@@ -27,6 +29,7 @@ import { WebhooksService } from './webhooks/webhooks.service';
 @Module({
   controllers: [
     OnboardingController,
+    BusinessMeController,
     SubscribeController,
     VenuesController,
     VenueAnalyticsController,
@@ -37,6 +40,7 @@ import { WebhooksService } from './webhooks/webhooks.service';
   ],
   providers: [
     BusinessService,
+    BusinessMeService,
     BusinessMemberGuard,
     StripeService,
     OnboardingService,

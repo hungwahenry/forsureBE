@@ -163,6 +163,7 @@ export async function findActiveBoosts(
     WHERE abt."cancelledAt" IS NULL
       AND abt."startsAt" <= NOW()
       AND abt."endsAt" > NOW()
+      AND biz."verifiedAt" IS NOT NULL
       AND biz."suspendedAt" IS NULL
       AND biz."autoPausedAt" IS NULL
       AND a.status = 'OPEN'
