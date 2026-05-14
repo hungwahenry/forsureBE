@@ -200,7 +200,7 @@ export class AdminAnalyticsService {
     const doneCount = fillStats ? Number(fillStats.done_count) : 0;
     const totalCount = fillStats ? Number(fillStats.total_count) : 0;
     const completionRate = totalCount > 0 ? doneCount / totalCount : 0;
-    const avgFillRate = fillStats?.avg_fill ?? 0;
+    const avgFillRate = Number(fillStats?.avg_fill ?? 0);
 
     const reportStatusBreakdown: ReportStatusBreakdownItem[] =
       reportStatusCounts.map((r) => ({
@@ -208,7 +208,8 @@ export class AdminAnalyticsService {
         count: Number(r.count),
       }));
 
-    const avgHours = avgResolutionHours[0]?.avg_hours ?? null;
+    const rawAvg = avgResolutionHours[0]?.avg_hours ?? null;
+    const avgHours = rawAvg === null ? null : Number(rawAvg);
 
     return {
       days,
