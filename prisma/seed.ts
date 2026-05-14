@@ -264,6 +264,27 @@ const FLAGS: FlagSeed[] = [
   },
 ];
 
+interface CategorySeed {
+  code: string;
+  label: string;
+  description?: string;
+  iconName?: string;
+  sortOrder: number;
+}
+
+const BUSINESS_CATEGORIES: CategorySeed[] = [
+  { code: 'CAFE', label: 'Cafe', description: 'Coffee shops, tea houses, dessert bars.', sortOrder: 10 },
+  { code: 'RESTAURANT', label: 'Restaurant', description: 'Sit-down dining, casual to upscale.', sortOrder: 20 },
+  { code: 'BAR', label: 'Bar & Lounge', description: 'Bars, pubs, lounges, cocktail spots.', sortOrder: 30 },
+  { code: 'FITNESS', label: 'Gym & Fitness', description: 'Gyms, yoga, pilates, martial arts.', sortOrder: 40 },
+  { code: 'STUDIO', label: 'Studio & Workshop', description: 'Creative studios, makerspaces, music rooms.', sortOrder: 50 },
+  { code: 'COWORKING', label: 'Coworking & Library', description: 'Shared workspaces, quiet study spots.', sortOrder: 60 },
+  { code: 'BEAUTY', label: 'Beauty & Wellness', description: 'Salons, spas, barbers, nail studios.', sortOrder: 70 },
+  { code: 'RETAIL', label: 'Retail & Boutique', description: 'Shops, boutiques, markets.', sortOrder: 80 },
+  { code: 'EVENT_SPACE', label: 'Event Space', description: 'Venues that host gatherings, parties, classes.', sortOrder: 90 },
+  { code: 'OUTDOOR', label: 'Outdoor & Recreation', description: 'Parks, courts, trails, recreation centers.', sortOrder: 100 },
+];
+
 async function main() {
   for (const r of REASONS) {
     await prisma.reportReason.upsert({
@@ -288,6 +309,28 @@ async function main() {
     });
   }
   console.log(`Seeded ${REASONS.length} report reasons.`);
+
+  for (const c of BUSINESS_CATEGORIES) {
+    await prisma.businessCategory.upsert({
+      where: { code: c.code },
+      create: {
+        id: id('bcg'),
+        code: c.code,
+        label: c.label,
+        description: c.description ?? null,
+        iconName: c.iconName ?? null,
+        sortOrder: c.sortOrder,
+      },
+      update: {
+        label: c.label,
+        description: c.description ?? null,
+        iconName: c.iconName ?? null,
+        sortOrder: c.sortOrder,
+        active: true,
+      },
+    });
+  }
+  console.log(`Seeded ${BUSINESS_CATEGORIES.length} business categories.`);
 
   for (const f of FLAGS) {
     await prisma.featureFlag.upsert({

@@ -530,6 +530,15 @@ model Business {
   slug                 String    @unique
   name                 String
   logoKey              String?
+  /// Banner image shown on the future consumer-facing business profile.
+  coverPhotoKey        String?
+  /// One-line description rendered on sponsored picker rows and business profiles. 280 chars max.
+  shortDescription     String?
+  /// Public-facing contact email/phone for admin and customer-support use.
+  supportEmail         String?
+  supportPhone         String?
+  categoryId           String?
+  category             BusinessCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   verifiedAt           DateTime? @db.Timestamptz(3)
   suspendedAt          DateTime? @db.Timestamptz(3)
   suspendedById        String?
@@ -554,6 +563,24 @@ model Business {
   members BusinessMember[]
   venues  BusinessVenue[]
   boosts  ActivityBoost[]
+
+  @@index([categoryId])
+}
+
+model BusinessCategory {
+  id          String  @id // bcg_...
+  code        String  @unique
+  label       String
+  description String?
+  /// Icon name from the mobile/web icon set. Optional — not rendered until icon mapping ships.
+  iconName    String?
+  active      Boolean @default(true)
+  sortOrder   Int     @default(0)
+  createdAt   DateTime @default(now()) @db.Timestamptz(3)
+
+  businesses Business[]
+
+  @@index([active, sortOrder])
 }
 
 enum BusinessMemberRole {
@@ -591,14 +618,32 @@ model BusinessVenue {
   /// Refilled at the start of each UTC day from dailyBudgetCents.
   dailyBudgetCents     Int                                    @default(0)
   dailyBudgetRemaining Int                                    @default(0)
+  /// Direct contact for the venue (rendered on the future venue detail screen).
+  phoneNumber          String?
+  websiteUrl           String?
+  /// Array of `{ day: 0-6, open: "HH:MM", close: "HH:MM" }`. Missing days = closed.
+  /// Multiple entries per day allowed for split hours (lunch + dinner).
+  openingHours         Json?
   createdAt            DateTime                               @default(now()) @db.Timestamptz(3)
   updatedAt            DateTime                               @updatedAt @db.Timestamptz(3)
 
   suggestionEvents VenueSuggestionEvent[]
   activities       Activity[]
+  photos           BusinessVenuePhoto[]
 
   @@unique([businessId, googlePlaceId])
   @@index([businessId])
+}
+
+model BusinessVenuePhoto {
+  id        String        @id // bvp_...
+  venueId   String
+  venue     BusinessVenue @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  imageKey  String
+  sortOrder Int           @default(0)
+  createdAt DateTime      @default(now()) @db.Timestamptz(3)
+
+  @@index([venueId, sortOrder])
 }
 
 model VenueSuggestionEvent {

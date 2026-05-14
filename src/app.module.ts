@@ -23,6 +23,7 @@ import { AdminModule } from './modules/admin/admin.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { BlocksModule } from './modules/blocks/blocks.module';
 import { BusinessModule } from './modules/business/business.module';
+import { PublicBusinessCategoriesModule } from './modules/business-categories/business-categories.module';
 import { ChatsModule } from './modules/chats/chats.module';
 import { EggsModule } from './modules/eggs/eggs.module';
 import { ExploreModule } from './modules/explore/explore.module';
@@ -105,6 +106,7 @@ import { StorageModule } from './storage/storage.module';
     NotificationsModule,
     BlocksModule,
     BusinessModule,
+    PublicBusinessCategoriesModule,
     StepUpModule,
     AccountModule,
     EggsModule,
