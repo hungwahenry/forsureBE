@@ -221,6 +221,47 @@ const FLAGS: FlagSeed[] = [
     enabledOnCreate: true,
     clientExposed: true,
   },
+  {
+    key: 'business_signup_enabled',
+    description: 'Allow new businesses to be created via the onboarding flow.',
+    enabledOnCreate: true,
+    clientExposed: false,
+  },
+  {
+    key: 'business_subscriptions_enabled',
+    description:
+      'Allow new Stripe Checkout sessions to start. Existing subscriptions are unaffected.',
+    enabledOnCreate: true,
+    clientExposed: false,
+  },
+  {
+    key: 'business_venue_suggestions_enabled',
+    description:
+      'Surface sponsored business venues in the place picker. Mobile also hides the section when off.',
+    enabledOnCreate: true,
+    clientExposed: true,
+  },
+  {
+    key: 'business_pick_billing_enabled',
+    description:
+      'Charge the per-pick fee when a consumer creates an activity at a sponsored venue. Off = record the event with chargedCents=0.',
+    enabledOnCreate: true,
+    clientExposed: false,
+  },
+  {
+    key: 'business_boosts_enabled',
+    description:
+      'Allow boosts to be created and interleaved into the feed. Existing boost rows stay but stop appearing when off.',
+    enabledOnCreate: true,
+    clientExposed: true,
+  },
+  {
+    key: 'business_auto_pause_enabled',
+    description:
+      'Run the hourly cron that auto-pauses businesses with 3+ distinct venue flags in 30 days.',
+    enabledOnCreate: true,
+    clientExposed: false,
+  },
 ];
 
 async function main() {

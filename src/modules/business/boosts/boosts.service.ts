@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ActivityRole, ActivityStatus } from '@prisma/client';
 import { ErrorCode } from '../../../common/constants/error-codes';
+import { FeatureFlagService } from '../../../common/feature-flags/feature-flag.service';
 import { AppException } from '../../../common/exceptions/app.exception';
 import { createId } from '../../../common/utils/id';
 import { PrismaService } from '../../../prisma/prisma.service';
@@ -21,6 +22,7 @@ export class BoostsService {
     private readonly prisma: PrismaService,
     private readonly stripe: StripeService,
     private readonly pricing: BoostsPricingService,
+    private readonly featureFlags: FeatureFlagService,
   ) {}
 
   async preview(businessId: string, userId: string, dto: PreviewBoostDto) {
@@ -33,6 +35,15 @@ export class BoostsService {
     userId: string,
     dto: StartBoostDto,
   ): Promise<ActivityBoostDto> {
+    const boostsEnabled = await this.featureFlags.isEnabled(
+      'business_boosts_enabled',
+      true,
+    );
+    if (!boostsEnabled) {
+      throw new AppException(ErrorCode.RESOURCE_CONFLICT, {
+        message: 'Boosts are temporarily disabled.',
+      });
+    }
     const business = await this.prisma.business.findUniqueOrThrow({
       where: { id: businessId },
       select: { autoPausedAt: true },

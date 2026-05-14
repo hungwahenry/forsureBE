@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { ErrorCode } from '../../../common/constants/error-codes';
+import { FeatureFlagService } from '../../../common/feature-flags/feature-flag.service';
 import { AppException } from '../../../common/exceptions/app.exception';
 import { createId } from '../../../common/utils/id';
 
@@ -18,6 +19,8 @@ interface ChargeArgs {
 @Injectable()
 export class VenueBillingService {
   private readonly logger = new Logger(VenueBillingService.name);
+
+  constructor(private readonly featureFlags: FeatureFlagService) {}
 
   async chargeForActivityPick(
     tx: Prisma.TransactionClient,
@@ -54,12 +57,18 @@ export class VenueBillingService {
     }
     const venue = locked[0];
 
+    const billingEnabled = await this.featureFlags.isEnabled(
+      'business_pick_billing_enabled',
+      true,
+    );
+
     const isBusinessActive =
       !venue.isPaused &&
       venue.verifiedAt !== null &&
       venue.suspendedAt === null &&
       venue.autoPausedAt === null &&
-      venue.inRange;
+      venue.inRange &&
+      billingEnabled;
 
     let chargedCents = 0;
     if (isBusinessActive) {
@@ -99,11 +108,13 @@ export class VenueBillingService {
     });
 
     if (chargedCents === 0) {
-      const reason = !venue.inRange
-        ? 'out_of_range'
-        : isBusinessActive
-          ? 'deduped_or_budget'
-          : 'inactive';
+      const reason = !billingEnabled
+        ? 'flag_off'
+        : !venue.inRange
+          ? 'out_of_range'
+          : isBusinessActive
+            ? 'deduped_or_budget'
+            : 'inactive';
       this.logger.debug(
         { venueId, userId, activityId, reason },
         'Venue pick recorded without charge',

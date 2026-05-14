@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { ErrorCode } from '../../../common/constants/error-codes';
+import { FeatureFlagService } from '../../../common/feature-flags/feature-flag.service';
 import { AppException } from '../../../common/exceptions/app.exception';
 import { createId } from '../../../common/utils/id';
 import { PrismaService } from '../../../prisma/prisma.service';
@@ -20,12 +21,23 @@ export class OnboardingService {
     private readonly prisma: PrismaService,
     @Inject(STORAGE_PROVIDER_TOKEN)
     private readonly storage: StorageProvider,
+    private readonly featureFlags: FeatureFlagService,
   ) {}
 
   async createBusiness(
     userId: string,
     dto: CreateBusinessDto,
   ): Promise<BusinessMembershipDto> {
+    const signupEnabled = await this.featureFlags.isEnabled(
+      'business_signup_enabled',
+      true,
+    );
+    if (!signupEnabled) {
+      throw new AppException(ErrorCode.RESOURCE_CONFLICT, {
+        message: 'New business signups are temporarily disabled.',
+      });
+    }
+
     const existing = await this.prisma.businessMember.findFirst({
       where: { userId },
       select: { businessId: true },

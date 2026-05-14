@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ErrorCode } from '../../common/constants/error-codes';
 import type { CursorPage } from '../../common/dto/pagination.dto';
+import { FeatureFlagService } from '../../common/feature-flags/feature-flag.service';
 import { AppException } from '../../common/exceptions/app.exception';
 import { PrismaService } from '../../prisma/prisma.service';
 import { STORAGE_PROVIDER_TOKEN } from '../../storage/storage.interface';
@@ -21,6 +22,7 @@ export class FeedService {
     private readonly prisma: PrismaService,
     @Inject(STORAGE_PROVIDER_TOKEN)
     private readonly storage: StorageProvider,
+    private readonly featureFlags: FeatureFlagService,
   ) {}
 
   async getFeed(
@@ -40,6 +42,10 @@ export class FeedService {
     const visibleGenderPrefs = activityVisibleGenderPreferences(profile.gender);
     const radiusMeters = query.radiusKm * 1000;
     const isFirstPage = !cursor;
+    const boostsEnabled = await this.featureFlags.isEnabled(
+      'business_boosts_enabled',
+      true,
+    );
 
     const [rows, boostRows] = await Promise.all([
       findFeedPage(this.prisma, {
@@ -51,7 +57,7 @@ export class FeedService {
         cursor,
         limit: limit + 1,
       }),
-      isFirstPage
+      isFirstPage && boostsEnabled
         ? findActiveBoosts(this.prisma, {
             viewerUserId,
             lat: query.lat,

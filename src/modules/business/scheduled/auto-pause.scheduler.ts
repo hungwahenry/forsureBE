@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { CronRunLogger } from '../../../common/cron/cron-run-logger.service';
+import { FeatureFlagService } from '../../../common/feature-flags/feature-flag.service';
 import { PrismaService } from '../../../prisma/prisma.service';
 
 const JOB_NAME = 'BusinessAutoPauseScheduler.checkVenueFlags';
@@ -19,6 +20,7 @@ export class BusinessAutoPauseScheduler {
   constructor(
     private readonly prisma: PrismaService,
     private readonly runLogger: CronRunLogger,
+    private readonly featureFlags: FeatureFlagService,
   ) {}
 
   @Cron('0 * * * *', { timeZone: 'UTC' })
@@ -26,7 +28,13 @@ export class BusinessAutoPauseScheduler {
     await this.runLogger.wrap(JOB_NAME, async () => this.runOnce());
   }
 
-  private async runOnce(): Promise<{ paused: number }> {
+  private async runOnce(): Promise<{ paused: number; skipped?: boolean }> {
+    const enabled = await this.featureFlags.isEnabled(
+      'business_auto_pause_enabled',
+      true,
+    );
+    if (!enabled) return { paused: 0, skipped: true };
+
     const cutoff = new Date(Date.now() - WINDOW_DAYS * 86_400_000);
 
     const candidates = await this.prisma.$queryRaw<PausedRow[]>`

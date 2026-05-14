@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ErrorCode } from '../../../common/constants/error-codes';
+import { FeatureFlagService } from '../../../common/feature-flags/feature-flag.service';
 import { AppException } from '../../../common/exceptions/app.exception';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { StripeService } from '../stripe.service';
@@ -13,9 +14,20 @@ export class SubscribeService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly stripe: StripeService,
+    private readonly featureFlags: FeatureFlagService,
   ) {}
 
   async startCheckout(userId: string): Promise<StartSubscribeResult> {
+    const subscriptionsEnabled = await this.featureFlags.isEnabled(
+      'business_subscriptions_enabled',
+      true,
+    );
+    if (!subscriptionsEnabled) {
+      throw new AppException(ErrorCode.RESOURCE_CONFLICT, {
+        message: 'New subscriptions are temporarily disabled.',
+      });
+    }
+
     const { client, verifiedBusinessPriceId, returnUrlBase } =
       this.stripe.requireConfigured();
 

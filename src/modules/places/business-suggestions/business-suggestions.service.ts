@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ErrorCode } from '../../../common/constants/error-codes';
+import { FeatureFlagService } from '../../../common/feature-flags/feature-flag.service';
 import { AppException } from '../../../common/exceptions/app.exception';
 import { createId } from '../../../common/utils/id';
 import { PrismaService } from '../../../prisma/prisma.service';
@@ -22,11 +23,17 @@ export class BusinessSuggestionsService {
     private readonly prisma: PrismaService,
     @Inject(STORAGE_PROVIDER_TOKEN)
     private readonly storage: StorageProvider,
+    private readonly featureFlags: FeatureFlagService,
   ) {}
 
   async list(
     dto: GetBusinessSuggestionsDto,
   ): Promise<BusinessVenueSuggestionDto[]> {
+    const enabled = await this.featureFlags.isEnabled(
+      'business_venue_suggestions_enabled',
+      true,
+    );
+    if (!enabled) return [];
     const rows = await findVenueSuggestions(this.prisma, {
       lat: dto.lat,
       lng: dto.lng,
