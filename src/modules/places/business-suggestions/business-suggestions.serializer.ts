@@ -9,6 +9,7 @@ export interface BusinessVenueSuggestionRow {
   businessId: string;
   businessName: string;
   businessLogoKey: string | null;
+  businessShortDescription: string | null;
 }
 
 export interface BusinessVenueSuggestionDto {
@@ -20,6 +21,7 @@ export interface BusinessVenueSuggestionDto {
   businessId: string;
   businessName: string;
   businessLogoUrl: string | null;
+  businessShortDescription: string | null;
 }
 
 export function serializeBusinessVenueSuggestion(
@@ -37,5 +39,6 @@ export function serializeBusinessVenueSuggestion(
     businessLogoUrl: row.businessLogoKey
       ? storage.publicUrl(row.businessLogoKey)
       : null,
+    businessShortDescription: row.businessShortDescription,
   };
 }

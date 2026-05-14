@@ -36,9 +36,10 @@ export async function findVenueSuggestions(
         v."placePoint",
         ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326)::geography
       ) AS "distanceM",
-      b.id            AS "businessId",
-      b.name          AS "businessName",
-      b."logoKey"     AS "businessLogoKey"
+      b.id                AS "businessId",
+      b.name              AS "businessName",
+      b."logoKey"         AS "businessLogoKey",
+      b."shortDescription" AS "businessShortDescription"
     FROM "BusinessVenue" v
     JOIN "Business" b ON b.id = v."businessId"
     WHERE b."verifiedAt" IS NOT NULL

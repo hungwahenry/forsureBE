@@ -24,6 +24,7 @@ export class AdminBusinessesDetailService {
       where: { id: businessId },
       include: {
         suspendedBy: { select: { id: true, email: true } },
+        category: true,
       },
     });
     if (!business) {
