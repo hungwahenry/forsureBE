@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { BusinessActivitiesController } from './activities/activities.controller';
 import { BusinessActivitiesService } from './activities/activities.service';
+import { BusinessAnalyticsController } from './analytics/analytics.controller';
+import { BusinessAnalyticsService } from './analytics/analytics.service';
 import { BillingController } from './billing/billing.controller';
 import { BillingService } from './billing/billing.service';
 import { BoostsController } from './boosts/boosts.controller';
@@ -9,6 +11,8 @@ import { BoostsService } from './boosts/boosts.service';
 import { BusinessService } from './business.service';
 import { BusinessMeController } from './me/me.controller';
 import { BusinessMeService } from './me/me.service';
+import { BusinessOverviewController } from './overview/overview.controller';
+import { BusinessOverviewService } from './overview/overview.service';
 import { BusinessAutoPauseScheduler } from './scheduled/auto-pause.scheduler';
 import { OnboardingController } from './onboarding/onboarding.controller';
 import { OnboardingService } from './onboarding/onboarding.service';
@@ -30,6 +34,8 @@ import { WebhooksService } from './webhooks/webhooks.service';
   controllers: [
     OnboardingController,
     BusinessMeController,
+    BusinessOverviewController,
+    BusinessAnalyticsController,
     SubscribeController,
     VenuesController,
     VenueAnalyticsController,
@@ -41,6 +47,8 @@ import { WebhooksService } from './webhooks/webhooks.service';
   providers: [
     BusinessService,
     BusinessMeService,
+    BusinessOverviewService,
+    BusinessAnalyticsService,
     BusinessMemberGuard,
     StripeService,
     OnboardingService,
