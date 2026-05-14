@@ -25,4 +25,13 @@ export class ListReportsDto extends CursorPaginationDto {
   @IsString()
   @Length(1, 64)
   reasonCode?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Filter BUSINESS_VENUE reports to only those targeting venues of this business.',
+  })
+  @IsOptional()
+  @IsString()
+  @Length(1, 64)
+  businessId?: string;
 }

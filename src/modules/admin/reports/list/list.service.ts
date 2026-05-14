@@ -34,6 +34,23 @@ export class AdminReportsListService {
     if (query.reasonCode) {
       andClauses.push({ reason: { code: query.reasonCode } });
     }
+    if (query.businessId) {
+      const venues = await this.prisma.businessVenue.findMany({
+        where: { businessId: query.businessId },
+        select: { id: true },
+      });
+      const venueIds = venues.map((v) => v.id);
+      if (venueIds.length === 0) {
+        return {
+          items: [],
+          pageInfo: { nextCursor: null, hasMore: false },
+        };
+      }
+      andClauses.push({
+        targetType: 'BUSINESS_VENUE',
+        targetId: { in: venueIds },
+      });
+    }
     if (cursor) {
       andClauses.push({
         OR: [

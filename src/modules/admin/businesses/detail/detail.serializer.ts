@@ -22,6 +22,7 @@ export interface AdminBusinessDetail {
     venues: number;
     boostsActive: number;
     boostsAllTime: number;
+    recentVenueFlags: number;
   };
 }
 

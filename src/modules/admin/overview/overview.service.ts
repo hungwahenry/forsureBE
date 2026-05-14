@@ -28,6 +28,7 @@ export interface AdminOverview {
   users: OverviewMetric;
   activeActivities: OverviewMetric;
   pendingReports: number;
+  autoPausedBusinesses: number;
   failedJobs24h: number;
   failedCronRuns24h: number;
   growth: OverviewGrowthPoint[];
@@ -59,6 +60,7 @@ export class AdminOverviewService {
       newActivities24h,
       newActivitiesPrev24h,
       pendingReports,
+      autoPausedBusinesses,
       failedCronRuns24h,
       notifFailed,
       exportFailed,
@@ -96,6 +98,9 @@ export class AdminOverviewService {
         },
       }),
       this.prisma.report.count({ where: { status: 'PENDING' } }),
+      this.prisma.business.count({
+        where: { autoPausedAt: { not: null }, suspendedAt: null },
+      }),
       this.prisma.cronRunLog.count({
         where: { status: 'FAILED', startedAt: { gte: last24h } },
       }),
@@ -127,6 +132,7 @@ export class AdminOverviewService {
         delta24h: newActivities24h - newActivitiesPrev24h,
       },
       pendingReports,
+      autoPausedBusinesses,
       failedJobs24h: notifFailed + exportFailed,
       failedCronRuns24h,
       growth,

@@ -32,25 +32,36 @@ export class AdminBusinessesDetailService {
       });
     }
 
-    const [members, venues, boostsActive, boostsAllTime] = await Promise.all([
-      this.prisma.businessMember.count({ where: { businessId } }),
-      this.prisma.businessVenue.count({ where: { businessId } }),
-      this.prisma.activityBoost.count({
-        where: {
-          businessId,
-          cancelledAt: null,
-          startsAt: { lte: new Date() },
-          endsAt: { gt: new Date() },
-        },
-      }),
-      this.prisma.activityBoost.count({ where: { businessId } }),
-    ]);
+    const flagsCutoff = new Date(Date.now() - 30 * 86_400_000);
+    const [members, venues, boostsActive, boostsAllTime, recentFlags] =
+      await Promise.all([
+        this.prisma.businessMember.count({ where: { businessId } }),
+        this.prisma.businessVenue.count({ where: { businessId } }),
+        this.prisma.activityBoost.count({
+          where: {
+            businessId,
+            cancelledAt: null,
+            startsAt: { lte: new Date() },
+            endsAt: { gt: new Date() },
+          },
+        }),
+        this.prisma.activityBoost.count({ where: { businessId } }),
+        this.prisma.$queryRaw<Array<{ count: bigint }>>`
+          SELECT COUNT(*)::bigint AS count
+          FROM "Report" r
+          JOIN "BusinessVenue" v ON v.id = r."targetId"
+          WHERE r."targetType" = 'BUSINESS_VENUE'
+            AND v."businessId" = ${businessId}
+            AND r."createdAt" >= ${flagsCutoff}
+        `,
+      ]);
 
     return serializeAdminBusinessDetail(this.storage, business, {
       members,
       venues,
       boostsActive,
       boostsAllTime,
+      recentVenueFlags: Number(recentFlags[0]?.count ?? 0),
     });
   }
 }

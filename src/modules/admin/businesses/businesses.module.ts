@@ -10,12 +10,15 @@ import { AdminBusinessesListController } from './list/list.controller';
 import { AdminBusinessesListService } from './list/list.service';
 import { AdminBusinessMembersController } from './members/members.controller';
 import { AdminBusinessMembersService } from './members/members.service';
+import { AdminBusinessesStatsController } from './stats/stats.controller';
+import { AdminBusinessesStatsService } from './stats/stats.service';
 import { AdminBusinessVenuesController } from './venues/venues.controller';
 import { AdminBusinessVenuesService } from './venues/venues.service';
 
 @Module({
   imports: [AdminSharedModule],
   controllers: [
+    AdminBusinessesStatsController,
     AdminBusinessesListController,
     AdminBusinessesDetailController,
     AdminBusinessesActionsController,
@@ -24,6 +27,7 @@ import { AdminBusinessVenuesService } from './venues/venues.service';
     AdminBusinessMembersController,
   ],
   providers: [
+    AdminBusinessesStatsService,
     AdminBusinessesListService,
     AdminBusinessesDetailService,
     AdminBusinessesActionsService,
