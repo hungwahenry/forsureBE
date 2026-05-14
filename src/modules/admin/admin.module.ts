@@ -10,6 +10,7 @@ import { AdminFeatureFlagsModule } from './feature-flags/feature-flags.module';
 import { AdminMeModule } from './me/me.module';
 import { AdminMessagesModule } from './messages/messages.module';
 import { AdminOverviewModule } from './overview/overview.module';
+import { AdminPagesModule } from './pages/pages.module';
 import { AdminPostsModule } from './posts/posts.module';
 import { AdminReportReasonsModule } from './report-reasons/report-reasons.module';
 import { AdminReportsModule } from './reports/reports.module';
@@ -38,6 +39,7 @@ import { AdminUsersModule } from './users/users.module';
     AdminAnalyticsModule,
     AdminBusinessesModule,
     AdminBusinessCategoriesModule,
+    AdminPagesModule,
   ],
 })
 export class AdminModule {}

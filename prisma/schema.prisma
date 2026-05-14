@@ -57,6 +57,10 @@ model User {
   businessMemberships   BusinessMember[]
   businessSuspensions   Business[]             @relation("BusinessSuspendedBy")
   venueSuggestionEvents VenueSuggestionEvent[]
+
+  // ----- Admin pages reverse relations -----
+  adminPagesCreated AdminPage[] @relation("AdminPageCreator")
+  adminPagesUpdated AdminPage[] @relation("AdminPageEditor")
 }
 
 enum UserStatus {
@@ -692,4 +696,35 @@ model ActivityBoost {
   @@index([activityId, endsAt])
   @@index([businessId, createdAt])
   @@index([endsAt])
+}
+
+enum AdminPageStatus {
+  DRAFT
+  PUBLISHED
+}
+
+/// Admin-authored content pages (terms, privacy, FAQ, etc.) rendered on the public web at /p/{slug}.
+model AdminPage {
+  id          String          @id // pg_...
+  slug        String          @unique
+  title       String
+  /// TipTap document model — source of truth for editing.
+  bodyJson    Json
+  /// Sanitized HTML generated from bodyJson at save time; what the public route renders.
+  bodyHtml    String
+  status      AdminPageStatus @default(DRAFT)
+  publishedAt DateTime?       @db.Timestamptz(3)
+  /// When true and status=PUBLISHED, the page is exposed in /pages/footer for the shared site footer.
+  showInFooter Boolean        @default(false)
+  /// Lower comes first when rendered in the footer. Ties broken by title.
+  footerOrder  Int            @default(0)
+  createdById String
+  updatedById String
+  createdBy   User            @relation("AdminPageCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  updatedBy   User            @relation("AdminPageEditor", fields: [updatedById], references: [id], onDelete: Restrict)
+  createdAt   DateTime        @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime        @updatedAt @db.Timestamptz(3)
+
+  @@index([status, updatedAt])
+  @@index([showInFooter, footerOrder])
 }
