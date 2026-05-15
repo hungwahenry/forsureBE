@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import { PrismaPg } from '@prisma/adapter-pg';
-import { PrismaClient, ReportTargetType } from '@prisma/client';
+import { PrismaClient, ReportTargetType, UserRole } from '@prisma/client';
 import { v7 as uuidv7 } from 'uuid';
 
 const prisma = new PrismaClient({
@@ -349,6 +349,37 @@ async function main() {
     });
   }
   console.log(`Seeded ${FLAGS.length} feature flags.`);
+
+  await seedSuperAdmin();
+}
+
+/** Email promoted to SUPER_ADMIN on each deploy. */
+const SUPER_ADMIN_EMAIL = 'henterhungwa@gmail.com';
+
+async function seedSuperAdmin() {
+  const email = SUPER_ADMIN_EMAIL.trim().toLowerCase();
+
+  const user = await prisma.user.findUnique({
+    where: { email },
+    select: { id: true, role: true },
+  });
+  if (!user) {
+    console.warn(
+      `Super admin (${email}) has no account yet — skipping. ` +
+        'Re-run the seed after that user has signed up.',
+    );
+    return;
+  }
+  if (user.role === UserRole.SUPER_ADMIN) {
+    console.log(`${email} is already a super admin.`);
+    return;
+  }
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { role: UserRole.SUPER_ADMIN },
+  });
+  console.log(`Promoted ${email} to SUPER_ADMIN.`);
 }
 
 main()
