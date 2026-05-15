@@ -14,7 +14,7 @@ import {
   Min,
 } from 'class-validator';
 
-const KEYWORD_PATTERN = /^[a-z0-9][a-z0-9 \-]{0,38}$/;
+const KEYWORD_PATTERN = /^[a-z0-9][a-z0-9 -]{0,38}$/;
 
 export class UpdateVenueDto {
   @ApiPropertyOptional()
@@ -72,7 +72,8 @@ export class UpdateVenueDto {
   isPaused?: boolean;
 
   @ApiPropertyOptional({
-    description: 'Public-facing phone for the venue. Loose format — owner-typed.',
+    description:
+      'Public-facing phone for the venue. Loose format — owner-typed.',
   })
   @IsOptional()
   @IsString()

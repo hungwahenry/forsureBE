@@ -10,7 +10,6 @@ import type {
   PerformanceAnalyticsDto,
   SpendAnalyticsDto,
   SpendBucket,
-  VenueAnalyticsRow,
   VenuesAnalyticsDto,
 } from './analytics.serializer';
 
@@ -87,8 +86,7 @@ function resolveWindow(from?: string, to?: string): AnalyticsWindow {
   const fromDate = from
     ? startOfUtcDay(new Date(from))
     : new Date(toDate.getTime() - (DEFAULT_WINDOW_DAYS - 1) * DAY_MS);
-  const days =
-    Math.round((toDate.getTime() - fromDate.getTime()) / DAY_MS) + 1;
+  const days = Math.round((toDate.getTime() - fromDate.getTime()) / DAY_MS) + 1;
   return { from: toYmd(fromDate), to: toYmd(toDate), days };
 }
 
@@ -105,10 +103,7 @@ function windowBounds(w: AnalyticsWindow): {
   return { start, endExclusive, priorStart };
 }
 
-function fillDaily(
-  rows: DailyRow[],
-  w: AnalyticsWindow,
-): DailyPoint[] {
+function fillDaily(rows: DailyRow[], w: AnalyticsWindow): DailyPoint[] {
   const start = new Date(`${w.from}T00:00:00.000Z`);
   const byDay = new Map<string, DailyRow>();
   for (const r of rows) byDay.set(toYmd(startOfUtcDay(r.day)), r);
@@ -189,14 +184,9 @@ export class BusinessAnalyticsService {
     const window = resolveWindow(from, to);
     const { start, endExclusive, priorStart } = windowBounds(window);
 
-    const [
-      currTotalsRows,
-      priorTotalsRows,
-      dailyRows,
-      hourlyRows,
-      dowRows,
-    ] = await Promise.all([
-      this.prisma.$queryRaw<PerformanceTotalsRow[]>`
+    const [currTotalsRows, priorTotalsRows, dailyRows, hourlyRows, dowRows] =
+      await Promise.all([
+        this.prisma.$queryRaw<PerformanceTotalsRow[]>`
         SELECT
           COUNT(*) FILTER (WHERE vse.kind = 'PICK')      AS picks,
           COUNT(*) FILTER (WHERE vse.kind = 'CONFIRMED') AS confirmed,
@@ -207,7 +197,7 @@ export class BusinessAnalyticsService {
           AND vse."createdAt" >= ${start}
           AND vse."createdAt" < ${endExclusive}
       `,
-      this.prisma.$queryRaw<PerformanceTotalsRow[]>`
+        this.prisma.$queryRaw<PerformanceTotalsRow[]>`
         SELECT
           COUNT(*) FILTER (WHERE vse.kind = 'PICK')      AS picks,
           COUNT(*) FILTER (WHERE vse.kind = 'CONFIRMED') AS confirmed,
@@ -218,7 +208,7 @@ export class BusinessAnalyticsService {
           AND vse."createdAt" >= ${priorStart}
           AND vse."createdAt" < ${start}
       `,
-      this.prisma.$queryRaw<DailyRow[]>`
+        this.prisma.$queryRaw<DailyRow[]>`
         SELECT
           date_trunc('day', vse."createdAt") AS day,
           COUNT(*) FILTER (WHERE vse.kind = 'PICK')      AS picks,
@@ -232,7 +222,7 @@ export class BusinessAnalyticsService {
         GROUP BY 1
         ORDER BY 1 ASC
       `,
-      this.prisma.$queryRaw<HourRow[]>`
+        this.prisma.$queryRaw<HourRow[]>`
         SELECT
           EXTRACT(HOUR FROM vse."createdAt")::int AS hour,
           COUNT(*) FILTER (WHERE vse.kind = 'PICK')      AS picks,
@@ -244,7 +234,7 @@ export class BusinessAnalyticsService {
           AND vse."createdAt" < ${endExclusive}
         GROUP BY 1
       `,
-      this.prisma.$queryRaw<DowRow[]>`
+        this.prisma.$queryRaw<DowRow[]>`
         SELECT
           EXTRACT(DOW FROM vse."createdAt")::int AS dow,
           COUNT(*) FILTER (WHERE vse.kind = 'PICK')      AS picks,
@@ -256,13 +246,14 @@ export class BusinessAnalyticsService {
           AND vse."createdAt" < ${endExclusive}
         GROUP BY 1
       `,
-    ]);
+      ]);
 
     const curr = currTotalsRows[0];
     const prior = priorTotalsRows[0];
     const picks = Number(curr.picks);
     const confirmed = Number(curr.confirmed);
-    const conversionPct = picks > 0 ? Math.round((confirmed / picks) * 1000) / 10 : null;
+    const conversionPct =
+      picks > 0 ? Math.round((confirmed / picks) * 1000) / 10 : null;
 
     return {
       window,

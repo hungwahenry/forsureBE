@@ -14,7 +14,7 @@ import {
   Min,
 } from 'class-validator';
 
-const KEYWORD_PATTERN = /^[a-z0-9][a-z0-9 \-]{0,38}$/;
+const KEYWORD_PATTERN = /^[a-z0-9][a-z0-9 -]{0,38}$/;
 
 export class CreateVenueDto {
   @ApiProperty({
@@ -27,7 +27,7 @@ export class CreateVenueDto {
 
   @ApiProperty({
     description:
-      'Display name shown in the dashboard and in mobile suggestions — typically the place\'s structured main text.',
+      "Display name shown in the dashboard and in mobile suggestions — typically the place's structured main text.",
   })
   @IsString()
   @Length(1, 120)
@@ -80,7 +80,7 @@ export class CreateVenueDto {
 
   @ApiProperty({
     description:
-      'Daily budget cap in cents. The venue stops being suggested once the day\'s charges exhaust it.',
+      "Daily budget cap in cents. The venue stops being suggested once the day's charges exhaust it.",
     minimum: 0,
     maximum: 1_000_000,
   })

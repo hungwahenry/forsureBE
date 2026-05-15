@@ -80,7 +80,7 @@ export class VenuePicksRolloverScheduler {
           summary.totalSettledCents += settled;
           summary.totalEvents += events.length;
         }
-      } catch (err) {
+      } catch (err: unknown) {
         summary.errors += 1;
         this.logger.error(
           { err, businessId, eventCount: events.length },

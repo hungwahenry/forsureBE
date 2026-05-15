@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import type { Request } from 'express';
@@ -52,9 +52,7 @@ export class AdminQueuesService {
   }
 
   async listQueues(): Promise<AdminQueueSummary[]> {
-    return Promise.all(
-      [...this.queues.values()].map(serializeQueueSummary),
-    );
+    return Promise.all([...this.queues.values()].map(serializeQueueSummary));
   }
 
   async listJobs(
@@ -82,7 +80,7 @@ export class AdminQueuesService {
       });
     }
     const state = await job.getState();
-    if (state !== JobState.FAILED) {
+    if (state !== 'failed') {
       throw new AppException(ErrorCode.RESOURCE_CONFLICT, {
         message: `Only failed jobs can be retried (current state: ${state}).`,
       });

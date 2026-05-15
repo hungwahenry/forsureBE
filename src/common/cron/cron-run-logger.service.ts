@@ -16,7 +16,13 @@ export class CronRunLogger {
     const startMs = Date.now();
     try {
       const result = await fn();
-      await this.finishLog(logId, 'SUCCESS', Date.now() - startMs, result, null);
+      await this.finishLog(
+        logId,
+        'SUCCESS',
+        Date.now() - startMs,
+        result,
+        null,
+      );
       return result;
     } catch (err) {
       await this.finishLog(logId, 'FAILED', Date.now() - startMs, null, err);
@@ -48,9 +54,11 @@ export class CronRunLogger {
     const errorMessage =
       error instanceof Error
         ? error.message
-        : error
-          ? String(error)
-          : null;
+        : error == null
+          ? null
+          : typeof error === 'string'
+            ? error
+            : JSON.stringify(error);
     const errorStack = error instanceof Error ? (error.stack ?? null) : null;
     const resultJson =
       result === null || result === undefined
