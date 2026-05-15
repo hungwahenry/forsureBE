@@ -27,6 +27,7 @@ import { BlocksModule } from './modules/blocks/blocks.module';
 import { BusinessModule } from './modules/business/business.module';
 import { PublicBusinessCategoriesModule } from './modules/business-categories/business-categories.module';
 import { ChatsModule } from './modules/chats/chats.module';
+import { ContactModule } from './modules/contact/contact.module';
 import { EggsModule } from './modules/eggs/eggs.module';
 import { ExploreModule } from './modules/explore/explore.module';
 import { FeedModule } from './modules/feed/feed.module';
@@ -120,6 +121,7 @@ import { StorageModule } from './storage/storage.module';
     StepUpModule,
     AccountModule,
     EggsModule,
+    ContactModule,
     AdminModule,
   ],
   providers: [

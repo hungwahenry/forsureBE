@@ -1,0 +1,19 @@
+{{#> _layout title="New contact lead" preheader=(concat name " — " email)}}
+  <h1 style="font-size:18px;margin:0 0 16px;color:#111;">New contact lead</h1>
+  <table style="width:100%;border-collapse:collapse;font-size:14px;color:#333;">
+    <tr>
+      <td style="padding:6px 0;color:#888;width:90px;">Name</td>
+      <td style="padding:6px 0;">{{name}}</td>
+    </tr>
+    <tr>
+      <td style="padding:6px 0;color:#888;">Email</td>
+      <td style="padding:6px 0;"><a href="mailto:{{email}}" style="color:#111;">{{email}}</a></td>
+    </tr>
+    <tr>
+      <td style="padding:6px 0;color:#888;">Company</td>
+      <td style="padding:6px 0;">{{company}}</td>
+    </tr>
+  </table>
+  <p style="margin:20px 0 6px;color:#888;font-size:13px;">Message</p>
+  <div style="background:#f4f4f5;border-radius:8px;padding:16px;color:#333;line-height:1.5;white-space:pre-wrap;">{{message}}</div>
+{{/_layout}}

@@ -769,3 +769,17 @@ model AppConfig {
 
   @@index([category])
 }
+
+// Inbound leads from the public marketing-site contact form.
+model ContactLead {
+  id        String   @id // lead_...
+  name      String
+  email     String
+  company   String?
+  message   String
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+
+  @@index([createdAt])
+}

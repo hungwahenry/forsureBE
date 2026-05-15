@@ -34,6 +34,8 @@ export const envSchema = z
     RESEND_FROM_EMAIL: z.email(),
     RESEND_FROM_NAME: z.string().default('forsure'),
 
+    TURNSTILE_SECRET_KEY: z.string().optional(),
+
     STORAGE_DRIVER: z.enum(['s3', 'local']).default('local'),
 
     LOCAL_STORAGE_DIR: z.string().default('./uploads'),
