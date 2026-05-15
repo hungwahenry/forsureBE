@@ -15,6 +15,10 @@ import { MembershipService } from '../../chats/membership/membership.service';
 import { MessagesService } from '../../chats/messages/messages.service';
 import { ActivityLifecycleNotifications } from '../../notifications/producers/activity-lifecycle.producer';
 import { RealtimeService } from '../../../realtime/realtime.service';
+import {
+  serializeActivitySummary,
+  type ActivitySummaryDto,
+} from '../activity.serializer';
 import { EditActivityDto } from './dto/edit-activity.dto';
 
 const MIN_LEAD_TIME_MS = 30 * 60_000;
@@ -56,7 +60,7 @@ export class ManageActivityService {
     userId: string,
     activityId: string,
     dto: EditActivityDto,
-  ): Promise<Activity> {
+  ): Promise<ActivitySummaryDto> {
     const activity = await this.requireHost(userId, activityId);
 
     const planningFieldsChanged =
@@ -181,10 +185,13 @@ export class ManageActivityService {
     this.realtime.toRoom(chatRoom(activityId), ChatEvents.ActivityUpdated, {
       activityId,
     });
-    return updated;
+    return serializeActivitySummary(updated);
   }
 
-  async cancel(userId: string, activityId: string): Promise<Activity> {
+  async cancel(
+    userId: string,
+    activityId: string,
+  ): Promise<ActivitySummaryDto> {
     const activity = await this.requireHost(userId, activityId);
     if (
       activity.status === ActivityStatus.CANCELLED ||
@@ -209,7 +216,7 @@ export class ManageActivityService {
       activityId,
     });
     void this.notifications.cancellation(activityId);
-    return updated;
+    return serializeActivitySummary(updated);
   }
 
   async kick(

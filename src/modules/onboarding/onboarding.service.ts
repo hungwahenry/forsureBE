@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { Prisma, Profile, User } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { ErrorCode } from '../../common/constants/error-codes';
 import { AppException } from '../../common/exceptions/app.exception';
 import {
@@ -10,10 +10,16 @@ import { createId } from '../../common/utils/id';
 import { PrismaService } from '../../prisma/prisma.service';
 import { STORAGE_PROVIDER_TOKEN } from '../../storage/storage.interface';
 import type { StorageProvider } from '../../storage/storage.interface';
+import {
+  serializeUser,
+  type PublicUserDto,
+} from '../auth/auth.serializer';
 import { CompleteOnboardingDto } from './dto/complete-onboarding.dto';
 import {
   serializeAvatarUpload,
+  serializeOnboardingProfile,
   type AvatarUploadDto,
+  type OnboardingProfileDto,
 } from './onboarding.serializer';
 
 const MIN_AGE_YEARS = 18;
@@ -60,7 +66,7 @@ export class OnboardingService {
   async complete(
     userId: string,
     dto: CompleteOnboardingDto,
-  ): Promise<{ user: User & { avatarUrl: string }; profile: Profile }> {
+  ): Promise<{ user: PublicUserDto; profile: OnboardingProfileDto }> {
     if (calculateAge(dto.dateOfBirth) < MIN_AGE_YEARS) {
       throw new AppException(ErrorCode.VALIDATION_FAILED, {
         message: 'You must be 18 or older to use forsure.',
@@ -104,11 +110,11 @@ export class OnboardingService {
           data: { onboardingCompletedAt: new Date() },
         });
         return {
-          user: {
+          user: serializeUser(this.storage, {
             ...user,
-            avatarUrl: this.storage.publicUrl(profile.avatarKey),
-          },
-          profile,
+            profile: { avatarKey: profile.avatarKey },
+          }),
+          profile: serializeOnboardingProfile(profile),
         };
       });
     } catch (e) {

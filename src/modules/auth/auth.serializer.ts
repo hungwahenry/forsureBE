@@ -1,4 +1,4 @@
-import type { User } from '@prisma/client';
+import type { User, UserRole, UserStatus } from '@prisma/client';
 import type { StorageProvider } from '../../storage/storage.interface';
 import type { BusinessMembershipDto } from '../business/business.serializer';
 
@@ -12,10 +12,46 @@ export interface TokenPairDto extends AccessTokenDto {
   refreshTokenExpiresAt: string;
 }
 
+/** Clean public shape of a User row — drops moderation internals. */
+export interface PublicUserDto {
+  id: string;
+  email: string;
+  emailVerifiedAt: string | null;
+  status: UserStatus;
+  role: UserRole;
+  onboardingCompletedAt: string | null;
+  lastLoginAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  avatarUrl: string;
+}
+
 export interface AuthMeDto {
-  user: User & { avatarUrl: string };
+  user: PublicUserDto;
   onboardingRequired: boolean;
   businessMemberships: BusinessMembershipDto[];
+}
+
+type UserWithAvatar = User & {
+  profile: { avatarKey: string } | null;
+};
+
+export function serializeUser(
+  storage: StorageProvider,
+  user: UserWithAvatar,
+): PublicUserDto {
+  return {
+    id: user.id,
+    email: user.email,
+    emailVerifiedAt: user.emailVerifiedAt?.toISOString() ?? null,
+    status: user.status,
+    role: user.role,
+    onboardingCompletedAt: user.onboardingCompletedAt?.toISOString() ?? null,
+    lastLoginAt: user.lastLoginAt?.toISOString() ?? null,
+    createdAt: user.createdAt.toISOString(),
+    updatedAt: user.updatedAt.toISOString(),
+    avatarUrl: user.profile ? storage.publicUrl(user.profile.avatarKey) : '',
+  };
 }
 
 export function serializeAccessToken(
@@ -40,19 +76,13 @@ export function serializeTokenPair(
   };
 }
 
-type UserWithAvatar = User & {
-  profile: { avatarKey: string } | null;
-};
-
 export function serializeAuthMe(
   storage: StorageProvider,
   user: UserWithAvatar,
   businessMemberships: BusinessMembershipDto[],
 ): AuthMeDto {
-  const { profile, ...rest } = user;
-  const avatarUrl = profile ? storage.publicUrl(profile.avatarKey) : '';
   return {
-    user: { ...rest, avatarUrl },
+    user: serializeUser(storage, user),
     onboardingRequired: !user.onboardingCompletedAt,
     businessMemberships,
   };

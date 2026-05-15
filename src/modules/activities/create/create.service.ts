@@ -1,14 +1,18 @@
 import { Injectable } from '@nestjs/common';
-import { ActivityRole, type Activity } from '@prisma/client';
+import { ActivityRole } from '@prisma/client';
 import { ErrorCode } from '../../../common/constants/error-codes';
 import { AppException } from '../../../common/exceptions/app.exception';
 import { createId } from '../../../common/utils/id';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { VenueBillingService } from '../../business/venues/billing.service';
 import { MembershipService } from '../../chats/membership/membership.service';
+import {
+  serializeActivitySummary,
+  type ActivitySummaryDto,
+} from '../activity.serializer';
 import { CreateActivityDto } from './dto/create-activity.dto';
 
-const MIN_LEAD_TIME_MS = 30 * 60_000; // 30 minutes
+const MIN_LEAD_TIME_MS = 30 * 60_000;
 
 @Injectable()
 export class CreateActivityService {
@@ -21,7 +25,7 @@ export class CreateActivityService {
   async create(
     authorUserId: string,
     dto: CreateActivityDto,
-  ): Promise<Activity> {
+  ): Promise<ActivitySummaryDto> {
     if (dto.startsAt.getTime() < Date.now() + MIN_LEAD_TIME_MS) {
       throw new AppException(ErrorCode.VALIDATION_FAILED, {
         message: 'Activities must start at least 30 minutes from now.',
@@ -84,6 +88,6 @@ export class CreateActivityService {
 
     // Add the host's currently-connected sockets to the new chat room.
     await this.membership.addToChat(authorUserId, activityId);
-    return activity;
+    return serializeActivitySummary(activity);
   }
 }

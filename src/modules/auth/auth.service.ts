@@ -1,7 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { Prisma, User } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { ErrorCode } from '../../common/constants/error-codes';
 import { AppException } from '../../common/exceptions/app.exception';
 import { FeatureFlagService } from '../../common/feature-flags/feature-flag.service';
@@ -26,8 +26,10 @@ import {
   serializeAccessToken,
   serializeAuthMe,
   serializeTokenPair,
+  serializeUser,
   type AccessTokenDto,
   type AuthMeDto,
+  type PublicUserDto,
   type TokenPairDto,
 } from './auth.serializer';
 import { generateRefreshToken, sha256 } from '../../common/utils/crypto';
@@ -113,7 +115,9 @@ export class AuthService {
     email: string,
     code: string,
     ctx: ClientContext,
-  ): Promise<TokenPairDto & { user: User; onboardingRequired: boolean }> {
+  ): Promise<
+    TokenPairDto & { user: PublicUserDto; onboardingRequired: boolean }
+  > {
     const verification = await this.prisma.emailVerification.findFirst({
       where: { email, consumedAt: null },
       orderBy: { createdAt: 'desc' },
@@ -174,6 +178,7 @@ export class AuthService {
           emailVerifiedAt: now,
           lastLoginAt: now,
         },
+        include: { profile: { select: { avatarKey: true } } },
       });
       const tokens = await this.issueTokenPair(
         user.id,
@@ -186,7 +191,7 @@ export class AuthService {
     });
 
     return {
-      user,
+      user: serializeUser(this.storage, user),
       onboardingRequired: !user.onboardingCompletedAt,
       ...tokens,
     };
