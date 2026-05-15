@@ -8,6 +8,8 @@ import { ConfigService } from '@nestjs/config';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
+import { Redis } from 'ioredis';
 import { SentryModule } from '@sentry/nestjs/setup';
 import type { Request } from 'express';
 import { LoggerModule } from 'nestjs-pino';
@@ -79,12 +81,19 @@ import { StorageModule } from './storage/storage.module';
       }),
     }),
 
-    ThrottlerModule.forRoot({
-      throttlers: [{ name: 'default', ttl: 60_000, limit: 100 }],
+    ThrottlerModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService<Env, true>) => ({
+        throttlers: [{ name: 'default', ttl: 60_000, limit: 100 }],
+        storage: new ThrottlerStorageRedisService(
+          new Redis(config.get('REDIS_URL', { infer: true }), {
+            maxRetriesPerRequest: 1,
+          }),
+        ),
+      }),
     }),
 
     ScheduleModule.forRoot(),
-
     PrismaModule,
     CronModule,
     FeatureFlagsModule,
