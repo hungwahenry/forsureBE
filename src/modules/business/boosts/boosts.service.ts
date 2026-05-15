@@ -76,30 +76,42 @@ export class BoostsService {
         ? activity.startsAt
         : naturalEnd;
 
-    const used = await this.pricing.countCycleBoosts(businessId);
-    const isOverage = used >= this.pricing.freePerCycle;
-
+    const boostId = createId('abt');
     let stripeInvoiceItemId: string | null = null;
-    if (isOverage) {
-      stripeInvoiceItemId = await this.attachOverageInvoiceItem(
-        businessId,
-        activity.title,
-      );
-    }
 
     try {
-      const row = await this.prisma.activityBoost.create({
-        data: {
-          id: createId('abt'),
-          activityId: dto.activityId,
-          businessId,
-          radiusM: dto.radiusM,
-          startsAt: now,
-          endsAt,
-          chargedCents: isOverage ? this.pricing.overageCents : 0,
-          isOverage,
-          stripeInvoiceItemId,
-        },
+      const row = await this.prisma.$transaction(async (tx) => {
+        await tx.$queryRaw`SELECT id FROM "Business" WHERE id = ${businessId} FOR UPDATE`;
+
+        const used = await tx.activityBoost.count({
+          where: {
+            businessId,
+            createdAt: { gte: new Date(Date.now() - 30 * 86_400_000) },
+          },
+        });
+        const isOverage = used >= this.pricing.freePerCycle;
+
+        if (isOverage) {
+          stripeInvoiceItemId = await this.attachOverageInvoiceItem(
+            businessId,
+            activity.title,
+            boostId,
+          );
+        }
+
+        return tx.activityBoost.create({
+          data: {
+            id: boostId,
+            activityId: dto.activityId,
+            businessId,
+            radiusM: dto.radiusM,
+            startsAt: now,
+            endsAt,
+            chargedCents: isOverage ? this.pricing.overageCents : 0,
+            isOverage,
+            stripeInvoiceItemId,
+          },
+        });
       });
       return serializeActivityBoost(row);
     } catch (err) {
@@ -157,6 +169,7 @@ export class BoostsService {
   private async attachOverageInvoiceItem(
     businessId: string,
     activityTitle: string,
+    boostId: string,
   ): Promise<string> {
     const business = await this.prisma.business.findUniqueOrThrow({
       where: { id: businessId },
@@ -173,7 +186,8 @@ export class BoostsService {
       subscriptionId: business.stripeSubscriptionId,
       amountCents: this.pricing.overageCents,
       description: `Activity boost: ${activityTitle}`,
-      metadata: { businessId, kind: 'boost_overage' },
+      metadata: { businessId, kind: 'boost_overage', boostId },
+      idempotencyKey: `boost-overage:${boostId}`,
     });
   }
 

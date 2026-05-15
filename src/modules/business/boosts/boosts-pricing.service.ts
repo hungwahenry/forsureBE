@@ -66,7 +66,7 @@ export class BoostsPricingService {
       },
     });
     return {
-      freeBoostsUsed: cycleRows.length,
+      freeBoostsUsed: cycleRows.filter((r) => !r.isOverage).length,
       freeBoostsCap: this.freePerCycle,
       cycleSpendCents: cycleRows.reduce((sum, r) => sum + r.chargedCents, 0),
       overageCount: cycleRows.filter((r) => r.isOverage).length,
