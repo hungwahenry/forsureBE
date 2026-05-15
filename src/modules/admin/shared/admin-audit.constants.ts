@@ -45,6 +45,9 @@ export const AdminAuditAction = {
   ADMIN_PAGE_PUBLISHED: 'ADMIN_PAGE_PUBLISHED',
   ADMIN_PAGE_UNPUBLISHED: 'ADMIN_PAGE_UNPUBLISHED',
   ADMIN_PAGE_DELETED: 'ADMIN_PAGE_DELETED',
+
+  APP_CONFIG_UPDATED: 'APP_CONFIG_UPDATED',
+  APP_CONFIG_RESET: 'APP_CONFIG_RESET',
 } as const;
 export type AdminAuditAction =
   (typeof AdminAuditAction)[keyof typeof AdminAuditAction];
@@ -64,6 +67,7 @@ export const AdminAuditTargetType = {
   BUSINESS_BOOST: 'BUSINESS_BOOST',
   BUSINESS_CATEGORY: 'BUSINESS_CATEGORY',
   ADMIN_PAGE: 'ADMIN_PAGE',
+  APP_CONFIG: 'APP_CONFIG',
 } as const;
 export type AdminAuditTargetType =
   (typeof AdminAuditTargetType)[keyof typeof AdminAuditTargetType];
