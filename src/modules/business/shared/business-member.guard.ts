@@ -26,8 +26,11 @@ export class BusinessMemberGuard implements CanActivate {
       throw new AppException(ErrorCode.AUTH_UNAUTHORIZED);
     }
 
+    // Until Team-invite ships, the 1-user-1-business invariant holds; the
+    // orderBy keeps the choice deterministic when multi-membership lands.
     const membership = await this.prisma.businessMember.findFirst({
       where: { userId: user.id },
+      orderBy: { createdAt: 'asc' },
       select: {
         businessId: true,
         role: true,

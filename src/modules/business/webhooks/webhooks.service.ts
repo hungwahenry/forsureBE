@@ -100,7 +100,7 @@ export class WebhooksService {
   private async onSubscriptionUpdated(
     subscription: SubscriptionData,
   ): Promise<void> {
-    const business = await this.prisma.business.findFirst({
+    const business = await this.prisma.business.findUnique({
       where: { stripeSubscriptionId: subscription.id },
       select: { id: true, stripeSubscriptionStatus: true },
     });

@@ -171,16 +171,15 @@ export class MessagesService {
     senderUserId: string,
     activityId: string,
   ): Promise<boolean> {
-    const others = await this.prisma.activityParticipant.findMany({
-      where: { activityId, userId: { not: senderUserId } },
-      select: { userId: true },
-    });
-    for (const p of others) {
-      if (await this.blocks.isEitherBlocked(senderUserId, p.userId)) {
-        return true;
-      }
-    }
-    return false;
+    const [others, blockedIds] = await Promise.all([
+      this.prisma.activityParticipant.findMany({
+        where: { activityId, userId: { not: senderUserId } },
+        select: { userId: true },
+      }),
+      this.blocks.listEitherBlockedUserIds(senderUserId),
+    ]);
+    const blocked = new Set(blockedIds);
+    return others.some((p) => blocked.has(p.userId));
   }
 
   async deleteMessage(

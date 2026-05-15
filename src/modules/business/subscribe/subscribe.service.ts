@@ -33,6 +33,7 @@ export class SubscribeService {
 
     const membership = await this.prisma.businessMember.findFirst({
       where: { userId, role: 'OWNER' },
+      orderBy: { createdAt: 'asc' },
       include: { business: true },
     });
     if (!membership) {

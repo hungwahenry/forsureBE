@@ -31,7 +31,6 @@ export class InboxService {
     private readonly featureFlags: FeatureFlagService,
   ) {}
 
-  /** Persist one row per recipient. Inbox is the canonical "got notified" record. */
   async write(rows: InboxRow[]): Promise<void> {
     if (rows.length === 0) return;
     const enabled = await this.featureFlags.isEnabled(
@@ -59,29 +58,35 @@ export class InboxService {
     );
     if (!enabled) return;
     const now = new Date();
-    await Promise.all(
-      rows.map((r) =>
-        this.prisma.notification.upsert({
-          where: { userId_groupKey: { userId: r.userId, groupKey: r.groupKey } },
-          create: {
-            id: createId('ntn'),
-            userId: r.userId,
-            eventCode: r.eventCode,
-            title: r.title,
-            body: r.body,
-            data: r.data as Prisma.InputJsonValue,
-            groupKey: r.groupKey,
-          },
-          update: {
-            title: r.title,
-            body: r.body,
-            data: r.data as Prisma.InputJsonValue,
-            readAt: null,
-            createdAt: now,
-          },
-        }),
-      ),
-    );
+    const CHUNK_SIZE = 100;
+    for (let i = 0; i < rows.length; i += CHUNK_SIZE) {
+      const chunk = rows.slice(i, i + CHUNK_SIZE);
+      await Promise.all(
+        chunk.map((r) =>
+          this.prisma.notification.upsert({
+            where: {
+              userId_groupKey: { userId: r.userId, groupKey: r.groupKey },
+            },
+            create: {
+              id: createId('ntn'),
+              userId: r.userId,
+              eventCode: r.eventCode,
+              title: r.title,
+              body: r.body,
+              data: r.data as Prisma.InputJsonValue,
+              groupKey: r.groupKey,
+            },
+            update: {
+              title: r.title,
+              body: r.body,
+              data: r.data as Prisma.InputJsonValue,
+              readAt: null,
+              createdAt: now,
+            },
+          }),
+        ),
+      );
+    }
   }
   async list(
     userId: string,
