@@ -1,4 +1,5 @@
 import { Prisma } from '@prisma/client';
+import { businessPubliclyActiveSql } from '../../../common/utils/business-state';
 import type { PrismaService } from '../../../prisma/prisma.service';
 import type { BusinessVenueSuggestionRow } from './business-suggestions.serializer';
 
@@ -42,9 +43,7 @@ export async function findVenueSuggestions(
       b."shortDescription" AS "businessShortDescription"
     FROM "BusinessVenue" v
     JOIN "Business" b ON b.id = v."businessId"
-    WHERE b."verifiedAt" IS NOT NULL
-      AND b."suspendedAt" IS NULL
-      AND b."autoPausedAt" IS NULL
+    WHERE ${businessPubliclyActiveSql('b')}
       AND v."isPaused" = false
       AND v."dailyBudgetRemaining" > 0
       AND ST_DWithin(

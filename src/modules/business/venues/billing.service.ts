@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 import { ErrorCode } from '../../../common/constants/error-codes';
 import { FeatureFlagService } from '../../../common/feature-flags/feature-flag.service';
 import { AppException } from '../../../common/exceptions/app.exception';
+import { isBusinessPubliclyActive } from '../../../common/utils/business-state';
 import { createId } from '../../../common/utils/id';
 
 const PICK_PRICE_CENTS = 500;
@@ -64,9 +65,7 @@ export class VenueBillingService {
 
     const isBusinessActive =
       !venue.isPaused &&
-      venue.verifiedAt !== null &&
-      venue.suspendedAt === null &&
-      venue.autoPausedAt === null &&
+      isBusinessPubliclyActive(venue) &&
       venue.inRange &&
       billingEnabled;
 

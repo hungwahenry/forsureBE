@@ -1,4 +1,5 @@
 import { type ActivityGenderPreference, Prisma } from '@prisma/client';
+import { businessPubliclyActiveSql } from '../../common/utils/business-state';
 import type { PrismaService } from '../../prisma/prisma.service';
 import type { FeedCursor } from './feed.cursor';
 import type { FeedRow } from './feed.interface';
@@ -164,9 +165,7 @@ export async function findActiveBoosts(
     WHERE abt."cancelledAt" IS NULL
       AND abt."startsAt" <= NOW()
       AND abt."endsAt" > NOW()
-      AND biz."verifiedAt" IS NOT NULL
-      AND biz."suspendedAt" IS NULL
-      AND biz."autoPausedAt" IS NULL
+      AND ${businessPubliclyActiveSql('biz')}
       AND a.status = 'OPEN'
       AND a."deletedAt" IS NULL
       AND a."startsAt" >= NOW() + INTERVAL '30 minutes'
