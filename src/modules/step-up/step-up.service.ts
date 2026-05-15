@@ -11,12 +11,14 @@ import { createId } from '../../common/utils/id';
 import {
   OTP_RESEND_COOLDOWN_MS,
   OTP_TTL_MIN,
-  verifyOtp,
 } from '../../common/utils/otp';
+import {
+  buildOtpChallenge,
+  handleOtpVerification,
+} from '../../common/utils/otp-challenge';
 import type { Env } from '../../config/env.schema';
 import { EmailService } from '../../email/email.service';
 import { PrismaService } from '../../prisma/prisma.service';
-import { generateOtp, sha256 } from '../../common/utils/crypto';
 import type { StepUpStartedDto } from './step-up.serializer';
 
 @Injectable()
@@ -51,15 +53,8 @@ export class StepUpService {
       orderBy: { createdAt: 'desc' },
     });
     if (recent) {
-      // Cooldown still active — reuse the existing challenge so the user
-      // doesn't get a second email immediately.
       return { challengeId: recent.id, ttlMinutes: OTP_TTL_MIN };
     }
-
-    await this.prisma.stepUpChallenge.updateMany({
-      where: { userId, action, consumedAt: null },
-      data: { consumedAt: new Date() },
-    });
 
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -69,15 +64,24 @@ export class StepUpService {
       throw new AppException(ErrorCode.RESOURCE_NOT_FOUND);
     }
 
-    const code = generateOtp();
-    const challenge = await this.prisma.stepUpChallenge.create({
-      data: {
-        id: createId('sup'),
-        userId,
-        action,
-        codeHash: sha256(code),
-        expiresAt: new Date(Date.now() + OTP_TTL_MIN * 60_000),
-      },
+    const { challenge, code } = await buildOtpChallenge({
+      invalidatePrior: () =>
+        this.prisma.stepUpChallenge
+          .updateMany({
+            where: { userId, action, consumedAt: null },
+            data: { consumedAt: new Date() },
+          })
+          .then(() => undefined),
+      create: (codeHash, expiresAt) =>
+        this.prisma.stepUpChallenge.create({
+          data: {
+            id: createId('sup'),
+            userId,
+            action,
+            codeHash,
+            expiresAt,
+          },
+        }),
     });
 
     if (!this.isProd) {
@@ -129,34 +133,25 @@ export class StepUpService {
       });
     }
 
-    const result = verifyOtp({
-      storedHash: challenge.codeHash,
-      attempts: challenge.attempts,
-      expiresAt: challenge.expiresAt,
+    await handleOtpVerification({
+      challenge,
       candidate: code,
+      mismatchMessage: 'Invalid confirmation code.',
+      incrementAttempts: () =>
+        this.prisma.stepUpChallenge
+          .update({
+            where: { id: challengeId },
+            data: { attempts: { increment: 1 } },
+          })
+          .then(() => undefined),
+      markConsumed: () =>
+        this.prisma.stepUpChallenge
+          .update({
+            where: { id: challengeId },
+            data: { consumedAt: new Date() },
+          })
+          .then(() => undefined),
     });
-
-    if (!result.ok) {
-      if (result.reason === 'MISMATCH') {
-        await this.prisma.stepUpChallenge.update({
-          where: { id: challengeId },
-          data: { attempts: { increment: 1 } },
-        });
-        throw new AppException(ErrorCode.AUTH_INVALID_CREDENTIALS, {
-          message: 'Invalid confirmation code.',
-        });
-      }
-      await this.prisma.stepUpChallenge.update({
-        where: { id: challengeId },
-        data: { consumedAt: new Date() },
-      });
-      throw new AppException(ErrorCode.AUTH_INVALID_CREDENTIALS, {
-        message:
-          result.reason === 'EXPIRED'
-            ? 'Code expired. Request a new one.'
-            : 'Too many attempts. Request a new code.',
-      });
-    }
 
     await this.prisma.stepUpChallenge.update({
       where: { id: challengeId },

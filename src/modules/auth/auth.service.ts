@@ -9,8 +9,11 @@ import { createId } from '../../common/utils/id';
 import {
   OTP_RESEND_COOLDOWN_MS,
   OTP_TTL_MIN,
-  verifyOtp,
 } from '../../common/utils/otp';
+import {
+  buildOtpChallenge,
+  handleOtpVerification,
+} from '../../common/utils/otp-challenge';
 import type { Env } from '../../config/env.schema';
 import { EmailService } from '../../email/email.service';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -27,7 +30,7 @@ import {
   type AuthMeDto,
   type TokenPairDto,
 } from './auth.serializer';
-import { generateOtp, generateRefreshToken, sha256 } from '../../common/utils/crypto';
+import { generateRefreshToken, sha256 } from '../../common/utils/crypto';
 import { parseDurationToMs } from './utils/duration';
 
 export interface ClientContext {
@@ -70,20 +73,24 @@ export class AuthService {
       return;
     }
 
-    await this.prisma.emailVerification.updateMany({
-      where: { email, consumedAt: null },
-      data: { consumedAt: new Date() },
-    });
-
-    const code = generateOtp();
-    await this.prisma.emailVerification.create({
-      data: {
-        id: createId('evf'),
-        email,
-        codeHash: sha256(code),
-        expiresAt: new Date(Date.now() + OTP_TTL_MIN * 60_000),
-        ipAddress,
-      },
+    const { code } = await buildOtpChallenge({
+      invalidatePrior: () =>
+        this.prisma.emailVerification
+          .updateMany({
+            where: { email, consumedAt: null },
+            data: { consumedAt: new Date() },
+          })
+          .then(() => undefined),
+      create: (codeHash, expiresAt) =>
+        this.prisma.emailVerification.create({
+          data: {
+            id: createId('evf'),
+            email,
+            codeHash,
+            expiresAt,
+            ipAddress,
+          },
+        }),
     });
 
     if (!this.isProd) {
@@ -117,35 +124,24 @@ export class AuthService {
       });
     }
 
-    const result = verifyOtp({
-      storedHash: verification.codeHash,
-      attempts: verification.attempts,
-      expiresAt: verification.expiresAt,
+    await handleOtpVerification({
+      challenge: verification,
       candidate: code,
+      incrementAttempts: () =>
+        this.prisma.emailVerification
+          .update({
+            where: { id: verification.id },
+            data: { attempts: { increment: 1 } },
+          })
+          .then(() => undefined),
+      markConsumed: () =>
+        this.prisma.emailVerification
+          .update({
+            where: { id: verification.id },
+            data: { consumedAt: new Date() },
+          })
+          .then(() => undefined),
     });
-
-    if (!result.ok) {
-      if (result.reason === 'MISMATCH') {
-        await this.prisma.emailVerification.update({
-          where: { id: verification.id },
-          data: { attempts: { increment: 1 } },
-        });
-        throw new AppException(ErrorCode.AUTH_INVALID_CREDENTIALS, {
-          message: 'Incorrect code.',
-        });
-      }
-      // EXPIRED or TOO_MANY_ATTEMPTS: burn the row so it can't be retried.
-      await this.prisma.emailVerification.update({
-        where: { id: verification.id },
-        data: { consumedAt: new Date() },
-      });
-      throw new AppException(ErrorCode.AUTH_INVALID_CREDENTIALS, {
-        message:
-          result.reason === 'EXPIRED'
-            ? 'Code expired. Request a new one.'
-            : 'Too many attempts. Request a new code.',
-      });
-    }
 
     const existing = await this.prisma.user.findUnique({
       where: { email },
