@@ -9,6 +9,7 @@ import {
 import { Server, Socket } from 'socket.io';
 import type { Env } from '../config/env.schema';
 import type { AccessTokenPayload } from '../modules/auth/jwt.strategy';
+import { PrismaService } from '../prisma/prisma.service';
 import { RealtimeService, userRoom } from './realtime.service';
 
 interface AuthedSocket extends Socket {
@@ -16,7 +17,7 @@ interface AuthedSocket extends Socket {
 }
 
 @Injectable()
-@WebSocketGateway({ cors: { origin: true, credentials: true } })
+@WebSocketGateway()
 export class RealtimeGateway implements OnGatewayConnection {
   @WebSocketServer() server!: Server;
   private readonly logger = new Logger(RealtimeGateway.name);
@@ -25,6 +26,7 @@ export class RealtimeGateway implements OnGatewayConnection {
     private readonly jwt: JwtService,
     private readonly config: ConfigService<Env, true>,
     private readonly realtime: RealtimeService,
+    private readonly prisma: PrismaService,
   ) {}
 
   afterInit() {
@@ -46,6 +48,14 @@ export class RealtimeGateway implements OnGatewayConnection {
       });
       userId = payload.sub;
     } catch {
+      socket.disconnect(true);
+      return;
+    }
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { status: true },
+    });
+    if (!user || user.status !== 'ACTIVE') {
       socket.disconnect(true);
       return;
     }

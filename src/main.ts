@@ -14,6 +14,7 @@ import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 import type { Env } from './config/env.schema';
+import { CorsIoAdapter } from './realtime/cors-io.adapter';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
@@ -36,10 +37,9 @@ async function bootstrap() {
   );
   app.use(cookieParser());
 
-  app.enableCors({
-    origin: config.get('CORS_ORIGINS', { infer: true }),
-    credentials: true,
-  });
+  const corsOrigins = config.get('CORS_ORIGINS', { infer: true });
+  app.enableCors({ origin: corsOrigins, credentials: true });
+  app.useWebSocketAdapter(new CorsIoAdapter(app, corsOrigins));
 
   // Serve local-storage uploads when the local driver is in use.
   if (config.get('STORAGE_DRIVER', { infer: true }) === 'local') {
