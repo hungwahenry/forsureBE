@@ -1,4 +1,5 @@
-import type { ActivityStatus } from '@prisma/client';
+import { type ActivityStatus, Prisma } from '@prisma/client';
+import { notBlockedSql } from '../../../common/utils/user-block';
 import type { PrismaService } from '../../../prisma/prisma.service';
 import type { ChatPreviewRow } from '../chats.interface';
 
@@ -49,11 +50,7 @@ export async function findChatPreviews(
       JOIN "Profile" prof ON prof."userId" = m."senderUserId"
       WHERE m."activityId" = a.id
         AND m."deletedAt" IS NULL
-        AND NOT EXISTS (
-          SELECT 1 FROM "UserBlock" b
-          WHERE (b."blockerId" = ${userId} AND b."blockedId" = m."senderUserId")
-             OR (b."blockerId" = m."senderUserId" AND b."blockedId" = ${userId})
-        )
+        AND ${notBlockedSql(userId, Prisma.raw('m."senderUserId"'))}
       ORDER BY m."createdAt" DESC, m.id DESC
       LIMIT 1
     ) last ON true
@@ -64,18 +61,10 @@ export async function findChatPreviews(
         AND m."deletedAt" IS NULL
         AND m."senderUserId" != ${userId}
         AND (me."lastReadAt" IS NULL OR m."createdAt" > me."lastReadAt")
-        AND NOT EXISTS (
-          SELECT 1 FROM "UserBlock" b
-          WHERE (b."blockerId" = ${userId} AND b."blockedId" = m."senderUserId")
-             OR (b."blockerId" = m."senderUserId" AND b."blockedId" = ${userId})
-        )
+        AND ${notBlockedSql(userId, Prisma.raw('m."senderUserId"'))}
     ) unread ON true
     WHERE a."deletedAt" IS NULL
-      AND NOT EXISTS (
-        SELECT 1 FROM "UserBlock" b
-        WHERE (b."blockerId" = ${userId} AND b."blockedId" = host."userId")
-           OR (b."blockerId" = host."userId" AND b."blockedId" = ${userId})
-      )
+      AND ${notBlockedSql(userId, Prisma.raw('host."userId"'))}
     ORDER BY COALESCE(last."createdAt", a."createdAt") DESC
   `;
 

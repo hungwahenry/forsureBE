@@ -1,5 +1,6 @@
 import { Prisma } from '@prisma/client';
 import type { TimestampIdCursor } from '../../common/utils/cursor';
+import { notBlockedSql } from '../../common/utils/user-block';
 import type { PrismaService } from '../../prisma/prisma.service';
 import type { ExplorePostRow } from './explore.serializer';
 
@@ -39,11 +40,7 @@ export async function findPublicPostIds(
         ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326)::geography,
         ${radiusMeters}
       )
-      AND NOT EXISTS (
-        SELECT 1 FROM "UserBlock" b
-        WHERE (b."blockerId" = ${viewerUserId} AND b."blockedId" = p."authorId")
-           OR (b."blockerId" = p."authorId" AND b."blockedId" = ${viewerUserId})
-      )
+      AND ${notBlockedSql(viewerUserId, Prisma.raw('p."authorId"'))}
       ${
         cursor
           ? Prisma.sql`AND (p."createdAt", p.id) < (to_timestamp(${cursor.ts} / 1000.0), ${cursor.id})`

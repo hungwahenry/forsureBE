@@ -1,5 +1,6 @@
 import { type ActivityGenderPreference, Prisma } from '@prisma/client';
 import { businessPubliclyActiveSql } from '../../common/utils/business-state';
+import { notBlockedSql } from '../../common/utils/user-block';
 import type { PrismaService } from '../../prisma/prisma.service';
 import type { FeedCursor } from './feed.cursor';
 import type { FeedRow } from './feed.interface';
@@ -84,11 +85,7 @@ export async function findFeedPage(
         SELECT 1 FROM "ActivityParticipant" vp
         WHERE vp."activityId" = a.id AND vp."userId" = ${viewerUserId}
       )
-      AND NOT EXISTS (
-        SELECT 1 FROM "UserBlock" b
-        WHERE (b."blockerId" = ${viewerUserId} AND b."blockedId" = host."userId")
-           OR (b."blockerId" = host."userId" AND b."blockedId" = ${viewerUserId})
-      )
+      AND ${notBlockedSql(viewerUserId, Prisma.raw('host."userId"'))}
       AND a."participantCount" < a.capacity
       ${
         cursor
@@ -180,11 +177,7 @@ export async function findActiveBoosts(
         SELECT 1 FROM "ActivityParticipant" vp
         WHERE vp."activityId" = a.id AND vp."userId" = ${viewerUserId}
       )
-      AND NOT EXISTS (
-        SELECT 1 FROM "UserBlock" b
-        WHERE (b."blockerId" = ${viewerUserId} AND b."blockedId" = host."userId")
-           OR (b."blockerId" = host."userId" AND b."blockedId" = ${viewerUserId})
-      )
+      AND ${notBlockedSql(viewerUserId, Prisma.raw('host."userId"'))}
     ORDER BY "distanceKm" ASC, a.id ASC
     LIMIT ${limit}
   `;
