@@ -1,10 +1,10 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { AppConfigService } from '../../../common/app-config/app-config.service';
 import { ErrorCode } from '../../../common/constants/error-codes';
 import { STEP_UP_ACTION } from '../../../common/constants/step-up-actions';
 import { AppException } from '../../../common/exceptions/app.exception';
 import { createId } from '../../../common/utils/id';
-import { OTP_RESEND_COOLDOWN_MS, OTP_TTL_MIN } from '../../../common/utils/otp';
 import {
   buildOtpChallenge,
   handleOtpVerification,
@@ -35,6 +35,7 @@ export class EmailChangeService {
     @Inject(STORAGE_PROVIDER_TOKEN)
     private readonly storage: StorageProvider,
     private readonly stepUp: StepUpService,
+    private readonly appConfig: AppConfigService,
   ) {
     this.isProd = config.get('NODE_ENV', { infer: true }) === 'production';
   }
@@ -73,7 +74,11 @@ export class EmailChangeService {
       });
     }
 
-    const cutoff = new Date(Date.now() - OTP_RESEND_COOLDOWN_MS);
+    const [cooldownSeconds, ttlMinutes] = await Promise.all([
+      this.appConfig.getInt('auth.otp_resend_cooldown_seconds'),
+      this.appConfig.getInt('auth.otp_ttl_minutes'),
+    ]);
+    const cutoff = new Date(Date.now() - cooldownSeconds * 1000);
     const recent = await this.prisma.emailChangeChallenge.findFirst({
       where: {
         userId,
@@ -84,10 +89,11 @@ export class EmailChangeService {
       orderBy: { createdAt: 'desc' },
     });
     if (recent) {
-      return { challengeId: recent.id, ttlMinutes: OTP_TTL_MIN };
+      return { challengeId: recent.id, ttlMinutes };
     }
 
     const { challenge, code } = await buildOtpChallenge({
+      ttlMinutes,
       invalidatePrior: () =>
         this.prisma.emailChangeChallenge
           .updateMany({
@@ -115,7 +121,7 @@ export class EmailChangeService {
       await this.email.send({
         to: newEmail,
         template: 'otp',
-        data: { code, ttlMinutes: OTP_TTL_MIN },
+        data: { code, ttlMinutes },
       });
     } catch (err: unknown) {
       if (this.isProd) throw err;
@@ -125,7 +131,7 @@ export class EmailChangeService {
       );
     }
 
-    return { challengeId: challenge.id, ttlMinutes: OTP_TTL_MIN };
+    return { challengeId: challenge.id, ttlMinutes };
   }
 
   async confirm(
@@ -145,6 +151,7 @@ export class EmailChangeService {
     await handleOtpVerification({
       challenge,
       candidate: code,
+      maxAttempts: await this.appConfig.getInt('auth.otp_max_attempts'),
       mismatchMessage: 'Invalid confirmation code.',
       incrementAttempts: () =>
         this.prisma.emailChangeChallenge

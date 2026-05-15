@@ -6,6 +6,7 @@ import {
   type Activity,
   type Prisma,
 } from '@prisma/client';
+import { AppConfigService } from '../../../common/app-config/app-config.service';
 import { ErrorCode } from '../../../common/constants/error-codes';
 import { AppException } from '../../../common/exceptions/app.exception';
 import { PrismaService } from '../../../prisma/prisma.service';
@@ -21,8 +22,6 @@ import {
 } from '../activity.serializer';
 import { EditActivityDto } from './dto/edit-activity.dto';
 
-const MIN_LEAD_TIME_MS = 30 * 60_000;
-
 @Injectable()
 export class ManageActivityService {
   constructor(
@@ -32,6 +31,7 @@ export class ManageActivityService {
     private readonly messages: MessagesService,
     private readonly notifications: ActivityLifecycleNotifications,
     private readonly venueBilling: VenueBillingService,
+    private readonly appConfig: AppConfigService,
   ) {}
 
   private async requireHost(
@@ -87,9 +87,12 @@ export class ManageActivityService {
     if (dto.title !== undefined) data.title = dto.title;
 
     if (dto.startsAt !== undefined) {
-      if (dto.startsAt.getTime() < Date.now() + MIN_LEAD_TIME_MS) {
+      const minLeadMinutes = await this.appConfig.getInt(
+        'activity.min_lead_time_minutes',
+      );
+      if (dto.startsAt.getTime() < Date.now() + minLeadMinutes * 60_000) {
         throw new AppException(ErrorCode.VALIDATION_FAILED, {
-          message: 'New start time must be at least 30 minutes from now.',
+          message: `New start time must be at least ${minLeadMinutes} minutes from now.`,
         });
       }
       data.startsAt = dto.startsAt;

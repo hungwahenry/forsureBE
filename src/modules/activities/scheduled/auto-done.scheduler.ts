@@ -1,13 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { ActivityRole, ActivityStatus } from '@prisma/client';
+import { AppConfigService } from '../../../common/app-config/app-config.service';
 import { CronRunLogger } from '../../../common/cron/cron-run-logger.service';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { RealtimeService } from '../../../realtime/realtime.service';
 import { ChatEvents, chatRoom } from '../../chats/chats.events';
 import { MessagesService } from '../../chats/messages/messages.service';
 
-const DONE_AFTER_MS = 24 * 60 * 60 * 1000;
 const JOB_NAME = 'AutoDoneScheduler.maturedToDone';
 
 @Injectable()
@@ -19,12 +19,16 @@ export class AutoDoneScheduler {
     private readonly realtime: RealtimeService,
     private readonly messages: MessagesService,
     private readonly runLogger: CronRunLogger,
+    private readonly appConfig: AppConfigService,
   ) {}
 
   @Cron(CronExpression.EVERY_10_MINUTES)
   async maturedToDone(): Promise<void> {
     await this.runLogger.wrap(JOB_NAME, async () => {
-      const cutoff = new Date(Date.now() - DONE_AFTER_MS);
+      const doneAfterHours = await this.appConfig.getInt(
+        'activity.auto_done_after_hours',
+      );
+      const cutoff = new Date(Date.now() - doneAfterHours * 3_600_000);
       const matured = await this.prisma.activity.findMany({
         where: {
           status: { in: [ActivityStatus.OPEN, ActivityStatus.FULL] },

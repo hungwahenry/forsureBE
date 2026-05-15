@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ActivityRole, ActivityStatus } from '@prisma/client';
+import { AppConfigService } from '../../../common/app-config/app-config.service';
 import { ErrorCode } from '../../../common/constants/error-codes';
 import { AppException } from '../../../common/exceptions/app.exception';
 import { FeatureFlagService } from '../../../common/feature-flags/feature-flag.service';
@@ -10,9 +11,6 @@ import { MembershipService } from '../../chats/membership/membership.service';
 import { ActivityLifecycleNotifications } from '../../notifications/producers/activity-lifecycle.producer';
 import { isGenderAllowedForActivity } from '../gender-policy';
 
-const MIN_LEAD_TIME_MS = 30 * 60_000; // 30 minutes — matches create rule
-const MAX_CONCURRENT_ACTIVITIES = 10;
-
 @Injectable()
 export class JoinActivityService {
   constructor(
@@ -21,6 +19,7 @@ export class JoinActivityService {
     private readonly notifications: ActivityLifecycleNotifications,
     private readonly blocks: BlocksService,
     private readonly featureFlags: FeatureFlagService,
+    private readonly appConfig: AppConfigService,
   ) {}
 
   async join(viewerUserId: string, activityId: string): Promise<void> {
@@ -45,7 +44,10 @@ export class JoinActivityService {
           message: 'This activity is not open.',
         });
       }
-      if (activity.startsAt.getTime() < Date.now() + MIN_LEAD_TIME_MS) {
+      const minLeadMinutes = await this.appConfig.getInt(
+        'activity.min_lead_time_minutes',
+      );
+      if (activity.startsAt.getTime() < Date.now() + minLeadMinutes * 60_000) {
         throw new AppException(ErrorCode.RESOURCE_CONFLICT, {
           message: 'This activity has already started or starts too soon.',
         });
@@ -91,9 +93,12 @@ export class JoinActivityService {
           activity: { status: ActivityStatus.OPEN },
         },
       });
-      if (activeCount >= MAX_CONCURRENT_ACTIVITIES) {
+      const maxConcurrent = await this.appConfig.getInt(
+        'activity.max_concurrent_per_user',
+      );
+      if (activeCount >= maxConcurrent) {
         throw new AppException(ErrorCode.RESOURCE_CONFLICT, {
-          message: `You can't join more than ${MAX_CONCURRENT_ACTIVITIES} activities at a time.`,
+          message: `You can't join more than ${maxConcurrent} activities at a time.`,
         });
       }
 

@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { AppConfigService } from '../../common/app-config/app-config.service';
 import { ErrorCode } from '../../common/constants/error-codes';
 import type { CursorPage } from '../../common/dto/pagination.dto';
 import { FeatureFlagService } from '../../common/feature-flags/feature-flag.service';
@@ -13,9 +14,6 @@ import type { FeedRow } from './feed.interface';
 import { findActiveBoosts, findFeedPage } from './feed.queries';
 import { serializeFeedItem, type FeedItem } from './feed.serializer';
 
-const ORGANIC_PER_SPONSORED = 5;
-const BOOSTS_PER_PAGE = 3;
-
 @Injectable()
 export class FeedService {
   constructor(
@@ -23,6 +21,7 @@ export class FeedService {
     @Inject(STORAGE_PROVIDER_TOKEN)
     private readonly storage: StorageProvider,
     private readonly featureFlags: FeatureFlagService,
+    private readonly appConfig: AppConfigService,
   ) {}
 
   async getFeed(
@@ -42,10 +41,12 @@ export class FeedService {
     const visibleGenderPrefs = activityVisibleGenderPreferences(profile.gender);
     const radiusMeters = query.radiusKm * 1000;
     const isFirstPage = !cursor;
-    const boostsEnabled = await this.featureFlags.isEnabled(
-      'business_boosts_enabled',
-      true,
-    );
+    const [boostsEnabled, boostsPerPage, organicPerSponsored] =
+      await Promise.all([
+        this.featureFlags.isEnabled('business_boosts_enabled', true),
+        this.appConfig.getInt('feed.boosts_per_page'),
+        this.appConfig.getInt('feed.organic_per_sponsored'),
+      ]);
 
     const [rows, boostRows] = await Promise.all([
       findFeedPage(this.prisma, {
@@ -64,7 +65,7 @@ export class FeedService {
             lng: query.lng,
             viewerRadiusMeters: radiusMeters,
             visibleGenderPrefs,
-            limit: BOOSTS_PER_PAGE,
+            limit: boostsPerPage,
           })
         : Promise.resolve<FeedRow[]>([]),
     ]);
@@ -93,7 +94,11 @@ export class FeedService {
     const remainingBoosts = boostRows.filter((b) =>
       boostByActivityId.has(b.id),
     );
-    const merged = interleaveWithBoosts(annotatedOrganic, remainingBoosts);
+    const merged = interleaveWithBoosts(
+      annotatedOrganic,
+      remainingBoosts,
+      organicPerSponsored,
+    );
 
     return {
       items: merged.map((r) => serializeFeedItem(this.storage, r)),
@@ -105,6 +110,7 @@ export class FeedService {
 function interleaveWithBoosts(
   organic: FeedRow[],
   boosts: FeedRow[],
+  organicPerSponsored: number,
 ): FeedRow[] {
   if (boosts.length === 0) return organic;
   const result: FeedRow[] = [];
@@ -113,7 +119,7 @@ function interleaveWithBoosts(
   while (oIdx < organic.length || bIdx < boosts.length) {
     const isSponsoredSlot =
       result.length > 0 &&
-      result.length % (ORGANIC_PER_SPONSORED + 1) === ORGANIC_PER_SPONSORED;
+      result.length % (organicPerSponsored + 1) === organicPerSponsored;
     if (isSponsoredSlot && bIdx < boosts.length) {
       result.push(boosts[bIdx++]);
     } else if (oIdx < organic.length) {

@@ -1,12 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
+import { AppConfigService } from '../../../common/app-config/app-config.service';
 import { CronRunLogger } from '../../../common/cron/cron-run-logger.service';
 import { FeatureFlagService } from '../../../common/feature-flags/feature-flag.service';
 import { PrismaService } from '../../../prisma/prisma.service';
 
 const JOB_NAME = 'BusinessAutoPauseScheduler.checkVenueFlags';
-const DISTINCT_REPORTER_THRESHOLD = 3;
-const WINDOW_DAYS = 30;
 
 interface PausedRow {
   businessId: string;
@@ -21,6 +20,7 @@ export class BusinessAutoPauseScheduler {
     private readonly prisma: PrismaService,
     private readonly runLogger: CronRunLogger,
     private readonly featureFlags: FeatureFlagService,
+    private readonly appConfig: AppConfigService,
   ) {}
 
   @Cron('0 * * * *', { timeZone: 'UTC' })
@@ -35,7 +35,11 @@ export class BusinessAutoPauseScheduler {
     );
     if (!enabled) return { paused: 0, skipped: true };
 
-    const cutoff = new Date(Date.now() - WINDOW_DAYS * 86_400_000);
+    const [windowDays, reporterThreshold] = await Promise.all([
+      this.appConfig.getInt('venue.auto_pause_window_days'),
+      this.appConfig.getInt('venue.auto_pause_reporter_threshold'),
+    ]);
+    const cutoff = new Date(Date.now() - windowDays * 86_400_000);
 
     const candidates = await this.prisma.$queryRaw<PausedRow[]>`
       SELECT
@@ -48,7 +52,7 @@ export class BusinessAutoPauseScheduler {
         AND r."createdAt" >= ${cutoff}
         AND b."autoPausedAt" IS NULL
       GROUP BY v."businessId"
-      HAVING COUNT(DISTINCT r."reporterId") >= ${DISTINCT_REPORTER_THRESHOLD}
+      HAVING COUNT(DISTINCT r."reporterId") >= ${reporterThreshold}
     `;
 
     if (candidates.length === 0) {
@@ -64,7 +68,7 @@ export class BusinessAutoPauseScheduler {
 
     this.logger.warn(
       { businessIds: ids, count: result.count },
-      `Auto-paused ${result.count} business(es) hitting ${DISTINCT_REPORTER_THRESHOLD}+ distinct venue reports in last ${WINDOW_DAYS}d`,
+      `Auto-paused ${result.count} business(es) hitting ${reporterThreshold}+ distinct venue reports in last ${windowDays}d`,
     );
     return { paused: result.count };
   }

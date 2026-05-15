@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { AppConfigService } from '../../common/app-config/app-config.service';
 import { ErrorCode } from '../../common/constants/error-codes';
 import {
   isStepUpAction,
@@ -8,7 +9,6 @@ import {
 } from '../../common/constants/step-up-actions';
 import { AppException } from '../../common/exceptions/app.exception';
 import { createId } from '../../common/utils/id';
-import { OTP_RESEND_COOLDOWN_MS, OTP_TTL_MIN } from '../../common/utils/otp';
 import {
   buildOtpChallenge,
   handleOtpVerification,
@@ -26,6 +26,7 @@ export class StepUpService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly email: EmailService,
+    private readonly appConfig: AppConfigService,
     config: ConfigService<Env, true>,
   ) {
     this.isProd = config.get('NODE_ENV', { infer: true }) === 'production';
@@ -39,7 +40,11 @@ export class StepUpService {
     }
     const action: StepUpAction = rawAction;
 
-    const cutoff = new Date(Date.now() - OTP_RESEND_COOLDOWN_MS);
+    const [cooldownSeconds, ttlMinutes] = await Promise.all([
+      this.appConfig.getInt('auth.otp_resend_cooldown_seconds'),
+      this.appConfig.getInt('auth.otp_ttl_minutes'),
+    ]);
+    const cutoff = new Date(Date.now() - cooldownSeconds * 1000);
     const recent = await this.prisma.stepUpChallenge.findFirst({
       where: {
         userId,
@@ -50,7 +55,7 @@ export class StepUpService {
       orderBy: { createdAt: 'desc' },
     });
     if (recent) {
-      return { challengeId: recent.id, ttlMinutes: OTP_TTL_MIN };
+      return { challengeId: recent.id, ttlMinutes };
     }
 
     const user = await this.prisma.user.findUnique({
@@ -62,6 +67,7 @@ export class StepUpService {
     }
 
     const { challenge, code } = await buildOtpChallenge({
+      ttlMinutes,
       invalidatePrior: () =>
         this.prisma.stepUpChallenge
           .updateMany({
@@ -91,7 +97,7 @@ export class StepUpService {
         template: 'step-up',
         data: {
           code,
-          ttlMinutes: OTP_TTL_MIN,
+          ttlMinutes,
           actionLabel: STEP_UP_ACTION_LABEL[action],
         },
       });
@@ -100,14 +106,9 @@ export class StepUpService {
       this.logger.error({ err }, 'Step-up email failed (continuing in dev)');
     }
 
-    return { challengeId: challenge.id, ttlMinutes: OTP_TTL_MIN };
+    return { challengeId: challenge.id, ttlMinutes };
   }
 
-  /**
-   * Verify a code against the stored challenge and mark it consumed on
-   * success. Throws on any mismatch (wrong code, expired, wrong action,
-   * wrong user, too many attempts).
-   */
   async verifyAndConsume(args: {
     userId: string;
     challengeId: string;
@@ -133,6 +134,7 @@ export class StepUpService {
     await handleOtpVerification({
       challenge,
       candidate: code,
+      maxAttempts: await this.appConfig.getInt('auth.otp_max_attempts'),
       mismatchMessage: 'Invalid confirmation code.',
       incrementAttempts: () =>
         this.prisma.stepUpChallenge

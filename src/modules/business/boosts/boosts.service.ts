@@ -69,10 +69,16 @@ export class BoostsService {
       dto.activityId,
     );
 
+    const [durationHours, freePerCycle, overageCents, cycleWindowDays] =
+      await Promise.all([
+        this.pricing.durationHours(),
+        this.pricing.freePerCycle(),
+        this.pricing.overageCents(),
+        this.pricing.cycleWindowDays(),
+      ]);
+
     const now = new Date();
-    const naturalEnd = new Date(
-      now.getTime() + this.pricing.durationHours * 3_600_000,
-    );
+    const naturalEnd = new Date(now.getTime() + durationHours * 3_600_000);
     const endsAt =
       activity.startsAt.getTime() < naturalEnd.getTime()
         ? activity.startsAt
@@ -88,10 +94,12 @@ export class BoostsService {
         const used = await tx.activityBoost.count({
           where: {
             businessId,
-            createdAt: { gte: new Date(Date.now() - 30 * 86_400_000) },
+            createdAt: {
+              gte: new Date(Date.now() - cycleWindowDays * 86_400_000),
+            },
           },
         });
-        const isOverage = used >= this.pricing.freePerCycle;
+        const isOverage = used >= freePerCycle;
 
         if (isOverage) {
           stripeInvoiceItemId = await this.attachOverageInvoiceItem(
@@ -109,7 +117,7 @@ export class BoostsService {
             radiusM: dto.radiusM,
             startsAt: now,
             endsAt,
-            chargedCents: isOverage ? this.pricing.overageCents : 0,
+            chargedCents: isOverage ? overageCents : 0,
             isOverage,
             stripeInvoiceItemId,
           },
@@ -183,7 +191,7 @@ export class BoostsService {
     return this.stripe.createSubscriptionInvoiceItem({
       customerId: business.stripeCustomerId,
       subscriptionId: business.stripeSubscriptionId,
-      amountCents: this.pricing.overageCents,
+      amountCents: await this.pricing.overageCents(),
       description: `Activity boost: ${activityTitle}`,
       metadata: { businessId, kind: 'boost_overage', boostId },
       idempotencyKey: `boost-overage:${boostId}`,

@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import type { Env } from '../../../config/env.schema';
+import { AppConfigService } from '../../../common/app-config/app-config.service';
 import { PrismaService } from '../../../prisma/prisma.service';
 
 export interface BoostPreviewDto {
@@ -21,38 +20,56 @@ export interface BoostCycleSummaryDto {
   cycleWindowDays: number;
 }
 
-const CYCLE_WINDOW_DAYS = 30;
-const CYCLE_WINDOW_MS = CYCLE_WINDOW_DAYS * 86_400_000;
+const DAY_MS = 86_400_000;
 
 @Injectable()
 export class BoostsPricingService {
-  readonly freePerCycle: number;
-  readonly overageCents: number;
-  readonly durationHours: number;
-
   constructor(
     private readonly prisma: PrismaService,
-    config: ConfigService<Env, true>,
-  ) {
-    this.freePerCycle = config.get('BOOST_FREE_PER_CYCLE', { infer: true });
-    this.overageCents = config.get('BOOST_OVERAGE_CENTS', { infer: true });
-    this.durationHours = config.get('BOOST_DURATION_HOURS', { infer: true });
+    private readonly appConfig: AppConfigService,
+  ) {}
+
+  freePerCycle(): Promise<number> {
+    return this.appConfig.getInt('boost.free_per_cycle');
+  }
+
+  overageCents(): Promise<number> {
+    return this.appConfig.getInt('boost.overage_cents');
+  }
+
+  durationHours(): Promise<number> {
+    return this.appConfig.getInt('boost.duration_hours');
+  }
+
+  cycleWindowDays(): Promise<number> {
+    return this.appConfig.getInt('boost.cycle_window_days');
   }
 
   async preview(businessId: string): Promise<BoostPreviewDto> {
-    const used = await this.countCycleBoosts(businessId);
-    const willCharge = used >= this.freePerCycle;
+    const [used, freeBoostsCap, overageCents, durationHours] =
+      await Promise.all([
+        this.countCycleBoosts(businessId),
+        this.freePerCycle(),
+        this.overageCents(),
+        this.durationHours(),
+      ]);
+    const willCharge = used >= freeBoostsCap;
     return {
       willCharge,
-      chargeCents: willCharge ? this.overageCents : 0,
+      chargeCents: willCharge ? overageCents : 0,
       freeBoostsUsed: used,
-      freeBoostsCap: this.freePerCycle,
-      durationHours: this.durationHours,
+      freeBoostsCap,
+      durationHours,
     };
   }
 
   async summarizeCycle(businessId: string): Promise<BoostCycleSummaryDto> {
-    const cutoff = new Date(Date.now() - CYCLE_WINDOW_MS);
+    const [freeBoostsCap, overageCents, cycleWindowDays] = await Promise.all([
+      this.freePerCycle(),
+      this.overageCents(),
+      this.cycleWindowDays(),
+    ]);
+    const cutoff = new Date(Date.now() - cycleWindowDays * DAY_MS);
     const cycleRows = await this.prisma.activityBoost.findMany({
       where: { businessId, createdAt: { gte: cutoff } },
       select: { chargedCents: true, isOverage: true },
@@ -67,17 +84,18 @@ export class BoostsPricingService {
     });
     return {
       freeBoostsUsed: cycleRows.filter((r) => !r.isOverage).length,
-      freeBoostsCap: this.freePerCycle,
+      freeBoostsCap,
       cycleSpendCents: cycleRows.reduce((sum, r) => sum + r.chargedCents, 0),
       overageCount: cycleRows.filter((r) => r.isOverage).length,
       activeCount,
-      overageCentsPerBoost: this.overageCents,
-      cycleWindowDays: CYCLE_WINDOW_DAYS,
+      overageCentsPerBoost: overageCents,
+      cycleWindowDays,
     };
   }
 
   async countCycleBoosts(businessId: string): Promise<number> {
-    const cutoff = new Date(Date.now() - CYCLE_WINDOW_MS);
+    const cycleWindowDays = await this.cycleWindowDays();
+    const cutoff = new Date(Date.now() - cycleWindowDays * DAY_MS);
     return this.prisma.activityBoost.count({
       where: { businessId, createdAt: { gte: cutoff } },
     });

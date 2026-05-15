@@ -1,7 +1,7 @@
 import { ErrorCode } from '../constants/error-codes';
 import { AppException } from '../exceptions/app.exception';
 import { generateOtp, sha256 } from './crypto';
-import { OTP_TTL_MIN, verifyOtp } from './otp';
+import { verifyOtp } from './otp';
 
 interface ChallengeRow {
   id: string;
@@ -11,6 +11,7 @@ interface ChallengeRow {
 }
 
 export async function buildOtpChallenge<C extends { id: string }>(args: {
+  ttlMinutes: number;
   invalidatePrior: () => Promise<void>;
   create: (codeHash: string, expiresAt: Date) => Promise<C>;
 }): Promise<{ challenge: C; code: string }> {
@@ -18,7 +19,7 @@ export async function buildOtpChallenge<C extends { id: string }>(args: {
   const code = generateOtp();
   const challenge = await args.create(
     sha256(code),
-    new Date(Date.now() + OTP_TTL_MIN * 60_000),
+    new Date(Date.now() + args.ttlMinutes * 60_000),
   );
   return { challenge, code };
 }
@@ -26,6 +27,7 @@ export async function buildOtpChallenge<C extends { id: string }>(args: {
 export async function handleOtpVerification(args: {
   challenge: ChallengeRow;
   candidate: string;
+  maxAttempts: number;
   incrementAttempts: () => Promise<void>;
   markConsumed: () => Promise<void>;
   mismatchMessage?: string;
@@ -35,6 +37,7 @@ export async function handleOtpVerification(args: {
     attempts: args.challenge.attempts,
     expiresAt: args.challenge.expiresAt,
     candidate: args.candidate,
+    maxAttempts: args.maxAttempts,
   });
   if (result.ok) return;
 

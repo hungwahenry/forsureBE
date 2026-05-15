@@ -30,19 +30,15 @@ export const envSchema = z
         .filter(Boolean),
     ),
 
-    // --- Email (Resend) ---
     RESEND_API_KEY: z.string().min(1),
     RESEND_FROM_EMAIL: z.email(),
     RESEND_FROM_NAME: z.string().default('forsure'),
 
-    // --- Storage ---
     STORAGE_DRIVER: z.enum(['s3', 'local']).default('local'),
 
-    // Local driver
     LOCAL_STORAGE_DIR: z.string().default('./uploads'),
     LOCAL_PUBLIC_URL: z.url().optional(),
 
-    // S3-compatible driver (R2, AWS, B2, Spaces, MinIO, ...)
     S3_ENDPOINT: z.url().optional(),
     S3_REGION: z.string().optional(),
     S3_BUCKET: z.string().optional(),
@@ -50,27 +46,16 @@ export const envSchema = z
     S3_SECRET_ACCESS_KEY: z.string().optional(),
     S3_PUBLIC_URL: z.url().optional(),
 
-    // Places (search/autocomplete via Google Places New) ---
     GOOGLE_PLACES_API_KEY: z.string().min(1),
 
-    // --- Push notifications (Expo) ---
-    // Optional: enables higher rate limits + receipt fetching from Expo's push service.
     EXPO_ACCESS_TOKEN: z.string().optional(),
 
-    // --- Error reporting (Sentry) ---
-    // Optional: when set, instrument.ts initializes Sentry; otherwise no-op.
     SENTRY_DSN: z.url().optional(),
 
-    // --- Billing (Stripe) ---
     STRIPE_SECRET_KEY: z.string().optional(),
     STRIPE_WEBHOOK_SECRET: z.string().optional(),
     STRIPE_PRICE_ID_VERIFIED_BUSINESS: z.string().optional(),
     STRIPE_RETURN_URL_BASE: z.url().optional(),
-
-    // --- Activity boost pricing ---
-    BOOST_FREE_PER_CYCLE: z.coerce.number().int().nonnegative().default(4),
-    BOOST_OVERAGE_CENTS: z.coerce.number().int().nonnegative().default(1900),
-    BOOST_DURATION_HOURS: z.coerce.number().int().positive().default(72),
   })
   .superRefine((env, ctx) => {
     if (env.STORAGE_DRIVER === 's3') {

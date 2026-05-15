@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { AppConfigService } from '../../../common/app-config/app-config.service';
 import { PrismaService } from '../../../prisma/prisma.service';
 import type {
   AnalyticsWindow,
@@ -14,8 +15,6 @@ import type {
 } from './analytics.serializer';
 
 const DAY_MS = 86_400_000;
-const DEFAULT_WINDOW_DAYS = 30;
-const DORMANT_THRESHOLD_DAYS = 30;
 
 interface DailyRow {
   day: Date;
@@ -80,12 +79,16 @@ function toYmd(d: Date): string {
   return d.toISOString().slice(0, 10);
 }
 
-function resolveWindow(from?: string, to?: string): AnalyticsWindow {
+function resolveWindow(
+  from: string | undefined,
+  to: string | undefined,
+  defaultWindowDays: number,
+): AnalyticsWindow {
   const today = startOfUtcDay(new Date());
   const toDate = to ? startOfUtcDay(new Date(to)) : today;
   const fromDate = from
     ? startOfUtcDay(new Date(from))
-    : new Date(toDate.getTime() - (DEFAULT_WINDOW_DAYS - 1) * DAY_MS);
+    : new Date(toDate.getTime() - (defaultWindowDays - 1) * DAY_MS);
   const days = Math.round((toDate.getTime() - fromDate.getTime()) / DAY_MS) + 1;
   return { from: toYmd(fromDate), to: toYmd(toDate), days };
 }
@@ -174,14 +177,27 @@ function boostState(
 
 @Injectable()
 export class BusinessAnalyticsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly appConfig: AppConfigService,
+  ) {}
+
+  private async resolveWindow(
+    from?: string,
+    to?: string,
+  ): Promise<AnalyticsWindow> {
+    const defaultWindowDays = await this.appConfig.getInt(
+      'analytics.business_window_days',
+    );
+    return resolveWindow(from, to, defaultWindowDays);
+  }
 
   async getPerformance(
     businessId: string,
     from?: string,
     to?: string,
   ): Promise<PerformanceAnalyticsDto> {
-    const window = resolveWindow(from, to);
+    const window = await this.resolveWindow(from, to);
     const { start, endExclusive, priorStart } = windowBounds(window);
 
     const [currTotalsRows, priorTotalsRows, dailyRows, hourlyRows, dowRows] =
@@ -277,11 +293,12 @@ export class BusinessAnalyticsService {
     from?: string,
     to?: string,
   ): Promise<VenuesAnalyticsDto> {
-    const window = resolveWindow(from, to);
+    const window = await this.resolveWindow(from, to);
     const { start, endExclusive } = windowBounds(window);
-    const dormantCutoff = new Date(
-      Date.now() - DORMANT_THRESHOLD_DAYS * DAY_MS,
+    const dormantThresholdDays = await this.appConfig.getInt(
+      'analytics.dormant_threshold_days',
     );
+    const dormantCutoff = new Date(Date.now() - dormantThresholdDays * DAY_MS);
 
     const rows = await this.prisma.$queryRaw<VenueRow[]>`
       SELECT
@@ -344,7 +361,7 @@ export class BusinessAnalyticsService {
     from?: string,
     to?: string,
   ): Promise<BoostsAnalyticsDto> {
-    const window = resolveWindow(from, to);
+    const window = await this.resolveWindow(from, to);
     const { start, endExclusive } = windowBounds(window);
     const now = new Date();
 
@@ -436,7 +453,7 @@ export class BusinessAnalyticsService {
     from?: string,
     to?: string,
   ): Promise<SpendAnalyticsDto> {
-    const window = resolveWindow(from, to);
+    const window = await this.resolveWindow(from, to);
     const { start, endExclusive, priorStart } = windowBounds(window);
     const granularity = pickGranularity(window.days);
     const truncUnit = granularity === 'week' ? 'week' : granularity;

@@ -5,6 +5,7 @@ import {
   PostVisibility,
   Prisma,
 } from '@prisma/client';
+import { AppConfigService } from '../../../common/app-config/app-config.service';
 import { ErrorCode } from '../../../common/constants/error-codes';
 import { AppException } from '../../../common/exceptions/app.exception';
 import { FeatureFlagService } from '../../../common/feature-flags/feature-flag.service';
@@ -25,8 +26,6 @@ import {
   type ActivityPostDto,
 } from './posts.serializer';
 
-const POST_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
-
 @Injectable()
 export class ActivityPostsService {
   constructor(
@@ -36,6 +35,7 @@ export class ActivityPostsService {
     private readonly membership: MembershipService,
     private readonly notifications: MemoryNotifications,
     private readonly featureFlags: FeatureFlagService,
+    private readonly appConfig: AppConfigService,
   ) {}
 
   async listPosts(
@@ -90,7 +90,7 @@ export class ActivityPostsService {
   ): Promise<ActivityPostDto> {
     await this.membership.requireChatMembership(userId, activityId);
     const activity = await this.requireActivity(activityId);
-    this.requireWithinPostingWindow(activity);
+    await this.requireWithinPostingWindow(activity);
 
     const desiredVisibility = await this.resolveVisibility(
       activity,
@@ -264,16 +264,17 @@ export class ActivityPostsService {
     return activity;
   }
 
-  private requireWithinPostingWindow(activity: {
+  private async requireWithinPostingWindow(activity: {
     status: ActivityStatus;
     startsAt: Date;
-  }) {
+  }): Promise<void> {
     if (activity.status !== ActivityStatus.DONE) {
       throw new AppException(ErrorCode.RESOURCE_CONFLICT, {
         message: 'You can post memories once the activity has ended.',
       });
     }
-    const cutoff = activity.startsAt.getTime() + POST_WINDOW_MS;
+    const windowDays = await this.appConfig.getInt('post.window_days');
+    const cutoff = activity.startsAt.getTime() + windowDays * 86_400_000;
     if (Date.now() > cutoff) {
       throw new AppException(ErrorCode.RESOURCE_CONFLICT, {
         message: "It's too late to post memories from this activity.",

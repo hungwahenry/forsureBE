@@ -6,7 +6,7 @@ import { ErrorCode } from '../../common/constants/error-codes';
 import { AppException } from '../../common/exceptions/app.exception';
 import { FeatureFlagService } from '../../common/feature-flags/feature-flag.service';
 import { createId } from '../../common/utils/id';
-import { OTP_RESEND_COOLDOWN_MS, OTP_TTL_MIN } from '../../common/utils/otp';
+import { AppConfigService } from '../../common/app-config/app-config.service';
 import {
   buildOtpChallenge,
   handleOtpVerification,
@@ -51,6 +51,7 @@ export class AuthService {
     @Inject(STORAGE_PROVIDER_TOKEN)
     private readonly storage: StorageProvider,
     private readonly featureFlags: FeatureFlagService,
+    private readonly appConfig: AppConfigService,
     config: ConfigService<Env, true>,
   ) {
     this.accessTtlMs = parseDurationToMs(
@@ -63,7 +64,11 @@ export class AuthService {
   }
 
   async requestCode(email: string, ipAddress?: string): Promise<void> {
-    const cutoff = new Date(Date.now() - OTP_RESEND_COOLDOWN_MS);
+    const [cooldownSeconds, ttlMinutes] = await Promise.all([
+      this.appConfig.getInt('auth.otp_resend_cooldown_seconds'),
+      this.appConfig.getInt('auth.otp_ttl_minutes'),
+    ]);
+    const cutoff = new Date(Date.now() - cooldownSeconds * 1000);
     const recent = await this.prisma.emailVerification.findFirst({
       where: { email, consumedAt: null, createdAt: { gte: cutoff } },
     });
@@ -73,6 +78,7 @@ export class AuthService {
     }
 
     const { code } = await buildOtpChallenge({
+      ttlMinutes,
       invalidatePrior: () =>
         this.prisma.emailVerification
           .updateMany({
@@ -100,7 +106,7 @@ export class AuthService {
       await this.email.send({
         to: email,
         template: 'otp',
-        data: { code, ttlMinutes: OTP_TTL_MIN },
+        data: { code, ttlMinutes },
       });
     } catch (err: unknown) {
       if (this.isProd) throw err;
@@ -128,6 +134,7 @@ export class AuthService {
     await handleOtpVerification({
       challenge: verification,
       candidate: code,
+      maxAttempts: await this.appConfig.getInt('auth.otp_max_attempts'),
       incrementAttempts: () =>
         this.prisma.emailVerification
           .update({

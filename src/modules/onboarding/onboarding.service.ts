@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import { AppConfigService } from '../../common/app-config/app-config.service';
 import { ErrorCode } from '../../common/constants/error-codes';
 import { AppException } from '../../common/exceptions/app.exception';
 import {
@@ -19,7 +20,6 @@ import {
   type OnboardingProfileDto,
 } from './onboarding.serializer';
 
-const MIN_AGE_YEARS = 18;
 const RESERVED_USERNAMES = new Set([
   'admin',
   'administrator',
@@ -41,6 +41,7 @@ export class OnboardingService {
     private readonly prisma: PrismaService,
     @Inject(STORAGE_PROVIDER_TOKEN)
     private readonly storage: StorageProvider,
+    private readonly appConfig: AppConfigService,
   ) {}
 
   async isUsernameAvailable(username: string): Promise<boolean> {
@@ -64,9 +65,10 @@ export class OnboardingService {
     userId: string,
     dto: CompleteOnboardingDto,
   ): Promise<{ user: PublicUserDto; profile: OnboardingProfileDto }> {
-    if (calculateAge(dto.dateOfBirth) < MIN_AGE_YEARS) {
+    const minAgeYears = await this.appConfig.getInt('onboarding.min_age_years');
+    if (calculateAge(dto.dateOfBirth) < minAgeYears) {
       throw new AppException(ErrorCode.VALIDATION_FAILED, {
-        message: 'You must be 18 or older to use forsure.',
+        message: `You must be ${minAgeYears} or older to use forsure.`,
       });
     }
 

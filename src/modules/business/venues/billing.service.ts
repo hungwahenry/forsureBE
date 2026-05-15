@@ -1,13 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import { AppConfigService } from '../../../common/app-config/app-config.service';
 import { ErrorCode } from '../../../common/constants/error-codes';
 import { FeatureFlagService } from '../../../common/feature-flags/feature-flag.service';
 import { AppException } from '../../../common/exceptions/app.exception';
 import { isBusinessPubliclyActive } from '../../../common/utils/business-state';
 import { createId } from '../../../common/utils/id';
-
-const PICK_PRICE_CENTS = 500;
-const DEDUPE_WINDOW_DAYS = 30;
 
 interface ChargeArgs {
   userId: string;
@@ -21,7 +19,10 @@ interface ChargeArgs {
 export class VenueBillingService {
   private readonly logger = new Logger(VenueBillingService.name);
 
-  constructor(private readonly featureFlags: FeatureFlagService) {}
+  constructor(
+    private readonly featureFlags: FeatureFlagService,
+    private readonly appConfig: AppConfigService,
+  ) {}
 
   async chargeForActivityPick(
     tx: Prisma.TransactionClient,
@@ -71,7 +72,11 @@ export class VenueBillingService {
 
     let chargedCents = 0;
     if (isBusinessActive) {
-      const cutoff = new Date(Date.now() - DEDUPE_WINDOW_DAYS * 86_400_000);
+      const [dedupeWindowDays, pickPriceCents] = await Promise.all([
+        this.appConfig.getInt('venue.pick_dedupe_window_days'),
+        this.appConfig.getInt('venue.pick_price_cents'),
+      ]);
+      const cutoff = new Date(Date.now() - dedupeWindowDays * 86_400_000);
       const deduped = await tx.venueSuggestionEvent.findFirst({
         where: {
           venueId,
@@ -87,11 +92,11 @@ export class VenueBillingService {
         const decremented = await tx.businessVenue.updateMany({
           where: {
             id: venueId,
-            dailyBudgetRemaining: { gte: PICK_PRICE_CENTS },
+            dailyBudgetRemaining: { gte: pickPriceCents },
           },
-          data: { dailyBudgetRemaining: { decrement: PICK_PRICE_CENTS } },
+          data: { dailyBudgetRemaining: { decrement: pickPriceCents } },
         });
-        if (decremented.count === 1) chargedCents = PICK_PRICE_CENTS;
+        if (decremented.count === 1) chargedCents = pickPriceCents;
       }
     }
 

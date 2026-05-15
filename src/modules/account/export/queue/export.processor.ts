@@ -3,6 +3,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Job } from 'bullmq';
 import { randomBytes } from 'crypto';
+import { AppConfigService } from '../../../../common/app-config/app-config.service';
 import type { Env } from '../../../../config/env.schema';
 import { EmailService } from '../../../../email/email.service';
 import { PrismaService } from '../../../../prisma/prisma.service';
@@ -12,8 +13,6 @@ import {
 } from '../../../../storage/storage.interface';
 import { ExportBuilder } from '../export.builder';
 import { DATA_EXPORT_QUEUE, type DataExportJob } from './export.queue';
-
-const DOWNLOAD_TTL_HOURS = 24;
 
 @Processor(DATA_EXPORT_QUEUE)
 @Injectable()
@@ -27,6 +26,7 @@ export class DataExportProcessor extends WorkerHost {
     private readonly email: EmailService,
     @Inject(STORAGE_PROVIDER_TOKEN)
     private readonly storage: StorageProvider,
+    private readonly appConfig: AppConfigService,
     config: ConfigService<Env, true>,
   ) {
     super();
@@ -47,7 +47,10 @@ export class DataExportProcessor extends WorkerHost {
         cacheControl: 'no-store',
       });
 
-      const expiresAt = new Date(Date.now() + DOWNLOAD_TTL_HOURS * 60 * 60_000);
+      const ttlHours = await this.appConfig.getInt(
+        'account.export_download_ttl_hours',
+      );
+      const expiresAt = new Date(Date.now() + ttlHours * 60 * 60_000);
       await this.prisma.dataExportRequest.update({
         where: { id: requestId },
         data: {
@@ -70,7 +73,7 @@ export class DataExportProcessor extends WorkerHost {
         template: 'data-export-ready',
         data: {
           downloadUrl,
-          ttlHours: DOWNLOAD_TTL_HOURS,
+          ttlHours,
         },
       });
     } catch (err: unknown) {

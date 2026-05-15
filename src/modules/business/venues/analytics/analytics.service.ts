@@ -1,5 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import type { ActivityStatus } from '@prisma/client';
+import { AppConfigService } from '../../../../common/app-config/app-config.service';
 import { ErrorCode } from '../../../../common/constants/error-codes';
 import { AppException } from '../../../../common/exceptions/app.exception';
 import { PrismaService } from '../../../../prisma/prisma.service';
@@ -7,10 +8,6 @@ import {
   STORAGE_PROVIDER_TOKEN,
   type StorageProvider,
 } from '../../../../storage/storage.interface';
-import { Inject } from '@nestjs/common';
-
-const WINDOW_DAYS = 30;
-const ACTIVITY_LIMIT = 20;
 
 export interface VenueAnalyticsStats {
   picks: number;
@@ -70,6 +67,7 @@ export class VenueAnalyticsService {
     private readonly prisma: PrismaService,
     @Inject(STORAGE_PROVIDER_TOKEN)
     private readonly storage: StorageProvider,
+    private readonly appConfig: AppConfigService,
   ) {}
 
   async get(businessId: string, venueId: string): Promise<VenueAnalyticsDto> {
@@ -83,7 +81,11 @@ export class VenueAnalyticsService {
       });
     }
 
-    const cutoff = new Date(Date.now() - WINDOW_DAYS * 86_400_000);
+    const [windowDays, activityLimit] = await Promise.all([
+      this.appConfig.getInt('analytics.venue_window_days'),
+      this.appConfig.getInt('analytics.venue_activity_list_limit'),
+    ]);
+    const cutoff = new Date(Date.now() - windowDays * 86_400_000);
 
     const statsRows = await this.prisma.$queryRaw<StatsRow[]>`
       SELECT
@@ -129,11 +131,11 @@ export class VenueAnalyticsService {
         AND a."deletedAt" IS NULL
         AND a."createdAt" >= ${cutoff}
       ORDER BY a."createdAt" DESC
-      LIMIT ${ACTIVITY_LIMIT}
+      LIMIT ${activityLimit}
     `;
 
     return {
-      windowDays: WINDOW_DAYS,
+      windowDays,
       stats: {
         picks: Number(stats.picks),
         conversions: Number(stats.conversions),

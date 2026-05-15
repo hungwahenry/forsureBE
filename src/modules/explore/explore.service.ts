@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { AppConfigService } from '../../common/app-config/app-config.service';
 import type { CursorPage } from '../../common/dto/pagination.dto';
 import { FeatureFlagService } from '../../common/feature-flags/feature-flag.service';
 import { decodeTsIdCursor, encodeTsIdCursor } from '../../common/utils/cursor';
@@ -15,8 +16,6 @@ import {
   type ExplorePostRow,
 } from './explore.serializer';
 
-const WINDOW_DAYS = 30;
-
 @Injectable()
 export class ExploreService {
   constructor(
@@ -24,6 +23,7 @@ export class ExploreService {
     @Inject(STORAGE_PROVIDER_TOKEN)
     private readonly storage: StorageProvider,
     private readonly featureFlags: FeatureFlagService,
+    private readonly appConfig: AppConfigService,
   ) {}
 
   async listPublicPosts(
@@ -46,7 +46,7 @@ export class ExploreService {
       lat: query.lat,
       lng: query.lng,
       radiusMeters: query.radiusKm * 1000,
-      windowDays: WINDOW_DAYS,
+      windowDays: await this.appConfig.getInt('analytics.explore_window_days'),
       cursor,
       limit: limit + 1,
     });

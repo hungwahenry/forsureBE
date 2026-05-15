@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { AppConfigService } from '../../../common/app-config/app-config.service';
 import { ErrorCode } from '../../../common/constants/error-codes';
 import { FeatureFlagService } from '../../../common/feature-flags/feature-flag.service';
 import { AppException } from '../../../common/exceptions/app.exception';
@@ -15,8 +16,6 @@ import {
 } from './business-suggestions.serializer';
 import type { GetBusinessSuggestionsDto } from './dto/get-business-suggestions.dto';
 
-const MAX_SUGGESTIONS = 3;
-
 @Injectable()
 export class BusinessSuggestionsService {
   constructor(
@@ -24,6 +23,7 @@ export class BusinessSuggestionsService {
     @Inject(STORAGE_PROVIDER_TOKEN)
     private readonly storage: StorageProvider,
     private readonly featureFlags: FeatureFlagService,
+    private readonly appConfig: AppConfigService,
   ) {}
 
   async list(
@@ -38,7 +38,7 @@ export class BusinessSuggestionsService {
       lat: dto.lat,
       lng: dto.lng,
       q: dto.q ?? '',
-      limit: MAX_SUGGESTIONS,
+      limit: await this.appConfig.getInt('suggestions.max_results'),
     });
     return rows.map((row) =>
       serializeBusinessVenueSuggestion(this.storage, row),

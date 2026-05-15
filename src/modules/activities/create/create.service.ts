@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ActivityRole } from '@prisma/client';
+import { AppConfigService } from '../../../common/app-config/app-config.service';
 import { ErrorCode } from '../../../common/constants/error-codes';
 import { AppException } from '../../../common/exceptions/app.exception';
 import { createId } from '../../../common/utils/id';
@@ -12,23 +13,25 @@ import {
 } from '../activity.serializer';
 import { CreateActivityDto } from './dto/create-activity.dto';
 
-const MIN_LEAD_TIME_MS = 30 * 60_000;
-
 @Injectable()
 export class CreateActivityService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly membership: MembershipService,
     private readonly venueBilling: VenueBillingService,
+    private readonly appConfig: AppConfigService,
   ) {}
 
   async create(
     authorUserId: string,
     dto: CreateActivityDto,
   ): Promise<ActivitySummaryDto> {
-    if (dto.startsAt.getTime() < Date.now() + MIN_LEAD_TIME_MS) {
+    const minLeadMinutes = await this.appConfig.getInt(
+      'activity.min_lead_time_minutes',
+    );
+    if (dto.startsAt.getTime() < Date.now() + minLeadMinutes * 60_000) {
       throw new AppException(ErrorCode.VALIDATION_FAILED, {
-        message: 'Activities must start at least 30 minutes from now.',
+        message: `Activities must start at least ${minLeadMinutes} minutes from now.`,
       });
     }
 

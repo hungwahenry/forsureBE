@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import { AppConfigService } from '../../../common/app-config/app-config.service';
 import { ErrorCode } from '../../../common/constants/error-codes';
 import { AppException } from '../../../common/exceptions/app.exception';
 import { createId } from '../../../common/utils/id';
@@ -21,14 +22,13 @@ import {
   type BusinessVenuePhotoDto,
 } from './venues.serializer';
 
-const VENUE_PHOTO_MAX = 10;
-
 @Injectable()
 export class VenuesService {
   constructor(
     private readonly prisma: PrismaService,
     @Inject(STORAGE_PROVIDER_TOKEN)
     private readonly storage: StorageProvider,
+    private readonly appConfig: AppConfigService,
   ) {}
 
   async list(businessId: string): Promise<BusinessVenueDto[]> {
@@ -171,9 +171,10 @@ export class VenuesService {
         message: 'Venue not found.',
       });
     }
-    if (venue._count.photos >= VENUE_PHOTO_MAX) {
+    const photoMax = await this.appConfig.getInt('venue.photo_max');
+    if (venue._count.photos >= photoMax) {
       throw new AppException(ErrorCode.RESOURCE_CONFLICT, {
-        message: `Each venue can have at most ${VENUE_PHOTO_MAX} photos. Delete one to add another.`,
+        message: `Each venue can have at most ${photoMax} photos. Delete one to add another.`,
       });
     }
 

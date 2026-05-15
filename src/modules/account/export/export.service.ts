@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { AppConfigService } from '../../../common/app-config/app-config.service';
 import { ErrorCode } from '../../../common/constants/error-codes';
 import { AppException } from '../../../common/exceptions/app.exception';
 import { createId } from '../../../common/utils/id';
@@ -8,8 +9,6 @@ import {
   type StorageProvider,
 } from '../../../storage/storage.interface';
 import { DataExportQueue } from './queue/export.queue';
-
-const REQUEST_COOLDOWN_HOURS = 24;
 
 export interface RequestExportResult {
   requestId: string;
@@ -29,10 +28,14 @@ export class DataExportService {
     private readonly queue: DataExportQueue,
     @Inject(STORAGE_PROVIDER_TOKEN)
     private readonly storage: StorageProvider,
+    private readonly appConfig: AppConfigService,
   ) {}
 
   async request(userId: string): Promise<RequestExportResult> {
-    const cutoff = new Date(Date.now() - REQUEST_COOLDOWN_HOURS * 60 * 60_000);
+    const cooldownHours = await this.appConfig.getInt(
+      'account.export_request_cooldown_hours',
+    );
+    const cutoff = new Date(Date.now() - cooldownHours * 60 * 60_000);
     const recent = await this.prisma.dataExportRequest.findFirst({
       where: {
         userId,
