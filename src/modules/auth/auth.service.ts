@@ -203,7 +203,17 @@ export class AuthService {
       include: { user: true },
     });
 
-    if (!stored || stored.revokedAt || stored.expiresAt < new Date()) {
+    if (!stored || stored.expiresAt < new Date()) {
+      throw new AppException(ErrorCode.AUTH_TOKEN_INVALID);
+    }
+
+    if (stored.revokedAt) {
+      // Reuse of an already-revoked token: assume the family is compromised
+      // and revoke every token in it.
+      await this.prisma.refreshToken.updateMany({
+        where: { familyId: stored.familyId, revokedAt: null },
+        data: { revokedAt: new Date() },
+      });
       throw new AppException(ErrorCode.AUTH_TOKEN_INVALID);
     }
 
@@ -216,6 +226,7 @@ export class AuthService {
       stored.user.id,
       { onboarded: !!stored.user.onboardingCompletedAt },
       ctx,
+      stored.familyId,
     );
   }
 
@@ -256,16 +267,19 @@ export class AuthService {
     userId: string,
     claims: { onboarded: boolean },
     ctx: ClientContext,
+    familyId?: string,
   ): Promise<TokenPairDto> {
     const access = await this.issueAccessToken(userId, claims);
 
     const refreshToken = generateRefreshToken();
     const expiresAt = new Date(Date.now() + this.refreshTtlMs);
+    const id = createId('rt');
     await this.prisma.refreshToken.create({
       data: {
-        id: createId('rt'),
+        id,
         userId,
         tokenHash: sha256(refreshToken),
+        familyId: familyId ?? id,
         expiresAt,
         ipAddress: ctx.ipAddress,
         userAgent: ctx.userAgent,
