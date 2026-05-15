@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { StripeService, type StripeEvent } from '../stripe.service';
 
@@ -22,9 +23,28 @@ export class WebhooksService {
     private readonly stripe: StripeService,
   ) {}
 
-  handle(payload: Buffer, signature: string): Promise<void> {
+  async handle(payload: Buffer, signature: string): Promise<void> {
     const event = this.stripe.constructWebhookEvent(payload, signature);
-    return this.dispatch(event);
+
+    try {
+      await this.prisma.stripeWebhookEvent.create({
+        data: { id: event.id, type: event.type },
+      });
+    } catch (err) {
+      if (
+        err instanceof Prisma.PrismaClientKnownRequestError &&
+        err.code === 'P2002'
+      ) {
+        this.logger.debug(
+          { eventId: event.id, type: event.type },
+          'Stripe event already processed — skipping',
+        );
+        return;
+      }
+      throw err;
+    }
+
+    await this.dispatch(event);
   }
 
   private async dispatch(event: StripeEvent): Promise<void> {
