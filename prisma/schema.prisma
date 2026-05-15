@@ -740,3 +740,29 @@ model StripeWebhookEvent {
 
   @@index([type])
 }
+
+// Admin-tunable business parameters. The DB is the source of truth — the
+// catalog (type, bounds, labels) lives in columns, not a code registry.
+// Rows are seeded by migration; admin edits values within [minValue,maxValue].
+enum ConfigValueType {
+  INT
+  FLOAT
+  BOOLEAN
+  STRING
+}
+
+model AppConfig {
+  key          String          @id
+  value        Json
+  defaultValue Json
+  valueType    ConfigValueType
+  minValue     Float?
+  maxValue     Float?
+  category     String
+  label        String
+  description  String
+  updatedAt    DateTime        @updatedAt @db.Timestamptz(3)
+  updatedById  String?
+
+  @@index([category])
+}

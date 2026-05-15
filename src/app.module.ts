@@ -38,6 +38,7 @@ import { PreferencesModule } from './modules/preferences/preferences.module';
 import { ReportsModule } from './modules/reports/reports.module';
 import { StepUpModule } from './modules/step-up/step-up.module';
 import { UsersModule } from './modules/users/users.module';
+import { AppConfigModule } from './common/app-config/app-config.module';
 import { CronModule } from './common/cron/cron.module';
 import { FeatureFlagsModule } from './common/feature-flags/feature-flags.module';
 import { SentryContextInterceptor } from './common/interceptors/sentry-context.interceptor';
@@ -96,6 +97,7 @@ import { StorageModule } from './storage/storage.module';
     PrismaModule,
     CronModule,
     FeatureFlagsModule,
+    AppConfigModule,
     EmailModule,
     StorageModule,
     HealthModule,
