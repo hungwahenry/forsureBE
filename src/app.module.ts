@@ -29,7 +29,6 @@ import { PublicBusinessCategoriesModule } from './modules/business-categories/bu
 import { ChatsModule } from './modules/chats/chats.module';
 import { EggsModule } from './modules/eggs/eggs.module';
 import { ExploreModule } from './modules/explore/explore.module';
-import { FeatureFlagsRoutesModule } from './modules/feature-flags/feature-flags.module';
 import { FeedModule } from './modules/feed/feed.module';
 import { InboxModule } from './modules/inbox/inbox.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
@@ -119,7 +118,6 @@ import { StorageModule } from './storage/storage.module';
     StepUpModule,
     AccountModule,
     EggsModule,
-    FeatureFlagsRoutesModule,
     AdminModule,
   ],
   providers: [
