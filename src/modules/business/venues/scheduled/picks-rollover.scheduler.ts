@@ -128,7 +128,16 @@ export class VenuePicksRolloverScheduler {
       .digest('hex')
       .slice(0, 32)}`;
 
-    const description = `Venue suggestion picks · ${events.length} × $5.00`;
+    // chargedCents is the price locked in at pick time; show a unit price only
+    // when every pick was charged the same, otherwise just the count.
+    const uniformPrice =
+      new Set(events.map((e) => e.chargedCents)).size === 1
+        ? events[0].chargedCents
+        : null;
+    const description =
+      uniformPrice !== null
+        ? `Venue suggestion picks · ${events.length} × $${(uniformPrice / 100).toFixed(2)}`
+        : `Venue suggestion picks · ${events.length} picks`;
     const invoiceItemId = await this.stripe.createSubscriptionInvoiceItem({
       customerId: business.stripeCustomerId,
       subscriptionId: business.stripeSubscriptionId,

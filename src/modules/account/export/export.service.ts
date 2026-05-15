@@ -46,7 +46,7 @@ export class DataExportService {
     });
     if (recent) {
       throw new AppException(ErrorCode.RESOURCE_CONFLICT, {
-        message: 'You already have a recent export. Try again in 24 hours.',
+        message: `You already have a recent export. Try again in ${cooldownHours} hours.`,
       });
     }
 
