@@ -48,6 +48,7 @@ export async function findChatPreviews(
       FROM "ChatMessage" m
       JOIN "Profile" prof ON prof."userId" = m."senderUserId"
       WHERE m."activityId" = a.id
+        AND m."deletedAt" IS NULL
         AND NOT EXISTS (
           SELECT 1 FROM "UserBlock" b
           WHERE (b."blockerId" = ${userId} AND b."blockedId" = m."senderUserId")
@@ -60,6 +61,7 @@ export async function findChatPreviews(
       SELECT COUNT(*)::int AS cnt
       FROM "ChatMessage" m
       WHERE m."activityId" = a.id
+        AND m."deletedAt" IS NULL
         AND m."senderUserId" != ${userId}
         AND (me."lastReadAt" IS NULL OR m."createdAt" > me."lastReadAt")
         AND NOT EXISTS (
@@ -68,11 +70,12 @@ export async function findChatPreviews(
              OR (b."blockerId" = m."senderUserId" AND b."blockedId" = ${userId})
         )
     ) unread ON true
-    WHERE NOT EXISTS (
-      SELECT 1 FROM "UserBlock" b
-      WHERE (b."blockerId" = ${userId} AND b."blockedId" = host."userId")
-         OR (b."blockerId" = host."userId" AND b."blockedId" = ${userId})
-    )
+    WHERE a."deletedAt" IS NULL
+      AND NOT EXISTS (
+        SELECT 1 FROM "UserBlock" b
+        WHERE (b."blockerId" = ${userId} AND b."blockedId" = host."userId")
+           OR (b."blockerId" = host."userId" AND b."blockedId" = ${userId})
+      )
     ORDER BY COALESCE(last."createdAt", a."createdAt") DESC
   `;
 

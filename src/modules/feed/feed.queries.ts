@@ -70,6 +70,7 @@ export async function findFeedPage(
       ON host."activityId" = a.id AND host."role" = 'HOST'
     JOIN "Profile" prof ON prof."userId" = host."userId"
     WHERE a.status = 'OPEN'
+      AND a."deletedAt" IS NULL
       AND a."startsAt" >= NOW() + INTERVAL '30 minutes'
       AND a."startsAt" <= NOW() + INTERVAL '25 days'
       AND a."genderPreference" = ANY(${visibleGenderPrefs}::"ActivityGenderPreference"[])

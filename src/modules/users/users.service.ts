@@ -49,8 +49,8 @@ export class UsersService {
     viewerUserId: string,
     username: string,
   ): Promise<MyProfileDto | PublicProfileDto> {
-    const profile = await this.prisma.profile.findUnique({
-      where: { username },
+    const profile = await this.prisma.profile.findFirst({
+      where: { username, user: { status: 'ACTIVE' } },
       include: { user: { include: { profile: true } } },
     });
     if (!profile) {
@@ -74,8 +74,8 @@ export class UsersService {
     username: string,
     query: ListUserPostsDto,
   ): Promise<CursorPage<UserPostDto>> {
-    const target = await this.prisma.profile.findUnique({
-      where: { username },
+    const target = await this.prisma.profile.findFirst({
+      where: { username, user: { status: 'ACTIVE' } },
       select: { userId: true },
     });
     if (!target) {
@@ -159,8 +159,8 @@ export class UsersService {
     username: string,
     query: ListUserActivitiesDto,
   ): Promise<CursorPage<UserActivityDto>> {
-    const target = await this.prisma.profile.findUnique({
-      where: { username },
+    const target = await this.prisma.profile.findFirst({
+      where: { username, user: { status: 'ACTIVE' } },
       select: { userId: true },
     });
     if (!target) {

@@ -18,14 +18,17 @@ export class ActivityReminderNotifications {
       this.queue,
       NOTIFICATION_EVENT.ACTIVITY_START_1H,
       async () => {
-        const activity = await this.prisma.activity.findUnique({
-          where: { id: activityId },
+        const activity = await this.prisma.activity.findFirst({
+          where: { id: activityId, deletedAt: null },
           select: {
             title: true,
             emoji: true,
             startsAt: true,
             placeName: true,
-            participants: { select: { userId: true, role: true } },
+            participants: {
+              where: { user: { status: 'ACTIVE' } },
+              select: { userId: true, role: true },
+            },
           },
         });
         if (!activity || activity.participants.length === 0) return null;

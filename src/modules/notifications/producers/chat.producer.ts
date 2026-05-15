@@ -43,6 +43,7 @@ export class ChatNotifications {
             where: {
               activityId: msg.activityId,
               userId: { not: msg.senderUserId },
+              user: { status: 'ACTIVE' },
             },
             select: { userId: true, lastReadAt: true },
           }),
@@ -107,7 +108,11 @@ export class ChatNotifications {
           select: { username: true },
         }),
         this.prisma.activityParticipant.findMany({
-          where: { activityId, userId: { not: pinnerUserId } },
+          where: {
+            activityId,
+            userId: { not: pinnerUserId },
+            user: { status: 'ACTIVE' },
+          },
           select: { userId: true },
         }),
       ]);

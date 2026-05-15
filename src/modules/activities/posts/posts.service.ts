@@ -75,8 +75,8 @@ export class ActivityPostsService {
     activityId: string,
   ): Promise<ActivityPostDto | null> {
     await this.membership.requireChatMembership(userId, activityId);
-    const post = await this.prisma.activityPost.findUnique({
-      where: { activityId_authorId: { activityId, authorId: userId } },
+    const post = await this.prisma.activityPost.findFirst({
+      where: { activityId, authorId: userId, deletedAt: null },
       include: postInclude,
     });
     return post ? serializePost(this.storage, post) : null;
