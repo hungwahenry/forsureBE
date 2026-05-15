@@ -6,7 +6,10 @@ import {
   encodeTsIdCursor,
 } from '../../../../common/utils/cursor';
 import { PrismaService } from '../../../../prisma/prisma.service';
-import { ListUserReportsDto, ReportDirection } from './dto/list-user-reports.dto';
+import {
+  ListUserReportsDto,
+  ReportDirection,
+} from './dto/list-user-reports.dto';
 import {
   serializeAdminUserReport,
   type AdminUserReportItem,

@@ -24,7 +24,8 @@ export class AdminAuditLogListController {
 
   @Get('actions')
   @ApiOperation({
-    summary: 'Distinct action codes that have ever appeared (for filter dropdown).',
+    summary:
+      'Distinct action codes that have ever appeared (for filter dropdown).',
   })
   async actions(): Promise<{ items: string[] }> {
     const items = await this.service.listDistinctActions();
@@ -33,7 +34,8 @@ export class AdminAuditLogListController {
 
   @Get('target-types')
   @ApiOperation({
-    summary: 'Distinct target types that have ever appeared (for filter dropdown).',
+    summary:
+      'Distinct target types that have ever appeared (for filter dropdown).',
   })
   async targetTypes(): Promise<{ items: string[] }> {
     const items = await this.service.listDistinctTargetTypes();

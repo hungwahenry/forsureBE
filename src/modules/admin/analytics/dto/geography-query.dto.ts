@@ -4,7 +4,8 @@ import { IsInt, IsOptional, Max, Min } from 'class-validator';
 
 export class GeographyQueryDto {
   @ApiPropertyOptional({
-    description: 'Activity lookback window in days. Default 30, min 7, max 180.',
+    description:
+      'Activity lookback window in days. Default 30, min 7, max 180.',
     default: 30,
   })
   @IsOptional()

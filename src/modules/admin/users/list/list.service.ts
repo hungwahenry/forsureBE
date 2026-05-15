@@ -1,7 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import type { CursorPage } from '../../../../common/dto/pagination.dto';
-import { decodeTsIdCursor, encodeTsIdCursor } from '../../../../common/utils/cursor';
+import {
+  decodeTsIdCursor,
+  encodeTsIdCursor,
+} from '../../../../common/utils/cursor';
 import { PrismaService } from '../../../../prisma/prisma.service';
 import {
   STORAGE_PROVIDER_TOKEN,

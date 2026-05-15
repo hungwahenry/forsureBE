@@ -149,7 +149,11 @@ export class AdminAnalyticsService {
         GROUP BY status
       `,
       this.prisma.$queryRaw<
-        Array<{ avg_fill: number | null; done_count: bigint; total_count: bigint }>
+        Array<{
+          avg_fill: number | null;
+          done_count: bigint;
+          total_count: bigint;
+        }>
       >`
         SELECT
           AVG(CASE WHEN status = 'DONE' THEN ("participantCount"::float / NULLIF(capacity, 0)) END) AS avg_fill,

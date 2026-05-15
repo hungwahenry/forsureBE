@@ -8,9 +8,7 @@ import { createId } from '../../../../common/utils/id';
 import { PrismaService } from '../../../../prisma/prisma.service';
 import { NotificationsQueue } from '../../../notifications/queue/notifications.queue';
 import type { BroadcastPayload } from '../../../notifications/handlers/broadcast.handler';
-import {
-  AdminAuditAction,
-} from '../../shared/admin-audit.constants';
+import { AdminAuditAction } from '../../shared/admin-audit.constants';
 import { AdminAuditService } from '../../shared/admin-audit.service';
 import {
   BroadcastAudienceKind,
@@ -62,10 +60,7 @@ export class AdminBroadcastActionsService {
     return { recipientCount, sample };
   }
 
-  async send(
-    dto: BroadcastDto,
-    actor: ActorContext,
-  ): Promise<BroadcastResult> {
+  async send(dto: BroadcastDto, actor: ActorContext): Promise<BroadcastResult> {
     const where = this.audienceWhere(dto.audience);
     const recipients = await this.prisma.user.findMany({
       where,
@@ -116,9 +111,7 @@ export class AdminBroadcastActionsService {
     return { broadcastId, recipientCount: recipientUserIds.length };
   }
 
-  private audienceWhere(
-    audience: BroadcastAudienceDto,
-  ): Prisma.UserWhereInput {
+  private audienceWhere(audience: BroadcastAudienceDto): Prisma.UserWhereInput {
     const base: Prisma.UserWhereInput = { status: 'ACTIVE' };
     switch (audience.kind) {
       case BroadcastAudienceKind.ALL:

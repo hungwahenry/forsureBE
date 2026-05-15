@@ -19,7 +19,8 @@ export class AdminEditProfileDto {
   @IsString()
   @Length(3, 20)
   @Matches(/^[a-z][a-z0-9_]*$/, {
-    message: 'username must start with a letter and contain only lowercase letters, digits, or underscore.',
+    message:
+      'username must start with a letter and contain only lowercase letters, digits, or underscore.',
   })
   username?: string;
 

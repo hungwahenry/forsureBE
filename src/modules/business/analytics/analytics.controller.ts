@@ -8,20 +8,12 @@ import {
   type BusinessMemberContext,
 } from '../shared/current-business-member.decorator';
 import { BusinessAnalyticsService } from './analytics.service';
-import {
-  boostsCsv,
-  performanceCsv,
-  spendCsv,
-  venuesCsv,
-} from './csv.helper';
+import { boostsCsv, performanceCsv, spendCsv, venuesCsv } from './csv.helper';
 import { AnalyticsQueryDto } from './dto/analytics-query.dto';
 
 function sendCsv(res: Response, filename: string, body: string): void {
   res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-  res.setHeader(
-    'Content-Disposition',
-    `attachment; filename="${filename}"`,
-  );
+  res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
   res.setHeader('Cache-Control', 'no-store');
   res.send(body);
 }

@@ -23,7 +23,7 @@ export class BillingService {
     if (!business?.stripeCustomerId) {
       throw new AppException(ErrorCode.RESOURCE_CONFLICT, {
         message:
-          "No Stripe customer linked yet — subscribe first, then manage billing.",
+          'No Stripe customer linked yet — subscribe first, then manage billing.',
       });
     }
     const { client, returnUrlBase } = this.stripe.requireConfigured();

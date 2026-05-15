@@ -39,7 +39,7 @@ export class FeatureFlagService {
     else this.cache.clear();
   }
 
- async listClientExposed(): Promise<Record<string, boolean>> {
+  async listClientExposed(): Promise<Record<string, boolean>> {
     const rows = await this.prisma.featureFlag.findMany({
       where: { clientExposed: true },
       select: { key: true, enabled: true },

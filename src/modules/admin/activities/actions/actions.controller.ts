@@ -92,7 +92,8 @@ export class AdminActivitiesActionsController {
   @Patch(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
-    summary: 'Edit activity fields (emoji/title/startsAt/capacity/memoriesShareablePublicly).',
+    summary:
+      'Edit activity fields (emoji/title/startsAt/capacity/memoriesShareablePublicly).',
   })
   async edit(
     @Param('id') id: string,

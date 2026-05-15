@@ -95,7 +95,8 @@ export class GooglePlacesClient {
 
   private async toError(res: Response, op: string): Promise<AppException> {
     const text = await res.text().catch(() => '');
-    const isOperational = res.status >= 500 || res.status === 403 || res.status === 429;
+    const isOperational =
+      res.status >= 500 || res.status === 403 || res.status === 429;
     this.logger[isOperational ? 'warn' : 'error'](
       { status: res.status, body: text.slice(0, 500), op },
       'Google Places request failed',

@@ -66,7 +66,11 @@ export class AdminActivitiesListService {
                 id: true,
                 email: true,
                 profile: {
-                  select: { username: true, displayName: true, avatarKey: true },
+                  select: {
+                    username: true,
+                    displayName: true,
+                    avatarKey: true,
+                  },
                 },
               },
             },

@@ -74,7 +74,7 @@ export class AdminUserActionsController {
 
   @Post('trigger-data-export')
   @ApiOperation({
-    summary: 'Enqueue a data export job on the user\'s behalf.',
+    summary: "Enqueue a data export job on the user's behalf.",
   })
   triggerDataExport(
     @Param('id') id: string,
@@ -90,7 +90,7 @@ export class AdminUserActionsController {
   @Patch('profile')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
-    summary: 'Edit the user\'s profile (displayName / username / bio).',
+    summary: "Edit the user's profile (displayName / username / bio).",
   })
   async editProfile(
     @Param('id') id: string,

@@ -40,7 +40,9 @@ export class BusinessSuggestionsService {
       q: dto.q ?? '',
       limit: MAX_SUGGESTIONS,
     });
-    return rows.map((row) => serializeBusinessVenueSuggestion(this.storage, row));
+    return rows.map((row) =>
+      serializeBusinessVenueSuggestion(this.storage, row),
+    );
   }
 
   async recordPick(userId: string, venueId: string): Promise<void> {

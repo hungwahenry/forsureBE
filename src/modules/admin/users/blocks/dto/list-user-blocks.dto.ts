@@ -11,7 +11,8 @@ export class ListUserBlocksDto extends CursorPaginationDto {
   @ApiPropertyOptional({
     enum: BlockDirection,
     default: BlockDirection.MADE,
-    description: 'made = blocks the user issued; received = blocks against them.',
+    description:
+      'made = blocks the user issued; received = blocks against them.',
   })
   @IsOptional()
   @IsEnum(BlockDirection)

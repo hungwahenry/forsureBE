@@ -13,7 +13,7 @@ export class AdminBusinessVenuesController {
   constructor(private readonly service: AdminBusinessVenuesService) {}
 
   @Get()
-  @ApiOperation({ summary: "Venues registered by the business." })
+  @ApiOperation({ summary: 'Venues registered by the business.' })
   list(@Param('id') id: string) {
     return this.service.list(id);
   }

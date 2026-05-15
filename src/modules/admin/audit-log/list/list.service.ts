@@ -26,7 +26,8 @@ export class AdminAuditLogListService {
     if (query.action) andClauses.push({ action: query.action });
     if (query.targetType) andClauses.push({ targetType: query.targetType });
     if (query.targetId) andClauses.push({ targetId: query.targetId });
-    if (query.from) andClauses.push({ createdAt: { gte: new Date(query.from) } });
+    if (query.from)
+      andClauses.push({ createdAt: { gte: new Date(query.from) } });
     if (query.to) andClauses.push({ createdAt: { lt: new Date(query.to) } });
     if (cursor) {
       andClauses.push({
@@ -79,8 +80,6 @@ export class AdminAuditLogListService {
       select: { targetType: true },
       orderBy: { targetType: 'asc' },
     });
-    return rows
-      .map((r) => r.targetType)
-      .filter((t): t is string => t !== null);
+    return rows.map((r) => r.targetType).filter((t): t is string => t !== null);
   }
 }

@@ -11,7 +11,8 @@ export class ListUserReportsDto extends CursorPaginationDto {
   @ApiPropertyOptional({
     enum: ReportDirection,
     default: ReportDirection.FILED,
-    description: 'filed = reports submitted by the user; against = reports targeting them.',
+    description:
+      'filed = reports submitted by the user; against = reports targeting them.',
   })
   @IsOptional()
   @IsEnum(ReportDirection)

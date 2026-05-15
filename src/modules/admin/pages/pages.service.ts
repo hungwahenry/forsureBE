@@ -121,7 +121,9 @@ export class AdminPagesService {
       });
     }
 
-    const updates: Prisma.AdminPageUpdateInput = { updatedBy: { connect: { id: actor.adminId } } };
+    const updates: Prisma.AdminPageUpdateInput = {
+      updatedBy: { connect: { id: actor.adminId } },
+    };
     const before: Record<string, unknown> = {};
     const after: Record<string, unknown> = {};
 

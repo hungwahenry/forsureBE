@@ -44,7 +44,9 @@ export class CreateBusinessCategoryDto {
   @Length(1, 64)
   iconName?: string;
 
-  @ApiPropertyOptional({ description: 'Shown to owners in the picker if true.' })
+  @ApiPropertyOptional({
+    description: 'Shown to owners in the picker if true.',
+  })
   @IsOptional()
   @IsBoolean()
   active?: boolean;

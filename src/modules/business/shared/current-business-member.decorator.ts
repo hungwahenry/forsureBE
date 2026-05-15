@@ -11,9 +11,7 @@ export const CurrentBusinessMember = createParamDecorator(
   (_data: unknown, ctx: ExecutionContext): BusinessMemberContext => {
     const req = ctx.switchToHttp().getRequest<Request>();
     if (!req.businessMember) {
-      throw new Error(
-        'CurrentBusinessMember used without BusinessMemberGuard',
-      );
+      throw new Error('CurrentBusinessMember used without BusinessMemberGuard');
     }
     return req.businessMember;
   },

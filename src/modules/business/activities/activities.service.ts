@@ -51,7 +51,10 @@ export class BusinessActivitiesService {
       where: { id: activityId },
       include: {
         boosts: { orderBy: { createdAt: 'desc' } },
-        participants: { where: { role: ActivityRole.HOST }, select: { userId: true } },
+        participants: {
+          where: { role: ActivityRole.HOST },
+          select: { userId: true },
+        },
       },
     });
     if (!activity || activity.deletedAt) {

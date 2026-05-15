@@ -17,10 +17,7 @@ import {
 import { SkipOnboarding } from '../../../../common/decorators/skip-onboarding.decorator';
 import { AdminGuard } from '../../shared/admin.guard';
 import { AdminReportsActionsService } from './actions.service';
-import {
-  DismissReportDto,
-  ResolveReportDto,
-} from './dto/resolve-report.dto';
+import { DismissReportDto, ResolveReportDto } from './dto/resolve-report.dto';
 
 @ApiTags('Admin / Reports')
 @ApiBearerAuth()

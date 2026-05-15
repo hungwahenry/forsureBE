@@ -134,10 +134,7 @@ type UserWithProfile = User & {
   profile: Pick<Profile, 'username' | 'displayName' | 'avatarKey'> | null;
 };
 
-function userBrief(
-  storage: StorageProvider,
-  user: UserWithProfile,
-): UserBrief {
+function userBrief(storage: StorageProvider, user: UserWithProfile): UserBrief {
   return {
     id: user.id,
     email: user.email,

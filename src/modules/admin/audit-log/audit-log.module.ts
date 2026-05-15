@@ -7,10 +7,7 @@ import { AdminAuditLogListService } from './list/list.service';
 
 @Module({
   imports: [AdminSharedModule],
-  controllers: [
-    AdminAuditLogListController,
-    AdminAuditLogDetailController,
-  ],
+  controllers: [AdminAuditLogListController, AdminAuditLogDetailController],
   providers: [AdminAuditLogListService, AdminAuditLogDetailService],
 })
 export class AdminAuditLogModule {}

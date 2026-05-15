@@ -219,10 +219,7 @@ export class VenuesService {
       where: { venueId },
       include: { venue: { select: { businessId: true } } },
     });
-    if (
-      photos.length === 0 ||
-      photos[0].venue.businessId !== businessId
-    ) {
+    if (photos.length === 0 || photos[0].venue.businessId !== businessId) {
       throw new AppException(ErrorCode.RESOURCE_NOT_FOUND, {
         message: 'Venue not found.',
       });

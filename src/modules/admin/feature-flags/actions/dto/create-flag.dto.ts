@@ -36,7 +36,8 @@ export class CreateFlagDto {
 
   @ApiPropertyOptional({
     default: true,
-    description: 'Whether the public GET /feature-flags endpoint exposes this flag to mobile clients.',
+    description:
+      'Whether the public GET /feature-flags endpoint exposes this flag to mobile clients.',
   })
   @IsOptional()
   @IsBoolean()

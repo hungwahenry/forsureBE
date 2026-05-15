@@ -36,8 +36,7 @@ export function serializeAdminUserBlock(
   row: Row,
   direction: BlockDirection,
 ): AdminUserBlockItem {
-  const other =
-    direction === BlockDirection.MADE ? row.blocked : row.blocker;
+  const other = direction === BlockDirection.MADE ? row.blocked : row.blocker;
   return {
     id: row.id,
     createdAt: row.createdAt.toISOString(),

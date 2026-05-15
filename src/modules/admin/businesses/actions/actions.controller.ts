@@ -32,7 +32,7 @@ export class AdminBusinessesActionsController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
     summary:
-      "Suspend a business. Stops their venues from appearing in suggestions, stops their boosts from appearing in the feed, and 403s their portal access.",
+      'Suspend a business. Stops their venues from appearing in suggestions, stops their boosts from appearing in the feed, and 403s their portal access.',
   })
   async suspend(
     @Param('id') id: string,

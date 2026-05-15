@@ -1,11 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import {
-  IsDateString,
-  IsOptional,
-  IsString,
-  Length,
-} from 'class-validator';
+import { IsDateString, IsOptional, IsString, Length } from 'class-validator';
 import { CursorPaginationDto } from '../../../../../common/dto/pagination.dto';
 
 export class ListAuditLogDto extends CursorPaginationDto {
@@ -32,13 +27,17 @@ export class ListAuditLogDto extends CursorPaginationDto {
   @Length(1, 40)
   targetType?: string;
 
-  @ApiPropertyOptional({ description: 'Show every action against this target id.' })
+  @ApiPropertyOptional({
+    description: 'Show every action against this target id.',
+  })
   @IsOptional()
   @IsString()
   @Length(1, 128)
   targetId?: string;
 
-  @ApiPropertyOptional({ description: 'Inclusive lower bound (ISO date-time).' })
+  @ApiPropertyOptional({
+    description: 'Inclusive lower bound (ISO date-time).',
+  })
   @IsOptional()
   @IsDateString()
   @Transform(({ value }: { value: unknown }) =>
@@ -46,7 +45,9 @@ export class ListAuditLogDto extends CursorPaginationDto {
   )
   from?: string;
 
-  @ApiPropertyOptional({ description: 'Exclusive upper bound (ISO date-time).' })
+  @ApiPropertyOptional({
+    description: 'Exclusive upper bound (ISO date-time).',
+  })
   @IsOptional()
   @IsDateString()
   @Transform(({ value }: { value: unknown }) =>

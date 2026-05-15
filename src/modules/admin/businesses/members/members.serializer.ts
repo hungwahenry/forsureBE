@@ -20,7 +20,9 @@ export interface AdminBusinessMemberItem {
 }
 
 type MemberWithUser = BusinessMember & {
-  user: User & { profile: Pick<Profile, 'username' | 'displayName' | 'avatarKey'> | null };
+  user: User & {
+    profile: Pick<Profile, 'username' | 'displayName' | 'avatarKey'> | null;
+  };
 };
 
 export function serializeAdminBusinessMember(

@@ -26,14 +26,16 @@ export async function deliverNotification(
 
   if (spec.groupKey) {
     await ctx.inbox.writeGrouped(
-      recipientUserIds.map((userId): GroupedInboxRow => ({
-        userId,
-        eventCode: event,
-        title: spec.title,
-        body: spec.body,
-        data,
-        groupKey: spec.groupKey!,
-      })),
+      recipientUserIds.map(
+        (userId): GroupedInboxRow => ({
+          userId,
+          eventCode: event,
+          title: spec.title,
+          body: spec.body,
+          data,
+          groupKey: spec.groupKey!,
+        }),
+      ),
     );
   } else {
     await ctx.inbox.write(
@@ -47,10 +49,9 @@ export async function deliverNotification(
     );
   }
 
-  const pushRecipients =
-    spec.suppressPushFor?.length
-      ? recipientUserIds.filter((id) => !spec.suppressPushFor!.includes(id))
-      : recipientUserIds;
+  const pushRecipients = spec.suppressPushFor?.length
+    ? recipientUserIds.filter((id) => !spec.suppressPushFor!.includes(id))
+    : recipientUserIds;
 
   await sendPush(ctx, event, pushRecipients, {
     title: spec.title,

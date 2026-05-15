@@ -39,7 +39,8 @@ export class AdminPagesController {
 
   @Get(':id')
   @ApiOperation({
-    summary: 'Fetch a single page including its TipTap JSON and sanitized HTML.',
+    summary:
+      'Fetch a single page including its TipTap JSON and sanitized HTML.',
   })
   get(@Param('id') id: string) {
     return this.service.get(id);

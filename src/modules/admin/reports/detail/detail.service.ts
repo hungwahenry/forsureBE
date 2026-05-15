@@ -112,8 +112,7 @@ export class AdminReportsDetailService {
       activity: activityRow ? { ...activityRow, host: hostRow } : null,
       message: 'message' in targets ? targets.message : null,
       post: 'post' in targets ? targets.post : null,
-      businessVenue:
-        'businessVenue' in targets ? targets.businessVenue : null,
+      businessVenue: 'businessVenue' in targets ? targets.businessVenue : null,
     });
   }
 }

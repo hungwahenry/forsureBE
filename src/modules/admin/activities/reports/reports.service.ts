@@ -70,9 +70,7 @@ export class AdminActivityReportsService {
         : null;
 
     return {
-      items: page.map((row) =>
-        serializeAdminActivityReport(this.storage, row),
-      ),
+      items: page.map((row) => serializeAdminActivityReport(this.storage, row)),
       pageInfo: { nextCursor, hasMore },
     };
   }

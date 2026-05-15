@@ -1,9 +1,4 @@
-import type {
-  Activity,
-  ChatMessage,
-  Profile,
-  User,
-} from '@prisma/client';
+import type { Activity, ChatMessage, Profile, User } from '@prisma/client';
 import type { StorageProvider } from '../../../../storage/storage.interface';
 
 export interface AdminMessageListItem {

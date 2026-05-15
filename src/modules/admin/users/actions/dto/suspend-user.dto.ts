@@ -9,7 +9,8 @@ export class SuspendUserDto {
   reason!: string;
 
   @ApiPropertyOptional({
-    description: 'When the suspension automatically lifts. Omit for indefinite.',
+    description:
+      'When the suspension automatically lifts. Omit for indefinite.',
   })
   @IsOptional()
   @Type(() => Date)

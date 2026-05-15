@@ -1,4 +1,10 @@
-import { Controller, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { SkipOnboarding } from '../../../common/decorators/skip-onboarding.decorator';
 import { BusinessMemberGuard } from '../shared/business-member.guard';

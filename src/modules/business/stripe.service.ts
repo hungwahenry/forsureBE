@@ -6,7 +6,9 @@ import { AppException } from '../../common/exceptions/app.exception';
 import type { Env } from '../../config/env.schema';
 
 type StripeClient = Stripe.Stripe;
-export type StripeEvent = ReturnType<StripeClient['webhooks']['constructEvent']>;
+export type StripeEvent = ReturnType<
+  StripeClient['webhooks']['constructEvent']
+>;
 
 @Injectable()
 export class StripeService {
@@ -37,11 +39,7 @@ export class StripeService {
     verifiedBusinessPriceId: string;
     returnUrlBase: string;
   } {
-    if (
-      !this.client ||
-      !this.verifiedBusinessPriceId ||
-      !this.returnUrlBase
-    ) {
+    if (!this.client || !this.verifiedBusinessPriceId || !this.returnUrlBase) {
       throw new AppException(ErrorCode.INTERNAL_ERROR, {
         message: 'Billing is not configured.',
       });
@@ -84,9 +82,7 @@ export class StripeService {
         description: opts.description,
         metadata: opts.metadata,
       },
-      opts.idempotencyKey
-        ? { idempotencyKey: opts.idempotencyKey }
-        : undefined,
+      opts.idempotencyKey ? { idempotencyKey: opts.idempotencyKey } : undefined,
     );
     return item.id;
   }

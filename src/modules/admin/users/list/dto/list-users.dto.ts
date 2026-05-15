@@ -6,7 +6,8 @@ import { CursorPaginationDto } from '../../../../../common/dto/pagination.dto';
 
 export class ListUsersDto extends CursorPaginationDto {
   @ApiPropertyOptional({
-    description: 'Search by email (substring), username (substring), or user id.',
+    description:
+      'Search by email (substring), username (substring), or user id.',
   })
   @IsOptional()
   @IsString()

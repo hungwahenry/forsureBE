@@ -71,7 +71,7 @@ export class BoostsController {
   @Get('cycle')
   @ApiOperation({
     summary:
-      "Cycle usage summary: free boosts used / cap, overage spend so far, active boost count.",
+      'Cycle usage summary: free boosts used / cap, overage spend so far, active boost count.',
   })
   cycleSummary(@CurrentBusinessMember() member: BusinessMemberContext) {
     return this.service.cycleSummary(member.businessId);

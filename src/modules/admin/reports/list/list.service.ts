@@ -90,9 +90,7 @@ export class AdminReportsListService {
         : null;
 
     return {
-      items: page.map((row) =>
-        serializeAdminReportListItem(this.storage, row),
-      ),
+      items: page.map((row) => serializeAdminReportListItem(this.storage, row)),
       pageInfo: { nextCursor, hasMore },
     };
   }

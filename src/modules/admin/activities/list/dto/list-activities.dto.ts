@@ -46,13 +46,17 @@ export class ListActivitiesDto extends CursorPaginationDto {
   @IsBoolean()
   includeDeleted?: boolean;
 
-  @ApiPropertyOptional({ description: 'Activities starting at/after this ISO date.' })
+  @ApiPropertyOptional({
+    description: 'Activities starting at/after this ISO date.',
+  })
   @IsOptional()
   @Type(() => Date)
   @IsDate()
   from?: Date;
 
-  @ApiPropertyOptional({ description: 'Activities starting at/before this ISO date.' })
+  @ApiPropertyOptional({
+    description: 'Activities starting at/before this ISO date.',
+  })
   @IsOptional()
   @Type(() => Date)
   @IsDate()

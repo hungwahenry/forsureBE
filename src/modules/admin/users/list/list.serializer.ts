@@ -31,7 +31,9 @@ export function serializeAdminUserListItem(
     role: user.role,
     createdAt: user.createdAt.toISOString(),
     lastLoginAt: user.lastLoginAt ? user.lastLoginAt.toISOString() : null,
-    suspendedUntil: user.suspendedUntil ? user.suspendedUntil.toISOString() : null,
+    suspendedUntil: user.suspendedUntil
+      ? user.suspendedUntil.toISOString()
+      : null,
     profile: user.profile
       ? {
           username: user.profile.username,

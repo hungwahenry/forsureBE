@@ -1,4 +1,8 @@
-import type { Business, BusinessMember, BusinessMemberRole } from '@prisma/client';
+import type {
+  Business,
+  BusinessMember,
+  BusinessMemberRole,
+} from '@prisma/client';
 import type { StorageProvider } from '../../storage/storage.interface';
 
 export interface BusinessMembershipDto {

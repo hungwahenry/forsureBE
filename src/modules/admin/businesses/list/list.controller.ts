@@ -15,7 +15,8 @@ export class AdminBusinessesListController {
 
   @Get()
   @ApiOperation({
-    summary: 'List businesses with state filter, search, and cursor pagination.',
+    summary:
+      'List businesses with state filter, search, and cursor pagination.',
   })
   list(@Query() query: ListBusinessesDto) {
     return this.service.list(query);

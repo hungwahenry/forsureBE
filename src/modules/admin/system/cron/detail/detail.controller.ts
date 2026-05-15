@@ -14,7 +14,8 @@ export class AdminCronDetailController {
 
   @Get(':id')
   @ApiOperation({
-    summary: 'Fetch a single cron run with full error stack and result payload.',
+    summary:
+      'Fetch a single cron run with full error stack and result payload.',
   })
   detail(@Param('id') id: string) {
     return this.service.detail(id);

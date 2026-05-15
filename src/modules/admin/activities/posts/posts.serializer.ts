@@ -1,4 +1,9 @@
-import type { ActivityPost, ActivityPostPhoto, Profile, User } from '@prisma/client';
+import type {
+  ActivityPost,
+  ActivityPostPhoto,
+  Profile,
+  User,
+} from '@prisma/client';
 import type { StorageProvider } from '../../../../storage/storage.interface';
 
 export interface AdminActivityPostItem {

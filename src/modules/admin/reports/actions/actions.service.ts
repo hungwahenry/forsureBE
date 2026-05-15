@@ -9,10 +9,7 @@ import {
   AdminAuditTargetType,
 } from '../../shared/admin-audit.constants';
 import { AdminAuditService } from '../../shared/admin-audit.service';
-import {
-  DismissReportDto,
-  ResolveReportDto,
-} from './dto/resolve-report.dto';
+import { DismissReportDto, ResolveReportDto } from './dto/resolve-report.dto';
 
 interface ActorContext {
   adminId: string;

@@ -30,7 +30,7 @@ export class AdminBusinessBoostsController {
 
   @Get(':id/boosts')
   @ApiOperation({
-    summary: "Boosts run by the business (active + historical).",
+    summary: 'Boosts run by the business (active + historical).',
   })
   list(@Param('id') id: string) {
     return this.service.list(id);

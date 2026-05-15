@@ -68,7 +68,9 @@ export class AdminActivityMessagesService {
         : null;
 
     return {
-      items: page.map((row) => serializeAdminActivityMessage(this.storage, row)),
+      items: page.map((row) =>
+        serializeAdminActivityMessage(this.storage, row),
+      ),
       pageInfo: { nextCursor, hasMore },
     };
   }

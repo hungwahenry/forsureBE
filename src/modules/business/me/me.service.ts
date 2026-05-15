@@ -13,10 +13,7 @@ import {
   type StorageProvider,
 } from '../../../storage/storage.interface';
 import type { UpdateBusinessDto } from './dto/update-business.dto';
-import {
-  serializeOwnerBusiness,
-  type OwnerBusinessDto,
-} from './me.serializer';
+import { serializeOwnerBusiness, type OwnerBusinessDto } from './me.serializer';
 
 export interface UploadResult {
   key: string;

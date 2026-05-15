@@ -28,7 +28,7 @@ export class BusinessActivitiesController {
   @Get(':id')
   @ApiOperation({
     summary:
-      "Detail view of a hosted activity: full boost history + campaign analytics.",
+      'Detail view of a hosted activity: full boost history + campaign analytics.',
   })
   get(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
     return this.service.get(user.id, id);

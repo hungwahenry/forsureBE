@@ -15,7 +15,8 @@ export class AdminUserSessionsController {
 
   @Get()
   @ApiOperation({
-    summary: 'Refresh tokens for the user (active and revoked). Token values are never returned.',
+    summary:
+      'Refresh tokens for the user (active and revoked). Token values are never returned.',
   })
   list(@Param('id') id: string, @Query() query: CursorPaginationDto) {
     return this.service.list(id, query);

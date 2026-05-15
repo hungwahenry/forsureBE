@@ -12,8 +12,7 @@ export class PublicBusinessCategoriesController {
 
   @Get()
   @ApiOperation({
-    summary:
-      'Active business categories for the owner-facing category picker.',
+    summary: 'Active business categories for the owner-facing category picker.',
   })
   list() {
     return this.service.listActive();

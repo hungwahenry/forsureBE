@@ -72,9 +72,12 @@ export async function serializeJob(
     data: job.data,
     attemptsMade: job.attemptsMade,
     failedReason: job.failedReason ?? null,
-    stacktrace: job.stacktrace && job.stacktrace.length > 0 ? job.stacktrace : null,
+    stacktrace:
+      job.stacktrace && job.stacktrace.length > 0 ? job.stacktrace : null,
     createdAt: job.timestamp ? new Date(job.timestamp).toISOString() : null,
-    processedAt: job.processedOn ? new Date(job.processedOn).toISOString() : null,
+    processedAt: job.processedOn
+      ? new Date(job.processedOn).toISOString()
+      : null,
     finishedAt: job.finishedOn ? new Date(job.finishedOn).toISOString() : null,
     delayUntil:
       job.delay && job.timestamp

@@ -28,7 +28,8 @@ export class WebhooksController {
     @Headers('stripe-signature') signature: string | undefined,
   ): Promise<{ received: true }> {
     if (!signature) throw new BadRequestException('Missing stripe-signature.');
-    if (!req.rawBody) throw new BadRequestException('Missing raw request body.');
+    if (!req.rawBody)
+      throw new BadRequestException('Missing raw request body.');
     await this.service.handle(req.rawBody, signature);
     return { received: true };
   }
