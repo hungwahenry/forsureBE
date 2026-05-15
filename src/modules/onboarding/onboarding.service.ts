@@ -10,10 +10,7 @@ import { createId } from '../../common/utils/id';
 import { PrismaService } from '../../prisma/prisma.service';
 import { STORAGE_PROVIDER_TOKEN } from '../../storage/storage.interface';
 import type { StorageProvider } from '../../storage/storage.interface';
-import {
-  serializeUser,
-  type PublicUserDto,
-} from '../auth/auth.serializer';
+import { serializeUser, type PublicUserDto } from '../auth/auth.serializer';
 import { CompleteOnboardingDto } from './dto/complete-onboarding.dto';
 import {
   serializeAvatarUpload,

@@ -54,13 +54,9 @@ export class WebhooksService {
           event.data.object as CheckoutSessionData,
         );
       case 'customer.subscription.updated':
-        return this.onSubscriptionUpdated(
-          event.data.object as SubscriptionData,
-        );
+        return this.onSubscriptionUpdated(event.data.object);
       case 'customer.subscription.deleted':
-        return this.onSubscriptionDeleted(
-          event.data.object as SubscriptionData,
-        );
+        return this.onSubscriptionDeleted(event.data.object);
       default:
         this.logger.debug(`Ignoring Stripe event ${event.type}`);
         return;

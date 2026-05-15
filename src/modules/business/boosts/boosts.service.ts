@@ -50,8 +50,7 @@ export class BoostsService {
     });
     if (!business.verifiedAt) {
       throw new AppException(ErrorCode.RESOURCE_CONFLICT, {
-        message:
-          'Subscribe to the verified plan before starting boosts.',
+        message: 'Subscribe to the verified plan before starting boosts.',
       });
     }
     if (business.suspendedAt) {
@@ -65,7 +64,10 @@ export class BoostsService {
           'Your business is paused pending review. New boosts cannot start until support clears the pause.',
       });
     }
-    const activity = await this.requireBoostableActivity(userId, dto.activityId);
+    const activity = await this.requireBoostableActivity(
+      userId,
+      dto.activityId,
+    );
 
     const now = new Date();
     const naturalEnd = new Date(
@@ -118,7 +120,7 @@ export class BoostsService {
       if (stripeInvoiceItemId) {
         await this.stripe
           .deleteInvoiceItem(stripeInvoiceItemId)
-          .catch((cleanupErr) => {
+          .catch((cleanupErr: unknown) => {
             this.logger.error(
               { stripeInvoiceItemId, err: cleanupErr },
               'Failed to clean up Stripe invoice item after DB write failure',
@@ -142,10 +144,7 @@ export class BoostsService {
     return this.pricing.summarizeCycle(businessId);
   }
 
-  async cancel(
-    businessId: string,
-    boostId: string,
-  ): Promise<ActivityBoostDto> {
+  async cancel(businessId: string, boostId: string): Promise<ActivityBoostDto> {
     const boost = await this.prisma.activityBoost.findUnique({
       where: { id: boostId },
     });

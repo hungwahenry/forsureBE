@@ -115,8 +115,14 @@ export async function findActiveBoosts(
   prisma: PrismaService,
   args: FindActiveBoostsArgs,
 ): Promise<FeedRow[]> {
-  const { viewerUserId, lat, lng, viewerRadiusMeters, visibleGenderPrefs, limit } =
-    args;
+  const {
+    viewerUserId,
+    lat,
+    lng,
+    viewerRadiusMeters,
+    visibleGenderPrefs,
+    limit,
+  } = args;
 
   const rows = await prisma.$queryRaw<BoostRowRaw[]>`
     SELECT
@@ -183,7 +189,13 @@ export async function findActiveBoosts(
   `;
 
   return rows.map(
-    ({ boostId, boostBusinessId, boostBusinessName, boostBusinessLogoKey, ...row }) => ({
+    ({
+      boostId,
+      boostBusinessId,
+      boostBusinessName,
+      boostBusinessLogoKey,
+      ...row
+    }) => ({
       ...row,
       boost: {
         boostId,

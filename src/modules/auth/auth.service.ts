@@ -6,10 +6,7 @@ import { ErrorCode } from '../../common/constants/error-codes';
 import { AppException } from '../../common/exceptions/app.exception';
 import { FeatureFlagService } from '../../common/feature-flags/feature-flag.service';
 import { createId } from '../../common/utils/id';
-import {
-  OTP_RESEND_COOLDOWN_MS,
-  OTP_TTL_MIN,
-} from '../../common/utils/otp';
+import { OTP_RESEND_COOLDOWN_MS, OTP_TTL_MIN } from '../../common/utils/otp';
 import {
   buildOtpChallenge,
   handleOtpVerification,

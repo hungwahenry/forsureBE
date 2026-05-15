@@ -8,9 +8,7 @@ interface BusinessStateFields {
 
 export function isBusinessPubliclyActive(b: BusinessStateFields): boolean {
   return (
-    b.verifiedAt !== null &&
-    b.suspendedAt === null &&
-    b.autoPausedAt === null
+    b.verifiedAt !== null && b.suspendedAt === null && b.autoPausedAt === null
   );
 }
 
