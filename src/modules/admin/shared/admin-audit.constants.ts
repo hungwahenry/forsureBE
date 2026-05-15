@@ -48,6 +48,9 @@ export const AdminAuditAction = {
 
   APP_CONFIG_UPDATED: 'APP_CONFIG_UPDATED',
   APP_CONFIG_RESET: 'APP_CONFIG_RESET',
+
+  CONTACT_LEAD_STATUS_CHANGED: 'CONTACT_LEAD_STATUS_CHANGED',
+  CONTACT_LEAD_DELETED: 'CONTACT_LEAD_DELETED',
 } as const;
 export type AdminAuditAction =
   (typeof AdminAuditAction)[keyof typeof AdminAuditAction];
@@ -68,6 +71,7 @@ export const AdminAuditTargetType = {
   BUSINESS_CATEGORY: 'BUSINESS_CATEGORY',
   ADMIN_PAGE: 'ADMIN_PAGE',
   APP_CONFIG: 'APP_CONFIG',
+  CONTACT_LEAD: 'CONTACT_LEAD',
 } as const;
 export type AdminAuditTargetType =
   (typeof AdminAuditTargetType)[keyof typeof AdminAuditTargetType];

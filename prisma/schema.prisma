@@ -772,14 +772,16 @@ model AppConfig {
 
 // Inbound leads from the public marketing-site contact form.
 model ContactLead {
-  id        String   @id // lead_...
+  id        String   @id // cl_...
   name      String
   email     String
   company   String?
   message   String
+  /// NEW | HANDLED | ARCHIVED — string so adding states is migration-free.
+  status    String   @default("NEW")
   ipAddress String?
   userAgent String?
   createdAt DateTime @default(now()) @db.Timestamptz(3)
 
-  @@index([createdAt])
+  @@index([status, createdAt])
 }
