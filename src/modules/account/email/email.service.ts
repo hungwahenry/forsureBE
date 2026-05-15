@@ -16,7 +16,7 @@ import {
   STORAGE_PROVIDER_TOKEN,
   type StorageProvider,
 } from '../../../storage/storage.interface';
-import { generateOtp, sha256 } from '../../auth/utils/crypto';
+import { generateOtp, sha256 } from '../../../common/utils/crypto';
 import { StepUpService } from '../../step-up/step-up.service';
 import {
   serializeMyProfile,

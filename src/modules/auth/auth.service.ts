@@ -14,11 +14,11 @@ import {
 import type { Env } from '../../config/env.schema';
 import { EmailService } from '../../email/email.service';
 import { PrismaService } from '../../prisma/prisma.service';
-import { BusinessService } from '../business/business.service';
 import {
   STORAGE_PROVIDER_TOKEN,
   type StorageProvider,
 } from '../../storage/storage.interface';
+import { serializeBusinessMembership } from '../business/business.serializer';
 import {
   serializeAccessToken,
   serializeAuthMe,
@@ -27,7 +27,7 @@ import {
   type AuthMeDto,
   type TokenPairDto,
 } from './auth.serializer';
-import { generateOtp, generateRefreshToken, sha256 } from './utils/crypto';
+import { generateOtp, generateRefreshToken, sha256 } from '../../common/utils/crypto';
 import { parseDurationToMs } from './utils/duration';
 
 export interface ClientContext {
@@ -49,7 +49,6 @@ export class AuthService {
     @Inject(STORAGE_PROVIDER_TOKEN)
     private readonly storage: StorageProvider,
     private readonly featureFlags: FeatureFlagService,
-    private readonly business: BusinessService,
     config: ConfigService<Env, true>,
   ) {
     this.accessTtlMs = parseDurationToMs(
@@ -241,14 +240,22 @@ export class AuthService {
   }
 
   async getMe(userId: string): Promise<AuthMeDto> {
-    const [user, businessMemberships] = await Promise.all([
+    const [user, memberships] = await Promise.all([
       this.prisma.user.findUniqueOrThrow({
         where: { id: userId },
         include: { profile: { select: { avatarKey: true } } },
       }),
-      this.business.listMembershipsForUser(userId),
+      this.prisma.businessMember.findMany({
+        where: { userId },
+        include: { business: true },
+        orderBy: { createdAt: 'asc' },
+      }),
     ]);
-    return serializeAuthMe(this.storage, user, businessMemberships);
+    return serializeAuthMe(
+      this.storage,
+      user,
+      memberships.map((row) => serializeBusinessMembership(this.storage, row)),
+    );
   }
 
   async issueAccessToken(

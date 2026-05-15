@@ -1,4 +1,4 @@
-import { sha256 } from '../../modules/auth/utils/crypto';
+import { sha256 } from './crypto';
 
 export const OTP_TTL_MIN = 10;
 export const OTP_MAX_ATTEMPTS = 5;

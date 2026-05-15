@@ -8,7 +8,6 @@ import { BillingService } from './billing/billing.service';
 import { BoostsController } from './boosts/boosts.controller';
 import { BoostsPricingService } from './boosts/boosts-pricing.service';
 import { BoostsService } from './boosts/boosts.service';
-import { BusinessService } from './business.service';
 import { BusinessMeController } from './me/me.controller';
 import { BusinessMeService } from './me/me.service';
 import { BusinessOverviewController } from './overview/overview.controller';
@@ -45,7 +44,6 @@ import { WebhooksService } from './webhooks/webhooks.service';
     WebhooksController,
   ],
   providers: [
-    BusinessService,
     BusinessMeService,
     BusinessOverviewService,
     BusinessAnalyticsService,
@@ -65,6 +63,6 @@ import { WebhooksService } from './webhooks/webhooks.service';
     BillingService,
     WebhooksService,
   ],
-  exports: [BusinessService, VenueBillingService],
+  exports: [VenueBillingService],
 })
 export class BusinessModule {}

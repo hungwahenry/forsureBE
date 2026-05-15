@@ -16,7 +16,7 @@ import {
 import type { Env } from '../../config/env.schema';
 import { EmailService } from '../../email/email.service';
 import { PrismaService } from '../../prisma/prisma.service';
-import { generateOtp, sha256 } from '../auth/utils/crypto';
+import { generateOtp, sha256 } from '../../common/utils/crypto';
 import type { StepUpStartedDto } from './step-up.serializer';
 
 @Injectable()
