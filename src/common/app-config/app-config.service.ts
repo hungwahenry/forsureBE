@@ -31,6 +31,19 @@ export class AppConfigService {
     return row.value as string;
   }
 
+  async listClientExposed(): Promise<
+    Record<string, number | boolean | string>
+  > {
+    await this.ensureFresh();
+    const out: Record<string, number | boolean | string> = {};
+    for (const row of this.cache.values()) {
+      if (row.clientExposed) {
+        out[row.key] = row.value as number | boolean | string;
+      }
+    }
+    return out;
+  }
+
   invalidate(): void {
     this.expiresAt = 0;
   }

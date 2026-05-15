@@ -761,6 +761,9 @@ model AppConfig {
   category     String
   label        String
   description  String
+  /// When true, the value is returned by the public GET /config endpoint so
+  /// clients can mirror server-side validation (e.g. min lead time).
+  clientExposed Boolean        @default(false)
   updatedAt    DateTime        @updatedAt @db.Timestamptz(3)
   updatedById  String?
 
