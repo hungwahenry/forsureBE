@@ -1,7 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { User } from '@prisma/client';
+import { Prisma, User } from '@prisma/client';
 import { ErrorCode } from '../../common/constants/error-codes';
 import { AppException } from '../../common/exceptions/app.exception';
 import { FeatureFlagService } from '../../common/feature-flags/feature-flag.service';
@@ -148,12 +148,6 @@ export class AuthService {
       });
     }
 
-    await this.prisma.emailVerification.update({
-      where: { id: verification.id },
-      data: { consumedAt: new Date() },
-    });
-
-    const now = new Date();
     const existing = await this.prisma.user.findUnique({
       where: { email },
       select: { id: true },
@@ -169,22 +163,32 @@ export class AuthService {
         });
       }
     }
-    const user = await this.prisma.user.upsert({
-      where: { email },
-      update: { lastLoginAt: now, emailVerifiedAt: now },
-      create: {
-        id: createId('usr'),
-        email,
-        emailVerifiedAt: now,
-        lastLoginAt: now,
-      },
-    });
 
-    const tokens = await this.issueTokenPair(
-      user.id,
-      { onboarded: !!user.onboardingCompletedAt },
-      ctx,
-    );
+    const now = new Date();
+    const { user, tokens } = await this.prisma.$transaction(async (tx) => {
+      await tx.emailVerification.update({
+        where: { id: verification.id },
+        data: { consumedAt: now },
+      });
+      const user = await tx.user.upsert({
+        where: { email },
+        update: { lastLoginAt: now, emailVerifiedAt: now },
+        create: {
+          id: createId('usr'),
+          email,
+          emailVerifiedAt: now,
+          lastLoginAt: now,
+        },
+      });
+      const tokens = await this.issueTokenPair(
+        user.id,
+        { onboarded: !!user.onboardingCompletedAt },
+        ctx,
+        undefined,
+        tx,
+      );
+      return { user, tokens };
+    });
 
     return {
       user,
@@ -208,8 +212,6 @@ export class AuthService {
     }
 
     if (stored.revokedAt) {
-      // Reuse of an already-revoked token: assume the family is compromised
-      // and revoke every token in it.
       await this.prisma.refreshToken.updateMany({
         where: { familyId: stored.familyId, revokedAt: null },
         data: { revokedAt: new Date() },
@@ -268,13 +270,15 @@ export class AuthService {
     claims: { onboarded: boolean },
     ctx: ClientContext,
     familyId?: string,
+    tx?: Prisma.TransactionClient,
   ): Promise<TokenPairDto> {
+    const client = tx ?? this.prisma;
     const access = await this.issueAccessToken(userId, claims);
 
     const refreshToken = generateRefreshToken();
     const expiresAt = new Date(Date.now() + this.refreshTtlMs);
     const id = createId('rt');
-    await this.prisma.refreshToken.create({
+    await client.refreshToken.create({
       data: {
         id,
         userId,
