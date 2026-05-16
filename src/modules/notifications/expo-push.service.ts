@@ -7,6 +7,7 @@ import {
 } from 'expo-server-sdk';
 import { FeatureFlagService } from '../../common/feature-flags/feature-flag.service';
 import type { Env } from '../../config/env.schema';
+import { ReceiptsQueue, type ReceiptEntry } from './queue/receipts.queue';
 
 export interface SendResult {
   invalidTokens: string[];
@@ -20,12 +21,12 @@ export class ExpoPushService {
   constructor(
     config: ConfigService<Env, true>,
     private readonly featureFlags: FeatureFlagService,
+    private readonly receipts: ReceiptsQueue,
   ) {
     const accessToken = config.get('EXPO_ACCESS_TOKEN', { infer: true });
     this.expo = new Expo({ accessToken });
   }
 
-  /** Validates a token's shape — cheap and synchronous. */
   isValidToken(token: string): boolean {
     return Expo.isExpoPushToken(token);
   }
@@ -44,32 +45,66 @@ export class ExpoPushService {
     if (valid.length === 0) return { invalidTokens: [] };
 
     const chunks = this.expo.chunkPushNotifications(valid);
-    const tickets: ExpoPushTicket[] = [];
+    const invalidTokens: string[] = [];
+    const receiptEntries: ReceiptEntry[] = [];
+
     for (const chunk of chunks) {
+      const chunkTokens = chunk.flatMap((m) =>
+        Array.isArray(m.to) ? m.to : [m.to],
+      );
+      let tickets: ExpoPushTicket[];
       try {
-        const part = await this.expo.sendPushNotificationsAsync(chunk);
-        tickets.push(...part);
+        tickets = await this.expo.sendPushNotificationsAsync(chunk);
       } catch (err: unknown) {
         this.logger.error({ err }, 'Expo push delivery failed for chunk');
+        continue;
       }
-    }
-
-    // Map tickets back to tokens to identify dead devices.
-    const invalidTokens: string[] = [];
-    let i = 0;
-    for (const m of valid) {
-      const to = Array.isArray(m.to) ? m.to : [m.to];
-      for (const token of to) {
-        const ticket = tickets[i++];
-        if (
-          ticket?.status === 'error' &&
-          ticket.details?.error === 'DeviceNotRegistered'
-        ) {
+      tickets.forEach((ticket, idx) => {
+        const token = chunkTokens[idx];
+        if (!token) return;
+        if (ticket.status === 'ok') {
+          receiptEntries.push({ receiptId: ticket.id, token });
+        } else if (ticket.details?.error === 'DeviceNotRegistered') {
           invalidTokens.push(token);
         }
-      }
+      });
+    }
+
+    if (receiptEntries.length > 0) {
+      await this.receipts.enqueue(receiptEntries);
     }
 
     return { invalidTokens };
+  }
+
+  async checkReceipts(entries: ReceiptEntry[]): Promise<string[]> {
+    if (entries.length === 0) return [];
+
+    const tokenByReceiptId = new Map(
+      entries.map((e) => [e.receiptId, e.token]),
+    );
+    const chunks = this.expo.chunkPushNotificationReceiptIds(
+      entries.map((e) => e.receiptId),
+    );
+
+    const invalidTokens: string[] = [];
+    for (const chunk of chunks) {
+      try {
+        const receipts =
+          await this.expo.getPushNotificationReceiptsAsync(chunk);
+        for (const [receiptId, receipt] of Object.entries(receipts)) {
+          if (
+            receipt.status === 'error' &&
+            receipt.details?.error === 'DeviceNotRegistered'
+          ) {
+            const token = tokenByReceiptId.get(receiptId);
+            if (token) invalidTokens.push(token);
+          }
+        }
+      } catch (err: unknown) {
+        this.logger.error({ err }, 'Failed to fetch Expo push receipts');
+      }
+    }
+    return invalidTokens;
   }
 }

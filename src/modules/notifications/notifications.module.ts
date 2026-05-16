@@ -24,6 +24,8 @@ import {
   NotificationsQueue,
 } from './queue/notifications.queue';
 import { NotificationsProcessor } from './queue/notifications.processor';
+import { RECEIPTS_QUEUE, ReceiptsQueue } from './queue/receipts.queue';
+import { ReceiptsProcessor } from './queue/receipts.processor';
 
 @Module({
   imports: [
@@ -38,7 +40,10 @@ import { NotificationsProcessor } from './queue/notifications.processor';
         },
       }),
     }),
-    BullModule.registerQueue({ name: NOTIFICATIONS_QUEUE }),
+    BullModule.registerQueue(
+      { name: NOTIFICATIONS_QUEUE },
+      { name: RECEIPTS_QUEUE },
+    ),
   ],
   controllers: [NotificationsController],
   exports: [
@@ -53,6 +58,8 @@ import { NotificationsProcessor } from './queue/notifications.processor';
     ExpoPushService,
     NotificationsQueue,
     NotificationsProcessor,
+    ReceiptsQueue,
+    ReceiptsProcessor,
     ChatMessageHandler,
     JoinHandler,
     LeaveHandler,
