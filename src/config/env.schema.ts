@@ -23,6 +23,12 @@ export const envSchema = z
     JWT_ACCESS_TTL: durationString.default('15m'),
     JWT_REFRESH_TTL: durationString.default('30d'),
 
+    REVIEW_ACCOUNT_EMAIL: z.email().optional(),
+    REVIEW_ACCOUNT_CODE: z
+      .string()
+      .regex(/^\d{6}$/, 'REVIEW_ACCOUNT_CODE must be 6 digits')
+      .optional(),
+
     CORS_ORIGINS: z.string().transform((v) =>
       v
         .split(',')

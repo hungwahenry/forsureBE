@@ -43,6 +43,8 @@ export class AuthService {
   private readonly accessTtlMs: number;
   private readonly refreshTtlMs: number;
   private readonly isProd: boolean;
+  private readonly reviewEmail?: string;
+  private readonly reviewCode?: string;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -61,9 +63,25 @@ export class AuthService {
       config.get('JWT_REFRESH_TTL', { infer: true }),
     );
     this.isProd = config.get('NODE_ENV', { infer: true }) === 'production';
+    this.reviewEmail = config
+      .get('REVIEW_ACCOUNT_EMAIL', { infer: true })
+      ?.toLowerCase();
+    this.reviewCode = config.get('REVIEW_ACCOUNT_CODE', { infer: true });
+  }
+
+  // App-store reviewers sign in on one designated email with a fixed code.
+  private isReviewLogin(email: string): boolean {
+    return (
+      !!this.reviewEmail && !!this.reviewCode && email === this.reviewEmail
+    );
   }
 
   async requestCode(email: string, ipAddress?: string): Promise<void> {
+    if (this.isReviewLogin(email)) {
+      this.logger.debug('App review account — skipping OTP send');
+      return;
+    }
+
     const [cooldownSeconds, ttlMinutes] = await Promise.all([
       this.appConfig.getInt('auth.otp_resend_cooldown_seconds'),
       this.appConfig.getInt('auth.otp_ttl_minutes'),
@@ -121,35 +139,46 @@ export class AuthService {
   ): Promise<
     TokenPairDto & { user: PublicUserDto; onboardingRequired: boolean }
   > {
-    const verification = await this.prisma.emailVerification.findFirst({
-      where: { email, consumedAt: null },
-      orderBy: { createdAt: 'desc' },
-    });
-    if (!verification) {
-      throw new AppException(ErrorCode.AUTH_INVALID_CREDENTIALS, {
-        message: 'Code expired or invalid. Request a new one.',
-      });
-    }
+    let verificationId: string | null = null;
 
-    await handleOtpVerification({
-      challenge: verification,
-      candidate: code,
-      maxAttempts: await this.appConfig.getInt('auth.otp_max_attempts'),
-      incrementAttempts: () =>
-        this.prisma.emailVerification
-          .update({
-            where: { id: verification.id },
-            data: { attempts: { increment: 1 } },
-          })
-          .then(() => undefined),
-      markConsumed: () =>
-        this.prisma.emailVerification
-          .update({
-            where: { id: verification.id },
-            data: { consumedAt: new Date() },
-          })
-          .then(() => undefined),
-    });
+    if (this.isReviewLogin(email)) {
+      if (code !== this.reviewCode) {
+        throw new AppException(ErrorCode.AUTH_INVALID_CREDENTIALS, {
+          message: 'Incorrect code.',
+        });
+      }
+    } else {
+      const verification = await this.prisma.emailVerification.findFirst({
+        where: { email, consumedAt: null },
+        orderBy: { createdAt: 'desc' },
+      });
+      if (!verification) {
+        throw new AppException(ErrorCode.AUTH_INVALID_CREDENTIALS, {
+          message: 'Code expired or invalid. Request a new one.',
+        });
+      }
+
+      await handleOtpVerification({
+        challenge: verification,
+        candidate: code,
+        maxAttempts: await this.appConfig.getInt('auth.otp_max_attempts'),
+        incrementAttempts: () =>
+          this.prisma.emailVerification
+            .update({
+              where: { id: verification.id },
+              data: { attempts: { increment: 1 } },
+            })
+            .then(() => undefined),
+        markConsumed: () =>
+          this.prisma.emailVerification
+            .update({
+              where: { id: verification.id },
+              data: { consumedAt: new Date() },
+            })
+            .then(() => undefined),
+      });
+      verificationId = verification.id;
+    }
 
     const existing = await this.prisma.user.findUnique({
       where: { email },
@@ -169,10 +198,12 @@ export class AuthService {
 
     const now = new Date();
     const { user, tokens } = await this.prisma.$transaction(async (tx) => {
-      await tx.emailVerification.update({
-        where: { id: verification.id },
-        data: { consumedAt: now },
-      });
+      if (verificationId) {
+        await tx.emailVerification.update({
+          where: { id: verificationId },
+          data: { consumedAt: now },
+        });
+      }
       const user = await tx.user.upsert({
         where: { email },
         update: { lastLoginAt: now, emailVerifiedAt: now },
